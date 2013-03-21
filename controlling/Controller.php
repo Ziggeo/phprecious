@@ -35,7 +35,36 @@ Class Controller {
 	}
 	
 	protected function before_filter($action, $args = array()) {
+		$assert = $this->assert_filter($action, $args);
+		if (@$assert[$action]) {
+			$asserts = $assert[$action];
+			if (!is_array($asserts))
+				$asserts = array($asserts);
+			$props = $this->filter_properties();
+			foreach ($asserts as $key) {
+				$prop = $props[$key];
+				if (!$prop["check"]($action, $args)) {
+					$prop["error"]($action, $args);
+					return FALSE;
+				}
+			}
+		}
 		return TRUE;
 	}
+	
+	protected function filter_properties() {
+		return array();
+	}
+	
+	protected function assert_filter($action, $args = array()) {
+		return array();
+	}
+	
+	public function read_requests($arr) {
+		$result = array();
+		foreach ($arr as $key)
+			$result[$key] = Requests::getVar($key);
+		return $result;
+	}	
 	
 }

@@ -1,5 +1,6 @@
 <?php
 
+require_once(dirname(__FILE__) . "/../../support/strings/ParseType.php");
 require_once(dirname(__FILE__) . "/ActiveModel.php");
 
 class DatabaseModel extends ActiveModel {
@@ -22,6 +23,8 @@ class DatabaseModel extends ActiveModel {
 					$result[$key] = static::getDatabase()->encodePrimaryKey($value);
 				elseif ($meta["type"] == "date" && $value != NULL)
 					$result[$key] = static::getDatabase()->encodeDate($value);
+				elseif ($meta["type"] == "boolean" && $value != NULL && !is_bool($value))
+					$result[$key] = ParseType::parseBool($value);
 			}
 		}
 		return $result;

@@ -114,8 +114,13 @@ class Model {
 		return $this->attrsChanged;
 	}
 	
-	public function attrs() {
-		return $this->attrs;		
+	public function attrs($filter = NULL) {
+		if ($filter == NULL)
+			return $this->attrs;
+		$result = array();
+		foreach ($filter as $key)
+			$result[$key] = @$this->attrs[$key];
+		return $result;		
 	}
 	
 	public function filterPersistentAttrs($attrs) {

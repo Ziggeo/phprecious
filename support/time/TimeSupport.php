@@ -49,7 +49,7 @@ class TimePoint {
 	public static function ensure($tp, $default = null) {
 		if (!@$tp)
 			return @$default ? $default : new TimePointObj();
-		if (!is_object($tp))
+		if (!is_object($tp) || !($tp instanceof TimePointObj))
 			return new TimePointObj($tp);
 		return $tp;
 	}
