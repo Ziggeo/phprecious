@@ -25,14 +25,30 @@ class ModelHasManyAssociation extends ModelAssociation {
 			$query = array_merge($query, @$this->getOption("where"));
 		$query[$key] = $model->id();
 		if (@$this->getOption("polymorphic"))
-			$params[$key . "_type"] = get_class($model);
+			$query[$key . "_type"] = get_class($model);
 		if (@$this->getOption("role"))
-			$params[$key . "_role"] = $this->getOption("role");
+			$query[$key . "_role"] = $this->getOption("role");
  		return $class::allBy($query, $sort, $limit);
 	}
 	
 	public function all($sort = NULL) {
 		return $this->select(NULL, $sort);
+	}
+	
+	public function findOne($query) {
+		$class = $this->foreignClass;
+		$model = $this->getParentModel();
+		$key = $this->foreignKey;
+		if (@!$query)
+			$query = array();
+		if(@$this->getOption("where"))
+			$query = array_merge($query, @$this->getOption("where"));
+		$query[$key] = $model->id();
+		if (@$this->getOption("polymorphic"))
+			$query[$key . "_type"] = get_class($model);
+		if (@$this->getOption("role"))
+			$query[$key . "_role"] = $this->getOption("role");
+ 		return $class::findBy($query);
 	}
 	
 	protected function delegateSelect() {

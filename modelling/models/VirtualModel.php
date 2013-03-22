@@ -36,7 +36,7 @@ class VirtualModel extends ActiveModel {
 	}
 
 	protected static function findRowBy($query) {
-		if ($query[self::idKey()])
+		if (@$query[self::idKey()])
 			return self::findRowById($query[self::idKey()]);
 		foreach (self::table() as $row) {
 			$match = TRUE;
