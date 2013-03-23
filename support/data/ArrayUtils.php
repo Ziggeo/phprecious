@@ -43,4 +43,17 @@ Class ArrayUtils {
 				return TRUE;
 		return FALSE;
 	}
+	
+	public static function filter($arr, $cb) {
+		$result = array();
+		if (is_array($cb))
+			foreach ($cb as $key)
+				$result[$key] = @$arr[$key];
+		else
+			foreach ($arr as $key=>$value)
+				if ($cb($key))
+					$result[$key] = $value;
+		return $result;
+	}
+	
 }
