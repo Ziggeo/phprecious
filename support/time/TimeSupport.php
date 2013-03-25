@@ -74,6 +74,10 @@ class TimePeriod {
 		return self::hours($days * 24);
 	}
 
+	public static function months($days) {
+		return self::days(30);
+	}
+
 	public static function get($seconds) {
 		return new TimePeriodObj($seconds);
 	}
@@ -118,6 +122,10 @@ class TimePointObj extends AbstractTimeObj {
 		
 	public function later($tp = null) {
 		return $this->seconds() > TimePoint::ensure($tp)->seconds();
+	}
+	
+	public function elapsed($tp = null) {
+		return TimePeriod::seconds(TimePoint::ensure($tp)->seconds() - $this->seconds());
 	}
 
 }
