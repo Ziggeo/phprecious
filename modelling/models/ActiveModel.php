@@ -92,10 +92,8 @@ abstract class ActiveModel extends Model {
 			$this->$key = $value;
 		if (!$this->isValid())
 			return FALSE;
-		if (!$this->hasChanged()) 
-			return TRUE;
 		$this->beforeUpdate();
-		$success = $this->updateModel();
+		$success = !$this->hasChanged() || $this->updateModel();
 		if ($success) {
 			static::log("Updated model '" . get_called_class() . "' with id {$this->id()}.", Logger::INFO_2);
 			$this->saved = TRUE;
