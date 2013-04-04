@@ -5,6 +5,11 @@ class TimeSupport {
 	public static function ensure_seconds($time) {
 		if (is_numeric($time))
 			return intval($time);
+		if (is_object($time)) {
+			if (get_class($time) == "TimePointObj")
+				return $time->seconds();
+			$time = $time . "";
+		} 
 		$arr = explode(" ", $time);
 		if (count($arr) == 2 && is_numeric($arr[0]) && is_numeric($arr[1]))
 			return intval($arr[1]);

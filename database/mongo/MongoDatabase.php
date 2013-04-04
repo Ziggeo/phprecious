@@ -47,8 +47,8 @@ class MongoDatabase extends Database {
     }
 	
 	public function encodeDate($date = NULL) {
-		if ($date)
-			return new MongoDate($date);
+		if ($date) 
+			return new MongoDate(TimePoint::get($date)->seconds());
 		else
 			return new MongoDate();
 	}

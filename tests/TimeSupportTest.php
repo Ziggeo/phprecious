@@ -17,6 +17,10 @@ class TimeSupportTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(TimeSupport::ensure_seconds("2 hours"), 2 * 60 * 60);
 	}
 	
+	public function testEnsureSecondsTimePoint() {
+		$this->assertEquals(TimeSupport::ensure_seconds(TimePoint::get(12345)), 12345);
+	}
+
 	public function testEnsureTimePoint() {
 		$t = time();
 		$tp = TimePoint::ensure($t);
