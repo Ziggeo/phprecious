@@ -85,12 +85,12 @@ abstract class ActiveModel extends Model {
 	
 	protected abstract function createModel();
 
-	public function update($attrs = array()) {
+	public function update($attrs = array(), $force = FALSE) {
 		if (!$this->saved || $this->deleted)
 			return FALSE;
 		foreach ($attrs as $key => $value)
 			$this->$key = $value;
-		if (!$this->isValid())
+		if (!$force && !$this->isValid())
 			return FALSE;
 		$this->beforeUpdate();
 		$success = !$this->hasChanged() || $this->updateModel();
