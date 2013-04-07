@@ -9,7 +9,8 @@ class DatabaseMail extends DatabaseModel {
 		$attrs["sender"] = array("type" => "string", "validate" => array(new PresentValidator()));
 		$attrs["recipient"] = array("type" => "string", "validate" => array(new PresentValidator()));
 		$attrs["subject"] = array("type" => "string", "validate" => array(new PresentValidator()));
-		$attrs["message"] = array("type" => "string", "validate" => array(new PresentValidator()));
+		$attrs["message"] = array("type" => "string");
+		$attrs["message_html"] = array("type" => "string");
 		$attrs["mailed"] = array("type" => "boolean", "default" => FALSE);
 		return $attrs;
 	}
@@ -23,6 +24,7 @@ class DatabaseMail extends DatabaseModel {
 			$mail->recipient = $db_mail->recipient;
 			$mail->subject = $db_mail->subject;
 			$mail->message = $db_mail->message;
+			$mail->message_html = $db_mail->message_html;
 			if ($mailer->send($mail))
 				$db_mail->update(array("mailed" => TRUE));
 			else

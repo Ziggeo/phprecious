@@ -11,7 +11,8 @@ class DatabaseMailer extends Mailer
 			"sender" => $mail->sender,
 			"recipient" => $mail->recipient,
 			"subject" => $mail->subject,
-			"message" => $mail->message
+			"message" => $mail->message,
+			"message_html" => $mail->message_html
 		));
 		
 		return $db_mail->save();
