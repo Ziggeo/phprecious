@@ -88,7 +88,7 @@ class Model {
 	}
 
 	protected function setAttr($key, $value, $setChanged = FALSE) {
-		if ($setChanged && @($this->attrs[$key] != $value)) 
+		if ($setChanged && @(!isset($this->attrs[$key]) || $this->attrs[$key] != $value))
 			$this->attrsChanged[$key] = $value;
 		$this->attrs[$key] = $value;
 	}

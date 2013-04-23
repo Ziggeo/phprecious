@@ -20,13 +20,13 @@ Class ApiController extends Controller {
 		return $result;
 	}
 
-	function return_forbidden() {
+	function return_forbidden($result = array()) {
 		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
 			header('HTTP/1.1 403 Forbidden');
 		    header('Content-Type: application/json');
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
 ?><textarea data-type="application/json">
-{"success": false}
+{"success": false, "data": <?= json_encode($result) ?>}
 </textarea><?			
 		}
 	    return FALSE;

@@ -109,6 +109,10 @@ class AbstractTimeObj {
 		return $this->seconds;
 	}
 	
+	public function microtime() {
+		return TimeSupport::seconds_to_microtime($this->seconds());
+	}
+	
 }
 
 class TimePointObj extends AbstractTimeObj {
