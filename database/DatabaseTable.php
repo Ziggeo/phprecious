@@ -56,6 +56,14 @@ abstract class DatabaseTable {
 		return $this->updateOne(array($this->primaryKey() => $this->database->encodePrimaryKey($id)), $update);
 	}
 	
+	public function incrementRow($id, $key, $value) {
+		$row = $this->findRow($id);
+		if (!@$row)
+			return FALSE;
+		$new_value = @$row[$key] ? $row[$key] + $value : $value;
+		return $this->updateRow($id, array($key => $new_value));
+	}
+	
 	public abstract function remove($query);
 	
 	public abstract function removeOne($query);

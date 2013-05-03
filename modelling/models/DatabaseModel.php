@@ -61,15 +61,19 @@ class DatabaseModel extends ActiveModel {
 	
 	protected function beforeUpdate() {
 		parent::beforeUpdate();
-		$this->setAttr("updated", self::table()->getDatabase()->encodeDate());  
+		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);
 	}
 	
 	protected function beforeCreate() {
 		parent::beforeCreate();
-		$this->setAttr("created", self::table()->getDatabase()->encodeDate());  
-		$this->setAttr("updated", self::table()->getDatabase()->encodeDate());  
+		$this->setAttr("created", self::table()->getDatabase()->encodeDate(), TRUE);  
+		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);  
 	}	
 	
+	protected function incAttr($key, $value) {
+		return self::table()->incrementCell($this->id(), $key, $value);
+	}
+
 	protected function createModel() {
 		$table = self::table();
 		$attrs = self::encodeData($this->filterPersistentAttrs($this->attrs()));

@@ -5,8 +5,13 @@ require_once(dirname(__FILE__) . "/../support/web/Requests.php");
 
 class Router {
 	
-	public static $controller_path = "";
-	public static $fullpath_base = "";
+	public $controller_path = "";
+	public $fullpath_base = "";
+	
+	function __construct($fullpath_base = "", $controller_path = "") {
+		$this->fullpath_base = $fullpath_base;
+		$this->controller_path = $controller_path;
+	}
 
 	protected static function perfmon($enter) {
 		global $PERFMON;
@@ -109,7 +114,7 @@ class Router {
 		}
 		else {
 			$cls = $controller_file . "Controller";
-			include(self::$controller_path . "/" . $cls . ".php");
+			include($this->controller_path . "/" . $cls . ".php");
 			$i = strrchr($cls, "/");
 			$clsname = $i ? substr($i, 1) : $cls;
 			self::perfmon(false);
@@ -143,7 +148,7 @@ class Router {
 	
 	public function fullpath($path) {
 		$subpath = call_user_method_array("path", $this, func_get_args());
-		return self::$fullpath_base . $subpath;
+		return $this->fullpath_base . $subpath;
 	}
 	
 	public function redirect($uri) {

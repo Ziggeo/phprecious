@@ -102,6 +102,19 @@ class Model {
 			$this->setAttr($key, $value, TRUE);
 	}
 	
+	public function inc($key, $value = 1) {
+		if (!$this->schemeProp($key, "readonly", FALSE))
+			$this->incAttr($key, $value);
+	}
+	
+	public function dec($key, $value = 1) {
+		$this->inc($key, -$value);
+	}
+
+	protected function incAttr($key, $value) {
+		$this->$key = $this->$key + $value;
+	}
+	
 	protected function resetChanged() {
 		$this->attrsChanged = array();
 	}
@@ -220,8 +233,13 @@ class Model {
 		$sch = $this->scheme();
 		// Construct scheme
 		foreach ($sch as $key=>$meta)
-			if(isset($meta["default"]))
-				$this->attrs[$key] = $meta["default"];
+			if(isset($meta["default"])) {
+				$f = $meta["default"];
+				if (is_object($f) && ($f instanceof Closure))
+					$this->attrs[$key] = $f($this);
+				else
+					$this->attrs[$key] = $f;
+			}
 		// Construct attributes
 		foreach ($attributes as $key=>$value) {
 			if (isset($sch[$key]))

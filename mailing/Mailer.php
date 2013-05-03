@@ -1,7 +1,6 @@
 <?php
 
-abstract class Mailer
-{
+abstract class Mailer {
 	
 	protected static function perfmon($enter) {
 		global $PERFMON;
@@ -21,15 +20,21 @@ abstract class Mailer
 
 	private $options;
 	
+	public $default_sender = "noreply@domain.com";
+	
 	public function option($key) {
 		return @$this->options[$key];
 	}
 	
 	public function __construct($options = array()) {
 		$this->options = $options;
+		if (@$this->options["default_sender"])
+			$this->default_sender = $this->options["default_sender"];
 	}
 	
 	public function send($mail) {
+		if (!@$mail->sender)
+			$mail->sender = $this->default_sender;
 		static::perfmon(true);
 		static::log(Logger::INFO_2, "Sending email to '" . $mail->recipient . "' with " . get_called_class());
 		$result = $this->sendMail($mail);

@@ -19,42 +19,39 @@ Class ApiController extends Controller {
 				$result[$key] = $raw[$key];
 		return $result;
 	}
-
-	function return_forbidden($result = array()) {
-		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
-			header('HTTP/1.1 403 Forbidden');
-		    header('Content-Type: application/json');
-		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
-?><textarea data-type="application/json">
-{"success": false, "data": <?= json_encode($result) ?>}
-</textarea><?			
-		}
-	    return FALSE;
-	}
 	
-	function return_error($result = array()) {
+	function return_state ($state, $result) {
 		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
-			header('HTTP/1.1 500 Internal Server Error');
+			if ($state != NULL)
+				header('HTTP/1.1 ' . $state);
 		    header('Content-Type: application/json');
 			print json_encode($result);	
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
 ?><textarea data-type="application/json">
-{"success": false, "data": <?= json_encode($result) ?>}
+{"success": <?= $state == NULL ? "true" : "false" ?>, "data": <?= json_encode($result) ?>}
 </textarea><?			
 		}
-	    return FALSE;
+		return $state == NULL;
+	}
+
+	function return_forbidden($result = array()) {
+		return $this->return_state("403 Forbidden", $result);
+	}
+	
+	function return_not_found($result = array()) {
+		return $this->return_state("404 Not Found", $result);
+	}
+
+	function return_error($result = array()) {
+		return $this->return_state("500 Internal Server Error", $result);
 	}
 	
 	function return_success($result = array()) {
-		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
-			header('Content-Type: application/json');
-		    print json_encode($result);	
-		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
-?><textarea data-type="application/json">
-{"success": true, "data": <?= json_encode($result) ?>}
-</textarea><?			
-		}
-	    return TRUE;
+		return $this->return_state("200 OK", $result);
 	}
 	
+	function return_success_created($result = array()) {
+		return $this->return_state("201 Created", $result);
+	}
+
 }

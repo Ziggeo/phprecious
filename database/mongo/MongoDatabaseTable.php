@@ -72,6 +72,14 @@ class MongoDatabaseTable extends DatabaseTable {
 		return $success;
 	}
 	
+	public function incrementCell($id, $key, $value) {
+		static::perfmon(true);
+		$success = $this->getCollection()->update($query, array('$inc' => array($key => $value)));
+       	$success = $success["ok"];
+		static::perfmon(false);
+		return $success;
+	}
+	
 	public function updateOne($query, $update, $options = array("safe" => TRUE)) {
 		$options["multiple"] = FALSE;
 		return $this->update($query, $update, $options);
