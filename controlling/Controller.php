@@ -28,10 +28,14 @@ Class Controller {
 		if ($result) {
 			$class = get_called_class();
 			self::log(Logger::INFO_2, "Dispatch action '{$action}' on controller '{$class}'");
-			call_user_method_array($action, $this, $args);
+			$this->call_action($action, $args);
 		}
 		static::perfmon(true);
 		return $result;
+	}
+	
+	protected function call_action($action, $args) {
+		call_user_method_array($action, $this, $args);
 	}
 	
 	protected function before_filter($action, $args = array()) {
