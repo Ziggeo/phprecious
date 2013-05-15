@@ -13,7 +13,7 @@ class ModelHasManyAssociation extends ModelAssociation {
 		$this->foreignClass = $foreignClass;
 	}
 	
-	public function select($query = NULL, $sort = NULL, $limit = NULL) {
+	private function prepare_query($query = NULL) {
 		$class = $this->foreignClass;
 		$model = $this->getParentModel();
 		$key = $this->foreignKey;
@@ -28,7 +28,14 @@ class ModelHasManyAssociation extends ModelAssociation {
 			$query[$key . "_type"] = get_class($model);
 		if (@$this->getOption("role"))
 			$query[$key . "_role"] = $this->getOption("role");
- 		return $class::allBy($query, $sort, $limit);
+		return $query;
+	}
+	
+	public function select($query = NULL, $sort = NULL, $limit = NULL) {
+		$class = $this->foreignClass;
+		if (!@$sort)
+			$sort = @$this->getOption("sort");
+ 		return $class::allBy($this->prepare_query($query), $sort, $limit);
 	}
 	
 	public function all($sort = NULL) {
@@ -37,18 +44,7 @@ class ModelHasManyAssociation extends ModelAssociation {
 	
 	public function findOne($query) {
 		$class = $this->foreignClass;
-		$model = $this->getParentModel();
-		$key = $this->foreignKey;
-		if (@!$query)
-			$query = array();
-		if(@$this->getOption("where"))
-			$query = array_merge($query, @$this->getOption("where"));
-		$query[$key] = $model->id();
-		if (@$this->getOption("polymorphic"))
-			$query[$key . "_type"] = get_class($model);
-		if (@$this->getOption("role"))
-			$query[$key . "_role"] = $this->getOption("role");
- 		return $class::findBy($query);
+ 		return $class::findBy($this->prepare_query($query));
 	}
 	
 	protected function delegateSelect() {

@@ -14,8 +14,19 @@ Class StringTable {
 		foreach ($idents as $key) 
 			$current = @$current[$key];
 		if (@!$current)
-			$current = _("Please provide text for ") . "'" . $ident . "'"; 
+			throw new Exception(_("Please provide text for ") . "'" . $ident . "'"); 
 		return $current;
+	}
+	
+	public function set($ident, $value) {
+		$idents = explode(".", $ident);
+		$current = $this->string_table;
+		foreach ($idents as $key) {
+			if (!@$current[$key])
+				$current[$key] = array();
+			$current = @$current[$key];
+		}
+		$current = $value;		
 	}
 	
 }

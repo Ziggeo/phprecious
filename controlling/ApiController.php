@@ -34,7 +34,7 @@ Class ApiController extends Controller {
 		    header('Content-Type: application/json');
 			print json_encode($data);	
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
-			?><textarea data-type="application/json">{"success": <?= $status == NULL ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
+			?><textarea data-type="application/json">{"success": <?= $status == HttpHeader::HTTP_STATUS_OK ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
 		}
 		return $status == HttpHeader::HTTP_STATUS_OK;
 	}
