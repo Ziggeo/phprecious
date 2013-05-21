@@ -179,6 +179,8 @@ class Model {
 			if (isset($meta["validate"])) {
 				$value = @$this->attrs[$key];
 				$validators = $meta["validate"];
+				if (!is_array($validators))
+					$validators = array($validators);
 				foreach ($validators as $validator) {
 					$result = $validator->validate($value, $this);
 					if ($result != NULL && is_string($result)) {

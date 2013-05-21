@@ -42,7 +42,7 @@ class DatabaseModel extends ActiveModel {
 		return self::$table[$class];
 	}
 	
-	protected static function idKey() {
+	public static function idKey() {
 		return self::table()->primaryKey();
 	} 	
 	

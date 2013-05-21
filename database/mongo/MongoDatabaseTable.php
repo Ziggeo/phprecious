@@ -49,6 +49,8 @@ class MongoDatabaseTable extends DatabaseTable {
 				$result = $result->sort($options["sort"]);
 			if (@$options["limit"])
 				$result = $result->limit($options["limit"]);
+			if (@$options["skip"])
+				$result = $result->skip($options["skip"]);
 		}
 		static::perfmon(false);
 		return $result;
@@ -74,7 +76,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function incrementCell($id, $key, $value) {
 		static::perfmon(true);
-		$success = $this->getCollection()->update($query, array('$inc' => array($key => $value)));
+		$success = $this->getCollection()->update(array("_id" => $id), array('$inc' => array($key => $value)));
        	$success = $success["ok"];
 		static::perfmon(false);
 		return $success;

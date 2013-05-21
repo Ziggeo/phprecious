@@ -21,7 +21,7 @@ class VirtualModel extends ActiveModel {
 		return $db["table"];
 	}
 	
-	protected static function idKey() {
+	public static function idKey() {
 		return "id";
 	} 	
 	

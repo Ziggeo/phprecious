@@ -19,7 +19,7 @@ class ValueValidator extends Validator {
 	
 	// Returns an error string in case of an error; otherwise returns NULL
 	public function validate($value, $context = NULL) {
-		if (!in_array($value, $this->value))
+		if (!in_array($value, $this->values))
 			return $this->error_string;
 		return NULL;
 	}

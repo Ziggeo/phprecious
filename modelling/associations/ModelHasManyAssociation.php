@@ -17,8 +17,6 @@ class ModelHasManyAssociation extends ModelAssociation {
 		$class = $this->foreignClass;
 		$model = $this->getParentModel();
 		$key = $this->foreignKey;
-		if (!@$sort)
-			$sort = @$this->getOption("sort");
 		if (@!$query)
 			$query = array();
 		if(@$this->getOption("where"))
@@ -31,11 +29,11 @@ class ModelHasManyAssociation extends ModelAssociation {
 		return $query;
 	}
 	
-	public function select($query = NULL, $sort = NULL, $limit = NULL) {
+	public function select($query = NULL, $sort = NULL, $limit = NULL, $skip = NULL) {
 		$class = $this->foreignClass;
 		if (!@$sort)
 			$sort = @$this->getOption("sort");
- 		return $class::allBy($this->prepare_query($query), $sort, $limit);
+ 		return $class::allBy($this->prepare_query($query), $sort, $limit, $skip);
 	}
 	
 	public function all($sort = NULL) {

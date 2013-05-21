@@ -17,7 +17,7 @@ Class Controller {
 	protected static function log($level, $s) {
 		global $LOGGER;
 		if (@$LOGGER)
-			$LOGGER->message("framework.control", $level, $s);
+			$LOGGER->message("controller", $level, $s);
 	}
 
 	public function dispatch($action, $args = array()) {

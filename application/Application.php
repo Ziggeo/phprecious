@@ -1,65 +1,210 @@
 <?php
 
-// Not complete
+
+require_once(dirname(__FILE__) . "/../support/required/Required.php");
+require_once(dirname(__FILE__) . "/../support/strings/StringTable.php");
+		
 Class Application {
 	
+	private $folders = array();
 	private $config;
-	private $environment_tags = array();
+	private $tags = array();
+	private $initializers = array();
+	
 	
 	function __construct() {
 		$this->config = new StringTable();
-		/*
-		$this->loadRequirements();
-		$this->determineEnvironment();
-		$this->loadConfiguration();
-		$this->setupConfiguration();
-		 */
+	}
+	
+	public function initialize() {
+		$this->processInitializers();
+	}
+	
+	public function getFolder($key) {
+		return @$this->folders[$key];
+	}
+	
+	public function setFolder($key, $value) {
+		$this->folders[$key] = $this->resolvePath($value);
+	}
+	
+	public function resolvePath($path) {
+		$self = $this;
+		return preg_replace_callback(
+			"/\{(.+)\}/", function ($matches) use ($self) {
+				return $self->getFolder($matches[1]);
+			}, $path
+		);
+	}
+	
+	public function require_file_path($path) {
+		Required::add_file_path($this->resolvePath($path));
+	}
+	
+	public function require_class_path($path) {
+		Required::add_class_path($this->resolvePath($path));
+	}
+	
+	public function require_class_paths($path) {
+		Required::add_class_paths($this->resolvePath($path));
+	}
+	
+	public function addTag($tag) {
+		$this->tags[$tag] = TRUE;
+	}
+	
+	public function hasTag($tag) {
+		return isset($this->tags[$tag]);
 	}
 	
 	public function config($key = "") {
 		return $this->config->get($key);
 	}
 	
-	public function setConfig($key = "", $value = NULL) {
-		$this->config->set($key, $value);
+	public function setConfig($key = "", $value = NULL, $overwrite = TRUE) {
+		if ($overwrite || !@$this->config->exists($key))
+			$this->config->set($key, $value);
 	}
 	
-	protected function addEnvironmentTag($tag) {
-		$this->environment_tags[$tag] = TRUE;
+	public function hasConfig($key) {
+		return $this->config->exists($key);
 	}
 	
-	protected function hasEnvironmentTag($tag) {
-		return @$this->environment_tags[$tag];
+	private function touchInitializer($ident) {
+		if (!@$this->initializers[$ident]) {
+			$this->initializers[$ident] = array(
+				"initializer" => NULL,
+				"processed" => FALSE,
+				"active" => FALSE,
+				"before" => array(),
+				"after" => array(),
+			);
+		}
 	}
 	
-	protected function getEnvironmentTags() {
-		return array_keys($this->environment_tags);
+	public function addInitializer($initializer) {
+		$ident = $initializer->ident();
+		$this->touchInitializer($ident);
+		$arr = &$this->initializers[$ident];
+		if (@$arr["initializer"])
+			return FALSE;
+		$arr["initializer"] = $initializer;
+		$deactivate = FALSE;
+		foreach ($initializer->before() as $before) {
+			$this->touchInitializer($before);
+			if ($this->initializers[$before]["processed"])
+				$deactivate = TRUE;
+			else {
+				$arr["before"][$before] = TRUE;
+				$this->initializers[$before]["after"][$ident] = TRUE;
+			}
+		}
+		foreach ($initializer->after() as $after) {
+			$this->touchInitializer($after);
+			if ($this->initializers[$after]["processed"]) {
+				if (!$this->initializers[$after]["active"])
+					$deactivate = TRUE;
+			} else {
+				$arr["after"][$after] = TRUE;
+				$this->initializers[$after]["before"][$ident] = TRUE;
+			}
+		}
+		if ($deactivate)
+			$this->processInitializer($initializer, FALSE);
 	}
 	
-	protected function addConfiguration($configuration, $options) {
-		// TODO.
+	private function processInitializer($initializer, $active = TRUE) {
+		$ident = $initializer->ident();
+		$arr = &$this->initializers[$ident];
+		$arr["processed"] = TRUE;
+		$arr["active"] = $active;
+		if ($active) {
+			$initializer->execute($this);
+			foreach ($arr["before"] as $key=>$value)
+				unset($this->initializers[$key]["after"][$ident]);
+		}
 	}
 	
-/*	
-	protected function loadRequirements() {
-		// TODO
+	private function processInitializers() {
+		$changed = TRUE;
+		while ($changed) {
+			$changed = FALSE;
+			foreach ($this->initializers as $initializer) {
+				if (!$initializer["processed"] && count($initializer["after"]) == 0) {
+					$this->processInitializer($initializer["initializer"], $initializer["initializer"]->applicable($this));
+					$changed = TRUE;
+				}
+			}			
+		}
 	}
 	
-	protected function determineEnvironment() {
-		// TODO
-	}
-	
-	protected function loadConfiguration() {
-		// TODO
-	}
-	
-	protected function setupConfiguration() {
-		// TODO
-	}
-	
-	public function execute() {
-		// TODO
-	}
-	*/
 }
 
+
+
+Class ApplicationInitializer {
+	
+	private static $anonymous_ident_id = 0;
+	protected $ident = NULL;
+	protected $required_tags = array();
+	protected $forbidden_tags = array();
+	protected $before = array();
+	protected $after = array();
+	private $execute_func = NULL;
+	
+	function __construct($options = array()) {
+		if (@$options["ident"])
+			$this->ident = $options["ident"];
+		if (@$options["required_tags"])
+			$this->required_tags = $options["required_tags"];
+		if (@$options["forbidden_tags"])
+			$this->forbidden_tags = $options["forbidden_tags"];
+		if (@$options["before"])
+			$this->before = $options["before"];
+		if (@$options["after"])
+			$this->after = $options["after"];
+		if (@$options["execute"])
+			$this->execute_func = $options["execute"];
+	}
+	
+	public function ident() {
+		if (!@$this->ident)
+			$this->ident = "anonymous_" . self::$anonymous_ident_id++;
+		return $this->ident;
+	}
+	
+	public function required_tags() {
+		return $this->required_tags;
+	}
+	
+	public function forbidden_tags() {
+		return $this->forbidden_tags;
+	}
+
+	public function before() {
+		return $this->before;
+	}
+
+	public function after() {
+		return $this->after;
+	}
+	
+	public function applicable($application) {
+		foreach ($this->required_tags() as $tag)
+			if (!$application->hasTag($tag))
+				return FALSE;
+		foreach ($this->forbidden_tags() as $tag)
+			if ($application->hasTag($tag))
+				return FALSE;
+		return TRUE;
+	}
+
+	public function execute($application) {
+		if (@$this->execute_func) {
+			$func = $this->execute_func;
+			$func($application);
+		}
+	}
+	
+	
+}

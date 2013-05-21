@@ -7,26 +7,34 @@ class Router {
 	
 	public $controller_path = "";
 	public $fullpath_base = "";
+	private $perfmon = NULL;
+	private $logger = NULL;
 	
-	function __construct($fullpath_base = "", $controller_path = "") {
+	function __construct($fullpath_base = "", $controller_path = "", $options = array()) {
 		$this->fullpath_base = $fullpath_base;
 		$this->controller_path = $controller_path;
+		if (@$options["perfmon"])
+			$this->perfmon = $options["perfmon"];
+		if (@$options["logger"])
+			$this->logger = $options["logger"];
 	}
 
-	protected static function perfmon($enter) {
+	protected function perfmon($enter) {
 		global $PERFMON;
-		if (@$PERFMON) {
+		$pf = @$this->perfmon ? $this->perfmon : $PERFMON;
+		if (@$pf) {
 			if ($enter)
-				$PERFMON->enter("router");
+				$pf->enter("router");
 			else
-				$PERFMON->leave("router");
+				$pf->leave("router");
 		}
 	}
 
-	protected static function log($level, $s) {
+	protected function log($level, $s) {
 		global $LOGGER;
-		if (@$LOGGER)
-			$LOGGER->message("framework.router", $level, $s);
+		$lg = @$this->logger ? $this->logger : $LOGGER;
+		if (@$lg)
+			$lg->message("router", $level, $s);
 	}
 
 	private $routes;
@@ -62,7 +70,7 @@ class Router {
 	}
 	
 	public function dispatchRoute() {
-		self::perfmon(true);
+		$this->perfmon(true);
 		if (func_num_args() == 2) {
 			$method = func_get_arg(0);
 			$uri = func_get_arg(1);
@@ -75,7 +83,7 @@ class Router {
 			$method = Requests::getMethod();
 			$uri = Requests::getPath();
 		}
-		self::log(Logger::INFO_2, "Dispatch Route: " . $method . " " . $uri);
+		$this->log(Logger::INFO_2, "Dispatch Route: " . $method . " " . $uri);
 		$uri = trim($uri, '/');
 		$controller_action = $this->metaRoutes["404"];
 		$args = array();
@@ -96,19 +104,19 @@ class Router {
 				}
 			}
 		}
-		self::perfmon(false);
+		$this->perfmon(false);
 		$this->dispatchControllerAction($controller_action, $args, $direct);
 	}
 		
 	public function dispatchControllerAction($controller_action, $args = array(), $direct = FALSE) {
-		self::perfmon(true);
-		self::log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
+		$this->perfmon(true);
+		$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
 		@list($controller_file, $action_function) = explode("#", $controller_action);
 		$this->currentController = $controller_file;
 		$this->currentAction = $action_function;
 		if ($direct) {
 			include($controller_file . ".php");
-			self::perfmon(false);
+			$this->perfmon(false);
 			if ($action_function)
 				call_user_func_array($action_function, $args);
 		}
@@ -117,14 +125,14 @@ class Router {
 			include($this->controller_path . "/" . $cls . ".php");
 			$i = strrchr($cls, "/");
 			$clsname = $i ? substr($i, 1) : $cls;
-			self::perfmon(false);
+			$this->perfmon(false);
 			$controller = new $clsname();
 			$controller->dispatch($action_function, $args);
 		}
 	}
 	
 	public function path($path) {
-		self::perfmon(true);
+		$this->perfmon(true);
 		$route = $this->paths[$path];
 		$uri = "/" . $route["uri"];
 		$uri = str_replace('\/', "/", $uri);
@@ -142,7 +150,7 @@ class Router {
 		$params = count($args) > 0 ? $args[0] : array();
 		if (($route["method"] != "GET") && ($route["method"] != "POST") && ($route["method"] != "*"))
 			$params["_method"] = $route["method"];
-		self::perfmon(false);
+		$this->perfmon(false);
 		return Requests::buildPath($uri, $params); 
 	}
 	

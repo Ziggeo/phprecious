@@ -11,7 +11,7 @@ abstract class ActiveModel extends Model {
 			$LOGGER->message("framework.model", $level, $s);
 	}
 	
-	protected static function idKey() {
+	public static function idKey() {
 		return "id";
 	} 
 	
@@ -167,12 +167,14 @@ abstract class ActiveModel extends Model {
 		return FALSE;
 	}
 	
-	public static function all($sort = NULL, $limit = NULL) {
+	public static function all($sort = NULL, $limit = NULL, $skip = NULL) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
 		if (@$limit)
 			$options["limit"] = $limit;
+		if (@$skip)
+			$options["skip"] = $skip;
 		$result = static::allRows($options);
 		return self::materializeObjects($result);
 	}
@@ -181,12 +183,14 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 
-	public static function allBy($query, $sort = NULL, $limit = NULL) {
+	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
 		if (@$limit)
 			$options["limit"] = $limit;
+		if (@$skip)
+			$options["skip"] = $skip;
 		$result = static::allRowsBy($query, $options);
 		return self::materializeObjects($result);
 	}
