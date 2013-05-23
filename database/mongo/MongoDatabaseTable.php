@@ -47,13 +47,20 @@ class MongoDatabaseTable extends DatabaseTable {
 		if (@$options) {
 			if (@$options["sort"])
 				$result = $result->sort($options["sort"]);
-			if (@$options["limit"])
-				$result = $result->limit($options["limit"]);
 			if (@$options["skip"])
 				$result = $result->skip($options["skip"]);
+			if (@$options["limit"])
+				$result = $result->limit($options["limit"]);
 		}
 		static::perfmon(false);
 		return $result;
+	}
+	
+	public function count($values) {
+		static::perfmon(true);
+		$result = $this->getCollection()->find($values);
+		static::perfmon(false);
+		return $result->count();
 	}
 	
 	public function findOne($values) {

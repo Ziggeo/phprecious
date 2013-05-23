@@ -24,6 +24,10 @@ abstract class DatabaseTable {
 	
 	public abstract function find($values, $options = NULL);
 	
+	public function count($values) {
+		return count(self::find($values));
+	}
+	
 	public function findSort($values, $sort) {
 		return $this->find($values, array("sort" => $sort));
 	}

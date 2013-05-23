@@ -199,6 +199,10 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 	
+	public static function count($query) {
+		return count(self::all($query));
+	}
+	
 	public static function materializeObjects($cursor) {
         $objects = array();
         foreach ($cursor as $object)

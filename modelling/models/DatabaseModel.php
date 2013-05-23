@@ -70,6 +70,10 @@ class DatabaseModel extends ActiveModel {
 		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);  
 	}	
 	
+	public static function count($query) {
+		return self::table()->count($query);
+	}
+
 	protected function incAttr($key, $value) {
 		return self::table()->incrementCell($this->id(), $key, $value);
 	}

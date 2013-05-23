@@ -36,6 +36,11 @@ class ModelHasManyAssociation extends ModelAssociation {
  		return $class::allBy($this->prepare_query($query), $sort, $limit, $skip);
 	}
 	
+	public function count($query = NULL) {
+		$class = $this->foreignClass;
+ 		return $class::count($this->prepare_query($query));
+	}
+	
 	public function all($sort = NULL) {
 		return $this->select(NULL, $sort);
 	}
