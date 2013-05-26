@@ -52,10 +52,16 @@ Class ArrayUtils {
 					$result[$key] = @$arr[$key];
 		} else {
 			foreach ($arr as $key=>$value)
-				if ($cb($key))
+				if ($cb($key, $value))
 					$result[$key] = $value;
 		}
 		return $result;
+	}
+	
+	public static function removeNull($arr) {
+		return self::filter($arr, function ($key, $value) {
+			return $value != NULL;
+		});
 	}
 	
 }
