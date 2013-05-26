@@ -9,5 +9,9 @@ Class StringUtils {
 			return false;
 		return substr_compare($string, $test, -$testlen) === 0;
 	}
+	
+	public static function has_sub($string, $test) {
+		return strpos($string, $sub) !== false;
+	}
 
 }
