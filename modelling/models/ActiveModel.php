@@ -106,6 +106,15 @@ abstract class ActiveModel extends Model {
 		return $success;
 	}
 	
+	public function updatables($attrs = array(), $save = FALSE) {
+		$sch = $this->scheme();
+		foreach ($attrs as $key=>$value) {
+			if (@$sch[$key] && @$sch[$key]["updatable"])
+				$this->$key = $value;
+		}
+		return !$save || $this->save(); 
+	}
+	
 	protected abstract function updateModel();
 	
 	protected function afterDelete() {

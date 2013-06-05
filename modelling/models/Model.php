@@ -46,6 +46,33 @@ class Model {
 	}
 	
 	
+	/*
+	 * Options
+	 */
+	
+	private static $options = array();
+	
+	static public function classOptions() {
+		$class = get_called_class();
+		if (!@self::$options[$class])
+			self::$options[$class] = static::initializeOptions();
+		return self::$options[$class];
+	}
+	
+	public function options() {
+		return static::classOptions();
+	}
+	
+	public function optionsOf($key) {
+		$opt = $this->options();
+		return @$opt[$key];
+	}
+
+	protected static function initializeOptions() {
+		return array();
+	}
+		
+	
 
 
 	/*
