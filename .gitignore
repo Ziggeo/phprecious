@@ -1,1 +1,3 @@
 .DS_Store
+demos/file_poster/data/*
+demos/file_poster/logs/*
