@@ -10,7 +10,7 @@ Class StringUtils {
 		return substr_compare($string, $test, -$testlen) === 0;
 	}
 	
-	public static function has_sub($string, $test) {
+	public static function has_sub($string, $sub) {
 		return strpos($string, $sub) !== false;
 	}
 
