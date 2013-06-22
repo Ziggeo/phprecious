@@ -1,5 +1,7 @@
 <?php
 
+require_once(dirname(__FILE__) . "/../strings/StringUtils.php");
+
 class FileUtils {
 	
 	public static function enumerate($folder, $expand = FALSE) {
@@ -35,4 +37,51 @@ class FileUtils {
 		return $result;
 	}
 
+	public static function extensionOf($filename) {
+		$ext_pos = strrpos($filename, ".");
+		return $ext_pos === FALSE ? NULL : strtolower(substr($filename, $ext_pos + 1));
+	}
+	
+	public static function pathOf($filename) {
+		$slash = strrpos($filename, "/");
+		return $slash === FALSE ? NULL : substr($filename, 0, $slash);
+	}
+
+	public static function remove_empty_directory_chain($path, $root = "") {
+		if ($root == $path)
+			return TRUE;
+		if ($root != "") {
+			$root .= "/";
+			if (!StringUtils::startsWith($path, $root))
+				return FALSE;
+			$path = substr($path, strlen($root));
+		}
+		while ($path != "") {
+			if (!self::is_empty_directory($root . $path))
+				return TRUE;
+			if (!@rmdir($root . $path))
+				return FALSE;
+			$slash = strrpos($path, "/");
+			$path = $slash === FALSE ? "" : substr($path, 0, $slash);
+		}
+		return TRUE;		
+	}
+	
+	public static function delete_tree($base, $files_only = FALSE) {
+		if (is_file($base)) {
+			@unlink($base);
+			return;
+		} elseif (@$handle = opendir($base)) {
+		    while (false !== ($entry = readdir($handle)))
+		        if ($entry != "." && $entry != "..") {
+		        	self::delete_tree($base . "/" . $entry);
+					if (!$files_only)
+						rmdir($base . "/" . $entry);
+		        } 
+		    closedir($handle);
+			if (!$files_only)
+				rmdir($base);
+		}
+	}
+	
 }

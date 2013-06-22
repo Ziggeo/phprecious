@@ -2,6 +2,10 @@
 
 Class StringUtils {
 
+	public static function startsWith($haystack, $needle) {
+	    return !strncmp($haystack, $needle, strlen($needle));
+	}
+
 	public static function ends_with($string, $test) {
 		$strlen = strlen($string);
 		$testlen = strlen($test);
