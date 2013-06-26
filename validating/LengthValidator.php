@@ -6,7 +6,7 @@ class LengthValidator extends Validator {
 	private $min_length;
 	private $max_length;
 	
-	public function __construct($min_length, $max_length, $error_string = NULL) {
+	public function __construct($min_length = NULL, $max_length = NULL, $error_string = NULL) {
 		$this->min_length = $min_length;
 		$this->max_length = $max_length;
 		//parent::__construct();
