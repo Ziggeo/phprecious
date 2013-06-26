@@ -15,6 +15,8 @@ Class ParseType {
 				return TRUE;
 			if ($lower == "false" || $lower == "off" || $lower == "no" || $lower == "0")
 				return FALSE;
+			if ($lower == "null")
+				return NULL;
 		}
 		return $default;
 	}

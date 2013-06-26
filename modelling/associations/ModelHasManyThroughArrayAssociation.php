@@ -59,8 +59,8 @@ class ModelHasManyThroughArrayAssociation extends ModelAssociation {
 		$model = $this->getParentModel();
 		$attrs = $this->foreignKeys;
 		if (in_array($item->id(), $model->$attrs)) {
-			$model->$attrs = array_filter($model->$attrs, function ($it) {
-				return $it->id() != $item->id();
+			$model->$attrs = array_filter($model->$attrs, function ($it) use ($item) {
+				return $it != $item->id();
 			});
 			if ($update)
 				$model->update();

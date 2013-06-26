@@ -6,7 +6,7 @@ class NumberValidator extends Validator {
 	private $min_value;
 	private $max_value;
 	
-	public function __construct($min_value, $max_value, $error_string = NULL) {
+	public function __construct($min_value = NULL, $max_value = NULL, $error_string = NULL) {
 		$this->min_value = $min_value;
 		$this->max_value = $max_value;
 		if ($error_string == NULL)

@@ -61,7 +61,8 @@ class DatabaseModel extends ActiveModel {
 	
 	protected function beforeUpdate() {
 		parent::beforeUpdate();
-		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);
+		if ($this->hasChanged())
+			$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);
 	}
 	
 	protected function beforeCreate() {
