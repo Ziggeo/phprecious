@@ -8,7 +8,7 @@ abstract class ActiveModel extends Model {
 	protected static function log($level, $s) {
 		global $LOGGER;
 		if (@$LOGGER)
-			$LOGGER->message("framework.model", $level, $s);
+			$LOGGER->message("model", $level, $s);
 	}
 	
 	public static function idKey() {

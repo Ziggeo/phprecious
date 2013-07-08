@@ -59,6 +59,11 @@ class Model {
 		return self::$options[$class];
 	}
 	
+	static public function classOptionsOf($key) {
+		$opt = static::classOptions();
+		return @$opt[$key];
+	}
+
 	public function options() {
 		return static::classOptions();
 	}

@@ -129,7 +129,7 @@ Class Application {
 		$changed = TRUE;
 		while ($changed) {
 			$changed = FALSE;
-			foreach ($this->initializers as $initializer) {
+			foreach ($this->initializers as $ident=>$initializer) {
 				if (!$initializer["processed"] && count($initializer["after"]) == 0) {
 					$this->processInitializer($initializer["initializer"], $initializer["initializer"]->applicable($this));
 					$changed = TRUE;

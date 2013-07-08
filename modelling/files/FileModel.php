@@ -16,12 +16,13 @@ Class FileModel extends DatabaseModel {
 			"type" => "string",
 			"default" => "default"
 		);
+		$idl = self::classOptionsOf("identifier_length");
 		$attrs["identifier"] = array(
 			"type" => "string",
 			"index" => TRUE,
-			"default" => function ($instance) {
-				return Tokens::generate(self::optionsOf("identifier_length"));
-			},
+			"default" => function ($instance) use ($idl) {
+				return Tokens::generate($idl);
+			}
 		);
 		$attrs["file_type"] = array("type" => "string");
 		$attrs["file_size"] = array("type" => "integer");
@@ -30,6 +31,18 @@ Class FileModel extends DatabaseModel {
 		return $attrs;
 	}	
 	
+	public function asRecord() {
+		return array(
+			"removed" => $this->removed,
+			"prefix_type" => $this->prefix_type,
+			"identifier" => $this->identifier,
+			"file_type" => $this->file_type,
+			"file_size" => $this->file_size,
+			"original_file_name" => $this->original_file_name,
+			"file_name" => $this->file_name,
+		);
+	}
+
 	protected static function initializeOptions() {
 		$opts = parent::initializeOptions();
 		$opts["directory"] = "";
@@ -45,24 +58,24 @@ Class FileModel extends DatabaseModel {
 	}
 	
 	public function getPrefix($pfx_type = NULL) {
-		$pfx = @self::optionsOf("prefixes");
+		$pfx = @$this->optionsOf("prefixes");
 		if (@$pfx) 
 			return $pfx[@$pfx_type ? $pfx_type : $this->prefix_type];
 		return "";
 	}
 	
 	public function getIdentifierName() {
-		$split_identifier = @self::optionsOf("split_identifier");
+		$split_identifier = @$this->optionsOf("split_identifier");
 		if (!@$split_identifier)
 			return $this->identifier;		
 		return join("/", str_split($this->identifier, $split_identifier));
 	}
 	
 	public function getFileName($prefix = NULL) {
-		return self::optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName();
+		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName();
 	}
 	
-	public function getFileDirectory($prefix = NULL) {
+	public function getDirectoryPath($prefix = NULL) {
 		$name = $this->getFileName($prefix);
 		$pos = strrpos($name, "/");
 		return substr($name, 0, $pos);
@@ -73,6 +86,10 @@ Class FileModel extends DatabaseModel {
 		return self::findBy($query);
 	}
 	
+	public static function findFileByIdentifier($identifier) {
+		return self::findFileBy(array("identifier" => $identifier));
+	}
+
 	public static function allFiles($sort = NULL, $limit = NULL, $skip = NULL) {
 		return self::allFilesBy(array(), $sort, $limit, $skip);
 	}
@@ -108,12 +125,16 @@ Class FileModel extends DatabaseModel {
 		return $this->id() . "/" . $this->original_file_name . "/" . $this->identifier;
 	}
 	
+	public function echoReadFile() {
+	    readfile($this->getFileName());
+	}
+
 	public function httpReadFile() {
 		static::log("Reading file " . $this->log_ident() . "", Logger::INFO_2);
 		header('Content-type: ' . $this->contentType());
 		ob_clean();
 		flush();
-	    readfile($this->getFileName());
+		$this->echoReadFile();
 	}
 	
 	public static function createByUpload($FILE, $options = array()) {
@@ -154,7 +175,7 @@ Class FileModel extends DatabaseModel {
 		return $instance;
 	}
 	
-	public static function createByFile($filename, $options = array(), $move = TRUE) {
+	public static function createByFile($filename, $options = array(), $move = FALSE) {
 		static::log("Create file by " . $filename . "", Logger::INFO);
 		if (!file_exists($filename)) {
 			static::log("Error: file does not exist.", Logger::WARN);
@@ -165,7 +186,7 @@ Class FileModel extends DatabaseModel {
 		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
 		$file_type = @$options["file_type"] ? $options["file_type"] : FileUtils::extensionOf($original_file_name);
 		$class = get_called_class();
-		$instance = new $class(array(
+		$instance = new static(array(
 			"file_type" => $file_type,
 			"file_size" => $file_size,
 			"original_file_name" => $original_file_name,
@@ -202,19 +223,16 @@ Class FileModel extends DatabaseModel {
 	
 	public function remove() {
 		static::log("Remove file " . $this->log_ident(), Logger::INFO);
-		if ($this->removed || !@self::optionsOf("keep_files"))
+		if ($this->removed || !@$this->optionsOf("keep_files"))
 			return $this->delete();
-		if (!@self::optionsOf("prefixes"))
+		if (!@$this->optionsOf("prefixes"))
 			return FALSE;
-		$pfx = self::optionsOf("prefixes");
-		$removedpfx = @$pfx["removed"];
-		if (!@$removedpfx)
-			return FALSE;
-		if (!mkdir($this->getDirectoryPath($removedpfx), 0777, TRUE)) {
+		$pfx = $this->optionsOf("prefixes");
+		if (!mkdir($this->getDirectoryPath("removed"), 0777, TRUE)) {
 			static::log("Error: cannot create directory.", Logger::WARN);
 			return FALSE;
 		}
-		if (!rename($this->getFileName(), $this->getFileName($removedpfx))) {
+		if (!rename($this->getFileName(), $this->getFileName("removed"))) {
 			static::log("Error: cannot move file.", Logger::WARN);
 			return FALSE;
 		}
@@ -236,34 +254,34 @@ Class FileModel extends DatabaseModel {
 	
 	// Deletes all files in the unreferenced folder. If it does not exist, removeUnreferencedFiles is called.
 	public static function cleanUnreferencedFiles() {
-		if (!@self::optionsOf("prefixes"))
+		if (!@self::classOptionsOf("prefixes"))
 			return self::removeUnreferencedFiles();
-		$pfx = self::optionsOf("prefixes");
+		$pfx = self::classOptionsOf("prefixes");
 		$unrefpfx = @$pfx["unref"];
 		if (!@$unrefpfx)
 			return self::removeUnreferencedFiles();
-		FileUtils::delete_tree(self::optionsOf("directory") . $unrefpfx, TRUE);
+		FileUtils::delete_tree(self::classOptionsOf("directory") . $unrefpfx, TRUE);
 	}
 	
 	// Identifies unreferenced files. If unref prefix is available, they are moved. Otherwise, they are deleted.
 	public static function removeUnreferencedFiles() {
-		if (!@self::optionsOf("prefixes"))
-			return self::removeUnreferencedFilesRec(self::optionsOf("directory"), "");
-		$pfx = self::optionsOf("prefixes");
+		if (!@self::classOptionsOf("prefixes"))
+			return self::removeUnreferencedFilesRec(self::classOptionsOf("directory"), "");
+		$pfx = self::classOptionsOf("prefixes");
 		if (@$pfx["default"])
-			return self::removeUnreferencedFilesRec(self::optionsOf("directory") . $pfx["default"], "");
+			return self::removeUnreferencedFilesRec(self::classOptionsOf("directory") . $pfx["default"], "");
 		if (@$pfx["removed"])
-			return self::removeUnreferencedFilesRec(self::optionsOf("directory") . $pfx["removed"], "");
+			return self::removeUnreferencedFilesRec(self::classOptionsOf("directory") . $pfx["removed"], "");
 	}
 	
-	private static function removeUnreferencedFiles($base, $sub) {
+	private static function removeUnreferencedFilesRec($base, $sub) {
 		if ($sub != "" && is_file($base . "/" . $sub)) {
 			$ident = str_replace("/", "", $sub);
 			if (@self::findBy(array("identifier" => $ident)))
 				return;
-			$pfx = self::optionsOf("prefixes");
+			$pfx = self::classOptionsOf("prefixes");
 			if (@$pfx && @$pfx["unref"]) {
-				$move_base = self::optionsOf("directory") . $pfx["unref"];
+				$move_base = self::classOptionsOf("directory") . $pfx["unref"];
 				@mkdir(FileUtils::pathOf($move_base . "/" . $sub));
 				@rename($base . "/" . $sub, $move_base . "/" . $sub);
 			} else {
@@ -273,7 +291,7 @@ Class FileModel extends DatabaseModel {
 			if (@$handle = opendir($sub == "" ? $base : ($base . "/" . $sub))) {
 			    while (false !== ($entry = readdir($handle)))
 			        if ($entry != "." && $entry != "..")
-						self::removeUnreferencedFiles($base, $sub == "" ? $entry : ($sub . "/" . $entry));
+						self::removeUnreferencedFilesRec($base, $sub == "" ? $entry : ($sub . "/" . $entry));
 			    closedir($handle);
 			}
 		}
