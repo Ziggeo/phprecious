@@ -140,10 +140,10 @@ Class FileModel extends DatabaseModel {
 	public static function createByUpload($FILE, $options = array()) {
 		if (!@$FILE || $FILE["error"] > 0)
 			return NULL;
+		$original_file_name = $FILE["name"];
 		static::log("Create file by upload " . $original_file_name . "", Logger::INFO);
-		$original_file_name = $file_upload["name"];
-		$file_size = $file_upload["size"];
-		$tmp_file = $file_upload["tmp_name"];
+		$file_size = $FILE["size"];
+		$tmp_file = $FILE["tmp_name"];
 		if (!file_exists($tmp_file)) {
 			static::log("Error: tmp file does not exist.", Logger::WARN);
 			return NULL;
