@@ -34,6 +34,16 @@ Class FileObject {
 		return fopen('data://text/plain;base64,' . base64_encode($this->getBytes()), 'r');
 	}
 	
+	public function saveAsTemporaryFile() {
+		$filename = tempnam(sys_get_temp_dir(), "");
+		$this->saveFile($filename);
+		return $filename;
+	}
+	
+	public function saveFile($filename) {
+		file_put_contents($filename, stream_get_contents($this->getStream()));
+	}
+	
 	public function getBytes() {
 		return stream_get_contents($this->getStream());
 	}
