@@ -71,7 +71,7 @@ class DatabaseModel extends ActiveModel {
 		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);  
 	}	
 	
-	public static function count($query) {
+	public static function count($query = array()) {
 		return self::table()->count($query);
 	}
 

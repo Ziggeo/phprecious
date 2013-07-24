@@ -72,7 +72,7 @@ Class FileModel extends DatabaseModel {
 	}
 	
 	public function getFileName($prefix = NULL) {
-		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName();
+		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . "." . $this->extension();
 	}
 	
 	public function getDirectoryPath($prefix = NULL) {
