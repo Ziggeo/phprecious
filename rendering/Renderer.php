@@ -26,7 +26,7 @@ class Renderer {
 	private $default_layout;
 	private $render_once = array();
 	
-	public function __construct($views_directory, $layouts_directory, $default_layout = "application") {
+	public function __construct($views_directory, $layouts_directory = NULL, $default_layout = "application") {
 		$this->default_layout = $default_layout;
 		$this->views_directory = $views_directory;
 		$this->layouts_directory = $layouts_directory;
@@ -45,7 +45,7 @@ class Renderer {
 		}
 		$template = $options["template"];
 		static::log(Logger::INFO_3, "Rendering '{$template}'.");
-		$layout = @$options["nolayout"] ? NULL : (@$options["layout"] ? $options["layout"] : $this->default_layout);
+		$layout = @$options["nolayout"] || !@$this->layouts_directory ? NULL : (@$options["layout"] ? $options["layout"] : $this->default_layout);
 		$yield = $this->views_directory . "/" . $template . ".php";
 		foreach ($locals as $key => $value ) {
 			$$key = $value;
