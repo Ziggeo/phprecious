@@ -78,7 +78,7 @@ class PerfMonitor {
 	
 	public function logMsgDB($db, $tablename, $annotations = array()) {
 		$data = array();
-		$data["created"] = $db->encodeDate();
+		$data["created"] = $db->encode("date", time());
 		foreach ($annotations as $key=>$value)
 			if (@$value)
 				$data[$key] = $value;

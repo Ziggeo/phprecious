@@ -38,12 +38,15 @@ class OnetimeTransaction extends DatabaseModel {
 		return TRUE;
 	}
 	
+	public function isExpired() {
+		return TimePoint::get($this->created)->increment(TimePeriod::days(Session::REMOVE_DAYS))->earlier();
+	}
+	
 	public static function cleanup($simulate = FALSE) {
 		foreach (self::all() as $instance)
-			if (TimeSupport::microtime_diff($instance->created)/60/60/24 >= self::REMOVE_DAYS) {
+			if ($instance->isExpired())
 				if (!$simulate)
 					$instance->delete();
-			}
 	}
 
 }

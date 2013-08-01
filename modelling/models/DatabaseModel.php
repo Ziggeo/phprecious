@@ -12,20 +12,26 @@ class DatabaseModel extends ActiveModel {
 		return $database;
 	}
 
-	private static function encodeData($attrs) {
+	public static function encodeData($attrs) {
 		$sch = static::classScheme();
 		$result = array();
 		foreach ($attrs as $key => $value) {
 			$result[$key] = $value;
 			$meta = @$sch[$key];
-			if (isset($meta) && isset($meta["type"])) {
-				if ($meta["type"] == "id" && $value != NULL)
-					$result[$key] = static::getDatabase()->encodePrimaryKey($value);
-				elseif ($meta["type"] == "date" && $value != NULL)
-					$result[$key] = static::getDatabase()->encodeDate($value);
-				elseif ($meta["type"] == "boolean" && $value != NULL && !is_bool($value))
-					$result[$key] = ParseType::parseBool($value);
-			}
+			if (isset($meta) && isset($meta["type"])) 
+				$result[$key] = static::getDatabase()->encode($meta["type"], $value);
+		}
+		return $result;
+	}
+
+	public static function decodeData($attrs) {
+		$sch = static::classScheme();
+		$result = array();
+		foreach ($attrs as $key => $value) {
+			$result[$key] = $value;
+			$meta = @$sch[$key];
+			if (isset($meta) && isset($meta["type"])) 
+				$result[$key] = static::getDatabase()->decode($meta["type"], $value);
 		}
 		return $result;
 	}
@@ -49,12 +55,14 @@ class DatabaseModel extends ActiveModel {
 	protected static function initializeScheme() {
 		$attrs = parent::initializeScheme();
 		$attrs["created"] = array(
-			"readonly" => TRUE,
-			"index" => TRUE
+			//"readonly" => TRUE,
+			"index" => TRUE,
+			"type" => "date",
 		);
 		$attrs["updated"] = array(
-			"readonly" => TRUE,
-			"index" => TRUE
+			//"readonly" => TRUE,
+			"index" => TRUE,
+			"type" => "date",
 		);
 		return $attrs;
 	}
@@ -62,53 +70,67 @@ class DatabaseModel extends ActiveModel {
 	protected function beforeUpdate() {
 		parent::beforeUpdate();
 		if ($this->hasChanged())
-			$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);
+			$this->setAttr("updated", time(), TRUE);
 	}
 	
 	protected function beforeCreate() {
 		parent::beforeCreate();
-		$this->setAttr("created", self::table()->getDatabase()->encodeDate(), TRUE);  
-		$this->setAttr("updated", self::table()->getDatabase()->encodeDate(), TRUE);  
+		$t = time();
+		if (!@$this->created)
+			$this->setAttr("created", $t, TRUE);  
+		if (!@$this->updated)
+			$this->setAttr("updated", $t, TRUE);  
 	}	
 	
 	public static function count($query = array()) {
-		return self::table()->count($query);
+		return self::table()->count(self::encodeData($query));
 	}
 
 	protected function incAttr($key, $value) {
-		return self::table()->incrementCell($this->id(), $key, $value);
+		return self::table()->incrementCell(static::getDatabase()->encode("id", $this->id()), $key, $value);
 	}
 
 	protected function createModel() {
 		$table = self::table();
 		$attrs = self::encodeData($this->filterPersistentAttrs($this->attrs()));
         $success = $table->insert($attrs);
-		if ($success) return @$attrs[self::idKey()];
+		if ($success)
+			return @static::getDatabase()->decode("id", $attrs[self::idKey()]);
 		return FALSE;		
 	}
 	
 	protected function updateModel() {
-		return self::table()->updateRow($this->id(), self::encodeData($this->filterPersistentAttrs($this->attrsChanged())));		
+		return self::table()->updateRow(static::getDatabase()->encode("id", $this->id()), self::encodeData($this->filterPersistentAttrs($this->attrsChanged())));		
 	}
 	
 	protected function deleteModel() {
-		return self::table()->removeRow($this->id());
+		return self::table()->removeRow(static::getDatabase()->encode("id", $this->id()));
 	}
 
 	protected static function findRowById($id) {
-		return self::table()->findRow($id);
+		$result = self::table()->findRow(static::getDatabase()->encode("id", $id));
+		return $result == NULL ? $result : self::decodeData($result);
 	}
 
 	protected static function findRowBy($query) {
-		return self::table()->findOne(self::encodeData($query));
+		$result = self::table()->findOne(self::encodeData($query));
+		return $result == NULL ? $result : self::decodeData($result);
 	}
 
 	protected static function allRows($options = NULL) {
-		return self::table()->find(array(), $options);
+		$result = self::table()->find(array(), $options);
+		$cls = get_called_class();
+		return new MappedIterator($result, function ($row) use ($cls) {
+			return $cls::decodeData($row);
+		});
 	}
 
 	protected static function allRowsBy($query, $options = NULL) {
-		return self::table()->find(self::encodeData($query), $options);
+		$result = self::table()->find(self::encodeData($query), $options);
+		$cls = get_called_class();
+		return new MappedIterator($result, function ($row) use ($cls) {
+			return $cls::decodeData($row);
+		});
 	}
 	
 	public static function ensureIndices() {

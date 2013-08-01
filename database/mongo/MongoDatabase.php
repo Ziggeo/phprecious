@@ -46,15 +46,20 @@ class MongoDatabase extends Database {
         return new MongoDatabaseTable($this, $name);
     }
 	
-	public function encodeDate($date = NULL) {
-		if ($date) 
-			return new MongoDate(TimePoint::get($date)->seconds());
-		else
-			return new MongoDate();
+	public function encode($type, $value) {
+		if ($type == "id")
+			return new MongoId($value);
+		if ($type == "date")
+			return new MongoDate($value);
+		return $value;
 	}
 	
-	public function encodePrimaryKey($id) {
-		return new MongoId($id);
+	public function decode($type, $value) {
+		if ($type == "id")
+			return $value . "";
+		if ($type == "date")
+			return TimeSupport::microtime_to_seconds($value);
+		return $value;
 	}
 
 }

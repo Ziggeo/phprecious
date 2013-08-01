@@ -46,6 +46,35 @@ class Model {
 	}
 	
 	
+	
+	/*
+	 * Cans
+	 */
+	 
+	private static $cans = array();
+	
+	static public function classCans() {
+		$class = get_called_class();
+		if (!@self::$cans[$class])
+			self::$cans[$class] = static::initializeCan();
+		return self::$cans[$class];
+	}
+	
+	public function cans() {
+		return static::classCans();
+	}
+	
+	protected static function initializeCan() {
+		return array();
+	}
+	
+	public function can($key, $args) {
+		$cans = $this->cans();
+		$can = @$cans[$key];
+		return @$can && $can($this, $args); 
+	}
+	
+	
 	/*
 	 * Options
 	 */
@@ -118,8 +147,18 @@ class Model {
 	protected function getAttr($key) {
 		return @$this->attrs[$key];
 	}
+	
+	protected function typecastAttr($key, $value) {
+		$type = $this->schemeProp($key, "type", NULL);
+		if ($type == "boolean") {
+			if ($value != NULL && !is_bool($value))
+				$value = ParseType::parseBool($value);
+		}
+		return $value;
+	}
 
 	protected function setAttr($key, $value, $setChanged = FALSE) {
+		$value = $this->typecastAttr($key, $value);
 		if ($setChanged && @(!isset($this->attrs[$key]) || $this->attrs[$key] !== $value))
 			$this->attrsChanged[$key] = $value;
 		$this->attrs[$key] = $value;
@@ -135,8 +174,10 @@ class Model {
 	}
 	
 	public function inc($key, $value = 1) {
-		if (!$this->schemeProp($key, "readonly", FALSE))
+		if (!$this->schemeProp($key, "readonly", FALSE)) {
 			$this->incAttr($key, $value);
+			$this->attrs[$key] = $value;
+		}
 	}
 	
 	public function dec($key, $value = 1) {
@@ -287,6 +328,25 @@ class Model {
 	
 	protected function afterConstruction() {
 	}
-
 	
+	
+	/*
+	 * Format
+	 */
+	 
+	public function asRecord($tags = array("read"), $options = array()) {
+		$result = array();
+		$sch = $this->scheme();
+		foreach ($sch as $key=>$meta) {
+			$key_tags = @$meta["tags"] ? $mega["tags"] : array();
+			if (ArrayUtils::subset($tags, $key_tags))
+				$result[$key] = $this->$key;
+		}
+		return $result;
+	}
+	
+	public static function asRecords($arr, $tags = array("read"), $options = array()) {
+		return array_map(function ($row) use ($tags, $options) { return $row->asRecord($tags, $options); }, $arr);
+	}
+
 }

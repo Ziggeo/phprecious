@@ -6,8 +6,8 @@ Class TimeFormat {
 	static $DATE_FORMAT;
 	static $DATE_TIME_FORMAT;
 
-	public static function format_microtime_nicely($t) {
-		$sec_ago = TimeSupport::microtime_diff($t);
+	public static function format_nicely($t) {
+		$sec_ago = TimePoint::get($t)->elapsed()->seconds();
 		if ($sec_ago < 120)
 			return "one minute ago";
 		elseif ($sec_ago < 60 * 60)
@@ -17,20 +17,20 @@ Class TimeFormat {
 		elseif ($sec_ago < 60 * 60 * 24)
 			return floor($sec_ago / 60 / 60) . " hours ago";
 		else
-			return strftime(self::$DATE_FORMAT, TimeSupport::microtime_to_seconds($t));
+			return strftime(self::$DATE_FORMAT, TimeSupport::ensure_seconds($t));
 		
 	}
 	
-	public static function format_microtime_date($t) {
-		return strftime(self::$DATE_FORMAT, TimeSupport::microtime_to_seconds($t));
+	public static function format_date($t) {
+		return strftime(self::$DATE_FORMAT, TimeSupport::ensure_seconds($t));
 	}
 	
-	public static function format_microtime_date_time($t) {
-		return strftime(self::$DATE_TIME_FORMAT, TimeSupport::microtime_to_seconds($t));
+	public static function format_date_time($t) {
+		return strftime(self::$DATE_TIME_FORMAT, TimeSupport::ensure_seconds($t));
 	}
 	
-	public static function format_microtime_time($t) {
-		return strftime(self::$TIME_FORMAT, TimeSupport::microtime_to_seconds($t));
+	public static function format_time($t) {
+		return strftime(self::$TIME_FORMAT, TimeSupport::ensure_seconds($t));
 	}
 
 }

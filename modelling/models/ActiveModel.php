@@ -22,7 +22,8 @@ abstract class ActiveModel extends Model {
 	protected static function initializeScheme() {
 		$attrs = parent::initializeScheme();
 		$attrs[static::idKey()] = array(
-			"readonly" => TRUE
+			"readonly" => TRUE,
+			"type" => "id"
 		);
 		return $attrs;
 	} 
@@ -176,7 +177,7 @@ abstract class ActiveModel extends Model {
 		return FALSE;
 	}
 	
-	public static function all($sort = NULL, $limit = NULL, $skip = NULL) {
+	public static function all($sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
@@ -185,14 +186,18 @@ abstract class ActiveModel extends Model {
 		if (@$skip)
 			$options["skip"] = $skip;
 		$result = static::allRows($options);
-		return self::materializeObjects($result);
+		$cls = get_called_class();
+		$iter = new MappedIterator($result, function($row) use ($cls) {
+			return $cls::materializeObject($row);
+		}); 
+		return $iterator ? $iter : iterator_to_array($iter, FALSE);
 	}
 	
 	protected static function allRows($options = NULL) {
 		return NULL;
 	}
 
-	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL) {
+	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
@@ -201,7 +206,11 @@ abstract class ActiveModel extends Model {
 		if (@$skip)
 			$options["skip"] = $skip;
 		$result = static::allRowsBy($query, $options);
-		return self::materializeObjects($result);
+		$cls = get_called_class();
+		$iter = new MappedIterator($result, function($row) use ($cls) {
+			return $cls::materializeObject($row);
+		}); 
+		return $iterator ? $iter : iterator_to_array($iter, FALSE);
 	}
 
 	protected static function allRowsBy($query, $options = NULL) {
@@ -219,4 +228,33 @@ abstract class ActiveModel extends Model {
         return $objects;
 	}
 	
+	public function asRecord($tags = array("read"), $options = array()) {
+		$result = array();
+		$sch = $this->scheme();
+		foreach ($sch as $key=>$meta) {
+			$key_tags = @$meta["tags"] ? $meta["tags"] : array();
+			if (ArrayUtils::subset($tags, $key_tags)) {
+				if ($key == static::idKey())
+					$result["id"] = $this->$key;
+				else
+					$result[$key] = $this->$key;
+			}
+		}
+		return $result;
+	}
+	
+	public function isInvalidated() {
+		return FALSE;
+	}
+	
+	public static function invalidateAll($simulate = FALSE) {
+		self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
+		foreach (self::all() as $instance)
+			if ($instance->isInvalidated()) {
+				self::log(Logger::INFO_2, get_called_class() . ": Remove Instance {$instance->id()}.");
+				if (!$simulate)
+					$instance->delete();
+			}		
+	} 
+
 }

@@ -6,21 +6,13 @@ abstract class Database {
 	
 	public abstract function selectTable($name);
 	
-	public function encodeDate($date = NULL) {
-		return $date;
+	public function encode($type, $value) {
+		return $value;
 	}
 	
-	public function decodeDate($date = NULL) {
-		return $date;
-	}
-
-	public function encodePrimaryKey($id) {
-		return $id;
+	public function decode($type, $value) {
+		return $value;
 	}
 	
-	public function decodePrimaryKey($id) {
-		return $id;
-	}
-
 }
 

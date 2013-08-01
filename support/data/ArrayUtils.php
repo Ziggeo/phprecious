@@ -64,4 +64,8 @@ Class ArrayUtils {
 		});
 	}
 	
+	public static function subset($subset, $set) {
+		return count(array_intersect($subset, $set)) == count($subset);		
+	}
+	
 }

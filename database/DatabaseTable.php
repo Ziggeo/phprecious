@@ -49,7 +49,7 @@ abstract class DatabaseTable {
 	}
 	
 	public function findRow($id) {
-		return $this->findOne(array($this->primaryKey() => $this->database->encodePrimaryKey($id)));
+		return $this->findOne(array($this->primaryKey() => $this->database->encode("id", $id)));
 	}
 	
 	public abstract function update($query, $update);
@@ -57,7 +57,7 @@ abstract class DatabaseTable {
 	public abstract function updateOne($query, $update);
 	
 	public function updateRow($id, $update) {
-		return $this->updateOne(array($this->primaryKey() => $this->database->encodePrimaryKey($id)), $update);
+		return $this->updateOne(array($this->primaryKey() => $this->database->encode("id", $id)), $update);
 	}
 	
 	public function incrementRow($id, $key, $value) {
@@ -73,7 +73,7 @@ abstract class DatabaseTable {
 	public abstract function removeOne($query);
 	
 	public function removeRow($id) {
-		return $this->removeOne(array($this->primaryKey() => $this->database->encodePrimaryKey($id)));
+		return $this->removeOne(array($this->primaryKey() => $this->database->encode("id", $id)));
 	}
 	
 	public abstract function ensureIndex($keys);
