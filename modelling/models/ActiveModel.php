@@ -187,6 +187,10 @@ abstract class ActiveModel extends Model {
 			$options["skip"] = $skip;
 		$result = static::allRows($options);
 		$cls = get_called_class();
+		if (is_array($result)) {
+			$result = new ArrayObject($result);
+			$result = $result->getIterator();
+		}
 		$iter = new MappedIterator($result, function($row) use ($cls) {
 			return $cls::materializeObject($row);
 		}); 
@@ -206,6 +210,10 @@ abstract class ActiveModel extends Model {
 		if (@$skip)
 			$options["skip"] = $skip;
 		$result = static::allRowsBy($query, $options);
+		if (is_array($result)) {
+			$result = new ArrayObject($result);
+			$result = $result->getIterator();
+		}
 		$cls = get_called_class();
 		$iter = new MappedIterator($result, function($row) use ($cls) {
 			return $cls::materializeObject($row);

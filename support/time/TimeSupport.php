@@ -29,8 +29,10 @@ class TimeSupport {
 	public static function microtime_to_seconds($mt = NULL) {
 		if (!@$mt)
 			$mt = microtime();
-		list($start_usec, $start_sec) = explode(" ", $mt);
-		return intval($start_sec);
+		$arr = explode(" ", $mt);
+		if (count($arr) == 2 && is_numeric($arr[0]) && is_numeric($arr[1]))
+			return intval($arr[1]);
+		return $arr[0];
 	}
 	
 	public static function seconds_to_microtime($seconds) {
