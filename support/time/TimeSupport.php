@@ -127,6 +127,10 @@ class TimePointObj extends AbstractTimeObj {
 		return TimePoint::get($this->seconds() + TimePeriod::ensure($timeperiod)->seconds());
 	}
 	
+	public function decrement($timeperiod) {
+		return TimePoint::get($this->seconds() - TimePeriod::ensure($timeperiod)->seconds());
+	}
+
 	public function earlier($tp = null) {
 		return $this->seconds() < TimePoint::ensure($tp)->seconds();
 	}

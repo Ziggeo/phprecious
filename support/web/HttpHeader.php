@@ -5,6 +5,7 @@ Class HttpHeader {
 	const HTTP_STATUS_OK = 200;
 	const HTTP_STATUS_CREATED = 201;
 	const HTTP_STATUS_PAYMENT_REQUIRED = 402;
+	const HTTP_STATUS_FORBIDDEN = 403;
 	const HTTP_STATUS_NOT_FOUND = 404;
 	const HTTP_STATUS_PRECONDITION_FAILED = 412;
 	const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500;
@@ -41,7 +42,7 @@ Class HttpHeader {
 			case 400: $string = 'Bad Request'; break;
 			case 401: $string = 'Unauthorized'; break;
 			case self::HTTP_STATUS_PAYMENT_REQUIRED: $string = 'Payment Required'; break;
-			case 403: $string = 'Forbidden'; break;
+			case self::HTTP_STATUS_FORBIDDEN: $string = 'Forbidden'; break;
 			case self::HTTP_STATUS_NOT_FOUND: $string = 'Not Found'; break;
 			case 405: $string = 'Method Not Allowed'; break;
 			case 406: $string = 'Not Acceptable'; break;

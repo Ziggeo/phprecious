@@ -31,7 +31,7 @@ class ModelHasManyViaAssociation extends ModelAssociation {
 		return $query;
 	}
 	
-	private function map_single($result) {
+	public function map_single($result) {
 		$class = $this->foreignClass;
 		$key = $this->foreignKey;
 		return $class::findById($result->$key);

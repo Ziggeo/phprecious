@@ -50,7 +50,7 @@ class MongoDatabase extends Database {
 		if ($type == "id")
 			return new MongoId($value);
 		if ($type == "date")
-			return new MongoDate($value);
+			return $value == NULL ? NULL : new MongoDate($value);
 		return $value;
 	}
 	
@@ -58,7 +58,7 @@ class MongoDatabase extends Database {
 		if ($type == "id")
 			return $value . "";
 		if ($type == "date")
-			return TimeSupport::microtime_to_seconds($value);
+			return $value == NULL ? NULL : TimeSupport::microtime_to_seconds($value);
 		return $value;
 	}
 
