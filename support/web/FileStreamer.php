@@ -2,6 +2,7 @@
 
 
 require_once(dirname(__FILE__) . "/../strings/StringUtils.php");
+require_once(dirname(__FILE__) . "/ContentType.php");
 
 
 Class FileStreamerException extends Exception {}
