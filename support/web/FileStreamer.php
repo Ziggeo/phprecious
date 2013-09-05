@@ -93,7 +93,6 @@ Class FileStreamer {
 	        header('Content-Range: bytes ' . $range["start"] . '-' . $range["end"] . '/' . $file_size);			
 		}
 
-		$content_type =$options["content_type"];
 		if (isset($options["content_type"])) {
 			if (StringUtils::has_sub($options["content_type"], "/"))
 				$content_type = $options["content_type"];
