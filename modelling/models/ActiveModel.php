@@ -75,12 +75,12 @@ abstract class ActiveModel extends Model {
 			$this->saved = TRUE;
 			$this->setAttr(static::idKey(), $id);
 			$this->resetChanged();
-			static::log("Created model '" . get_called_class() . "' with id {$this->id()}.", Logger::INFO_2);
+			static::log(Logger::INFO_2, "Created model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->afterCreate();
 			return TRUE;
 		}
 		else
-			static::log("Failed to create model '" . get_called_class() . "'.", Logger::WARN);
+			static::log(Logger::WARN, "Failed to create model '" . get_called_class() . "'.");
 		return FALSE;
 	}
 	
@@ -96,14 +96,14 @@ abstract class ActiveModel extends Model {
 		$this->beforeUpdate();
 		$success = !$this->hasChanged() || $this->updateModel();
 		if ($success) {
-			static::log("Updated model '" . get_called_class() . "' with id {$this->id()}.", Logger::INFO_2);
+			static::log(Logger::INFO_2, "Updated model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->saved = TRUE;
 			$this->newModel = FALSE;
 			$this->resetChanged();
 			$this->afterUpdate();
 		}
 		else
-			static::log("Failed to update model '" . get_called_class() . "' with id {$this->id()}.", Logger::WARN);
+			static::log(Logger::WARN, "Failed to update model '" . get_called_class() . "' with id {$this->id()}.");
 		return $success;
 	}
 	
@@ -126,14 +126,14 @@ abstract class ActiveModel extends Model {
 			return FALSE;
 		$success = $this->deleteModel();
 		if ($success) {
-			static::log("Deleted model '" . get_called_class() . "' with id {$this->id()}.", Logger::INFO_2);
+			static::log(Logger::INFO_2, "Deleted model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->deleted = TRUE;
 			foreach ($this->assocs() as $assoc)
 				$assoc->deleteModel();
 			$this->afterDelete();
 		}
 		else
-			static::log("Failed to delete model '{" . get_called_class() . "' with id {$this->id()}.", Logger::WARN);
+			static::log(Logger::WARN, "Failed to delete model '{" . get_called_class() . "' with id {$this->id()}.");
 		return $success;
 	}
 		
