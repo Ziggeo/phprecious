@@ -75,7 +75,7 @@ class MongoDatabaseTable extends DatabaseTable {
 			return false;
 		static::perfmon(true);
 		$success = $this->getCollection()->update($query, array('$set' => $update), $options);
-        if (@$options["safe"] or @$options["fsync"])
+        if (@$options["safe"] || @$options["fsync"] || isset($success["ok"]))
         	$success = $success["ok"];
 		static::perfmon(false);
 		return $success;
@@ -84,9 +84,8 @@ class MongoDatabaseTable extends DatabaseTable {
 	public function incrementCell($id, $key, $value) {
 		static::perfmon(true);
 		$success = $this->getCollection()->update(array("_id" => $id), array('$inc' => array($key => $value)));
-       	$success = $success["ok"];
 		static::perfmon(false);
-		return $success;
+		return isset($success["ok"]) ? $success["ok"] : $success;
 	}
 	
 	public function updateOne($query, $update, $options = array("safe" => TRUE)) {

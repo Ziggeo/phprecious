@@ -175,17 +175,19 @@ class Model {
 	
 	public function inc($key, $value = 1) {
 		if (!$this->schemeProp($key, "readonly", FALSE)) {
-			$this->incAttr($key, $value);
-			$this->attrs[$key] = $value;
+			if ($this->incAttr($key, $value))
+				$this->attrs[$key] = $this->attrs[$key] + 1; 
 		}
+		return $this->attrs[$key];
 	}
 	
 	public function dec($key, $value = 1) {
-		$this->inc($key, -$value);
+		return $this->inc($key, -$value);
 	}
 
 	protected function incAttr($key, $value) {
 		$this->$key = $this->$key + $value;
+		return $this->$key;
 	}
 	
 	protected function resetChanged() {

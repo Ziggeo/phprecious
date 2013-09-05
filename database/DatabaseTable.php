@@ -60,7 +60,7 @@ abstract class DatabaseTable {
 		return $this->updateOne(array($this->primaryKey() => $this->database->encode("id", $id)), $update);
 	}
 	
-	public function incrementRow($id, $key, $value) {
+	public function incrementCell($id, $key, $value) {
 		$row = $this->findRow($id);
 		if (!@$row)
 			return FALSE;
