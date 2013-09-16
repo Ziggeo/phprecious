@@ -1,6 +1,8 @@
 <?php
 
 require_once(dirname(__FILE__) . "/../../support/strings/ParseType.php");
+require_once(dirname(__FILE__) . "/../../support/data/Iterators.php");
+require_once(dirname(__FILE__) . "/../../support/time/TimeSupport.php");
 require_once(dirname(__FILE__) . "/ActiveModel.php");
 
 class DatabaseModel extends ActiveModel {

@@ -84,7 +84,7 @@ Class App extends Application {
 			$this->router = new Router(
 				$this->config("server.protocol") . "://" . $this->config("server.domain"),
 				dirname(__FILE__) . "/../controllers",
-				array("logger" => $this->logger())
+				array("logger" => $this->logger(), "relative_paths" => TRUE)
 			);
 			include_once(dirname(__FILE__) . "/../routes/routes.php");
 		}

@@ -4,6 +4,7 @@ Class HttpHeader {
 	
 	const HTTP_STATUS_OK = 200;
 	const HTTP_STATUS_CREATED = 201;
+	const HTTP_STATUS_BAD_REQUEST = 400;
 	const HTTP_STATUS_PAYMENT_REQUIRED = 402;
 	const HTTP_STATUS_FORBIDDEN = 403;
 	const HTTP_STATUS_NOT_FOUND = 404;
@@ -39,7 +40,7 @@ Class HttpHeader {
 			case 307: $string = 'Temporary Redirect'; break; // HTTP/1.1
 	
 			// 4xx Client Error
-			case 400: $string = 'Bad Request'; break;
+			case HTTP_STATUS_BAD_REQUEST: $string = 'Bad Request'; break;
 			case 401: $string = 'Unauthorized'; break;
 			case self::HTTP_STATUS_PAYMENT_REQUIRED: $string = 'Payment Required'; break;
 			case self::HTTP_STATUS_FORBIDDEN: $string = 'Forbidden'; break;

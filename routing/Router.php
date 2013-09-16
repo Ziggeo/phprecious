@@ -9,6 +9,7 @@ class Router {
 	public $fullpath_base = "";
 	private $perfmon = NULL;
 	private $logger = NULL;
+	private $relative_paths = FALSE;
 	
 	function __construct($fullpath_base = "", $controller_path = "", $options = array()) {
 		$this->fullpath_base = $fullpath_base;
@@ -17,6 +18,7 @@ class Router {
 			$this->perfmon = $options["perfmon"];
 		if (@$options["logger"])
 			$this->logger = $options["logger"];
+		$this->relative_paths = @$options["relative_paths"] ? TRUE : FALSE;
 	}
 
 	protected function perfmon($enter) {
@@ -134,7 +136,7 @@ class Router {
 	public function path($path) {
 		$this->perfmon(true);
 		$route = $this->paths[$path];
-		$uri = "/" . $route["uri"];
+		$uri = ($this->relative_paths ? "" : "/") . $route["uri"];
 		$uri = str_replace('\/', "/", $uri);
 		$args = func_get_args();
 		array_shift($args);
