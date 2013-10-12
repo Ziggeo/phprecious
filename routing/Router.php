@@ -50,7 +50,8 @@ class Router {
 			"uri" => $uri,
 			"controller_action" => $controller_action,
 			"direct" => FALSE,
-			"conditions" => array()
+			"conditions" => array(),
+			"arguments" => array()
 		);
 		if (@$options["direct"])
 			$entry["direct"] = TRUE;
@@ -58,6 +59,8 @@ class Router {
 			$entry["conditions"] = $options["conditions"];
 		if (@$options["path"])
 			$entry["path"] = $options["path"];
+		if (@$options["arguments"])
+			$entry["arguments"] = $options["arguments"];
 		$this->routes[] = $entry;
 		if (@$options["path"])
 			$this->paths[$options["path"]] = $entry; 
@@ -90,6 +93,7 @@ class Router {
 		$controller_action = $this->metaRoutes["404"];
 		$args = array();
 		$direct = FALSE;
+		$arguments = array();
 		foreach ($this->routes as $route) {
 			if ((($route["method"] == "*") || ($route["method"] == $method)) &&
 			    (preg_match("/^" . $route["uri"] . "$/", $uri, $matches))) {
@@ -100,6 +104,7 @@ class Router {
 				if ($success) {
 					$controller_action = $route["controller_action"];
 					$direct = $route["direct"];
+					$arguments = $route["arguments"];
 					array_shift($matches);
 					$args = $matches;
 					break;
@@ -107,12 +112,18 @@ class Router {
 			}
 		}
 		$this->perfmon(false);
-		$this->dispatchControllerAction($controller_action, $args, $direct);
+		$this->dispatchControllerAction($controller_action, $args, $direct, $arguments);
 	}
 		
-	public function dispatchControllerAction($controller_action, $args = array(), $direct = FALSE) {
+	public function dispatchControllerAction($controller_action, $args = array(), $direct = FALSE, $arguments = array()) {
 		$this->perfmon(true);
 		$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
+		krsort($arguments);
+		foreach ($arguments as $key=>$data) {
+			$item = @$data["remove"] ? ArrayUtils::removeByIndex($args, $key) : $args[$key];
+			if (@$data["write"])
+				$data["write"]($item);
+		}
 		@list($controller_file, $action_function) = explode("#", $controller_action);
 		$this->currentController = $controller_file;
 		$this->currentAction = $action_function;
@@ -140,6 +151,12 @@ class Router {
 		$uri = str_replace('\/', "/", $uri);
 		$args = func_get_args();
 		array_shift($args);
+		$arguments = $route["arguments"];
+		ksort($arguments);
+		foreach ($arguments as $key=>$data) {
+			if (@$data["read"])
+				ArrayUtils::insert($args, $key, $data["read"]());
+		}
 		$in_uri_args = substr_count($uri, "(");
 		while (count($args) > 0 && $in_uri_args > 0) {
 			$tmp = explode("(", $uri, 2);

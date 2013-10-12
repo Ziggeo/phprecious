@@ -68,4 +68,14 @@ Class ArrayUtils {
 		return count(array_intersect($subset, $set)) == count($subset);		
 	}
 	
+	public static function removeByIndex(&$input, $index) {
+		$item = $input[$index];
+		array_splice($input, $index, 1);
+		return $item;
+	}
+	
+	public static function insert(&$input, $index, $data) {
+		array_splice($input, $index, 0, array($data));
+	}
+	
 }
