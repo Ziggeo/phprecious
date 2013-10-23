@@ -14,7 +14,7 @@ Class StringTable {
 		foreach ($idents as $key) 
 			$current = @$current[$key];
 		if (!isset($current))
-			throw new Exception(_("Please provide text for ") . "'" . $ident . "'"); 
+			return NULL; 
 		return $current;
 	}
 	

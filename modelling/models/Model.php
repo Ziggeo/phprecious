@@ -141,8 +141,8 @@ class Model {
 	 * Attributes
 	 */ 
 
-	private $attrs = array();
-	private $attrsChanged = array();
+	protected $attrs = array();
+	protected $attrsChanged = array();
 	
 	protected function getAttr($key) {
 		return @$this->attrs[$key];
@@ -154,6 +154,9 @@ class Model {
 			if ($value != NULL && !is_bool($value))
 				$value = ParseType::parseBool($value);
 		}
+		$transform = $this->schemeProp($key, "transform", NULL);
+		if (@$transform)
+			$value = $transform($value);
 		return $value;
 	}
 
@@ -181,8 +184,18 @@ class Model {
 		return $this->attrs[$key];
 	}
 	
+	public static function incAll($array, $key, $value = 1) {
+		foreach($array as $item)
+			$item->inc($key, $value);
+	}
+	
 	public function dec($key, $value = 1) {
 		return $this->inc($key, -$value);
+	}
+
+	public static function decAll($array, $key, $value = 1) {
+		foreach($array as $item)
+			$item->dec($key, $value);
 	}
 
 	protected function incAttr($key, $value) {
@@ -233,7 +246,7 @@ class Model {
 	 * Errors & Validations
 	 */
 	 
-	private $errors = array();	
+	protected $errors = array();	
 	
 	public function errors() {
 		return $this->errors;
@@ -349,6 +362,16 @@ class Model {
 	
 	public static function asRecords($arr, $tags = array("read"), $options = array()) {
 		return array_map(function ($row) use ($tags, $options) { return $row->asRecord($tags, $options); }, $arr);
+	}
+	
+	public function setByTags($tags, $data) {
+		$sch = $this->scheme();
+		foreach ($data as $key=>$value) {
+			$meta = @$sch[$key];
+			$key_tags = @$meta && @$meta["tags"] ? $meta["tags"] : array();
+			if (ArrayUtils::subset($tags, $key_tags))
+				$this->$key = $value;
+		}
 	}
 
 }

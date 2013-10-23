@@ -78,4 +78,9 @@ Class ArrayUtils {
 		array_splice($input, $index, 0, array($data));
 	}
 	
+	public static function removeByValue(&$input, $value) {
+		if(($key = array_search($value, $input)) !== false)
+    		self::removeByIndex($input[$key]);
+	}
+	
 }

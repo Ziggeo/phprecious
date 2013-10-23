@@ -251,13 +251,44 @@ abstract class ActiveModel extends Model {
 		return $result;
 	}
 	
+	public function validate() {
+		parent::validate();
+		$sch = $this->scheme();
+		foreach ($sch as $key=>$meta) {
+			if (isset($meta["unique"])) {
+				$conf = $meta["unique"];
+				$value = @$this->attrs[$key];
+				if ((!@$conf["ignore_if_null"] || isset($value)) &&
+				    (isset($this->attrsChanged[$key]) || !$this->isSaved())) {
+					$query = array();
+					if (@$conf["query"])
+						foreach($conf["query"] as $item)
+							$query[$item] = $this->attrs[$item];
+					while (TRUE) {
+						$query[$key] = $value;
+						$object = self::findBy($query);
+						if (@$object && $object->id() != $this->id()) {
+							if (@$conf["iterate_default"]) {
+								$value = $meta["default"]();
+								$this->$key = $value;
+								continue;
+							}								
+							$this->errors[$key] = @$conf["error_message"] ? $conf["error_message"] : "Key " . $key . " not unique";
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	public function isInvalidated() {
 		return FALSE;
 	}
 	
 	public static function invalidateAll($simulate = FALSE) {
 		self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
-		foreach (self::all() as $instance)
+		foreach (self::all(NULL, NULL, NULL, TRUE) as $instance)
 			if ($instance->isInvalidated()) {
 				self::log(Logger::INFO_2, get_called_class() . ": Remove Instance {$instance->id()}.");
 				if (!$simulate)
