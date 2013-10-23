@@ -17,5 +17,10 @@ Class StringUtils {
 	public static function has_sub($string, $sub) {
 		return strpos($string, $sub) !== false;
 	}
+	
+	public static function subBefore($string, $sub) {
+		$arr = explode($sub, $string, 2);
+		return $arr[0];
+	}		
 
 }
