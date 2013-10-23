@@ -7,7 +7,8 @@ class DatabaseMailer extends Mailer
 {
 	
 	protected function sendMail($mail) {
-		$db_mail = new DatabaseMail(array(
+		$cls = @$this->option("database_mail") ? $this->option("database_mail") : "DatabaseMail";
+		$db_mail = new $cls(array(
 			"sender" => $mail->sender,
 			"recipient" => $mail->recipient,
 			"subject" => $mail->subject,

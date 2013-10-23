@@ -11,7 +11,7 @@ class DatabaseMail extends DatabaseModel {
 		$attrs["subject"] = array("type" => "string", "validate" => array(new PresentValidator()));
 		$attrs["message"] = array("type" => "string");
 		$attrs["message_html"] = array("type" => "string");
-		$attrs["mailed"] = array("type" => "boolean", "default" => FALSE);
+		$attrs["mailed"] = array("type" => "boolean", "default" => FALSE, "index" => TRUE);
 		return $attrs;
 	}
 	
