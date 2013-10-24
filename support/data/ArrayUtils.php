@@ -80,7 +80,7 @@ Class ArrayUtils {
 	
 	public static function removeByValue(&$input, $value) {
 		if(($key = array_search($value, $input)) !== false)
-    		self::removeByIndex($input[$key]);
+    		self::removeByIndex($input, $key);
 	}
 	
 }

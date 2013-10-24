@@ -21,7 +21,7 @@ abstract class ModelAssociation {
 	}
 	
 	public function delegate() {
-		if (@$options["cached"] && (func_num_args() == 0)) {
+		if (@$this->options["cached"] && (func_num_args() == 0)) {
 			if (!$this->cached) {
 				$this->cache = $this->delegateSelect();
 				$this->cached = TRUE;
