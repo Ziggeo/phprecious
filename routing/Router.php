@@ -10,6 +10,8 @@ class Router {
 	private $perfmon = NULL;
 	private $logger = NULL;
 	private $relative_paths = FALSE;
+	private $paths = array();
+	private $virtual_paths = array();
 	
 	function __construct($fullpath_base = "", $controller_path = "", $options = array()) {
 		$this->fullpath_base = $fullpath_base;
@@ -146,6 +148,8 @@ class Router {
 	
 	public function path($path) {
 		$this->perfmon(true);
+		if (@$this->virtual_paths[$path])
+			return $this->virtual_paths[$path]();
 		$route = $this->paths[$path];
 		$uri = ($this->relative_paths ? "" : "/") . $route["uri"];
 		$uri = str_replace('\/', "/", $uri);
@@ -188,6 +192,10 @@ class Router {
 	
 	public function getCurrentAction() {
 		return $this->currentAction;
+	}
+	
+	public function addVirtualPath($path, $function) {
+		$this->virtual_paths[$path] = $function;
 	}
 	
 }
