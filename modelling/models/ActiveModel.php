@@ -118,12 +118,16 @@ abstract class ActiveModel extends Model {
 	
 	protected abstract function updateModel();
 	
+	protected function beforeDelete() {
+	}
+
 	protected function afterDelete() {
 	}
 	
 	public function delete() {
 		if (!$this->saved || $this->deleted)
 			return FALSE;
+		$this->beforeDelete();
 		$success = $this->deleteModel();
 		if ($success) {
 			static::log(Logger::INFO_2, "Deleted model '" . get_called_class() . "' with id {$this->id()}.");
@@ -163,10 +167,14 @@ abstract class ActiveModel extends Model {
 		$this->newModel = FALSE;
 		$this->resetChanged();
 	}
+	
+	protected static function materializeClass($attrs) {
+		return get_called_class();
+	} 
 
 	public static function materializeObject($attrs) {
 		if (@$attrs) {
-			$class = get_called_class();
+			$class = static::materializeClass($attrs);
 			$obj = new $class();
 			foreach ($attrs as $key=>$value) 
 				$obj->setAttr($key, $value);

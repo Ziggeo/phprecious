@@ -364,6 +364,14 @@ class Model {
 		return array_map(function ($row) use ($tags, $options) { return $row->asRecord($tags, $options); }, $arr);
 	}
 	
+	public function asJSON($tags = array("read"), $options = array()) {
+		return json_encode($this->asRecord($tags, $options));
+	}
+	
+	public static function asJSONs($arr, $tags = array("read"), $options = array()) {
+		return json_encode(self::asRecords($arr, $tags, $options));
+	}
+
 	public function setByTags($tags, $data) {
 		$sch = $this->scheme();
 		foreach ($data as $key=>$value) {
