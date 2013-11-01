@@ -68,10 +68,9 @@ class FileUtils {
 	}
 	
 	public static function delete_tree($base, $files_only = FALSE) {
-		if (is_file($base)) {
+		if (is_file($base))
 			@unlink($base);
-			return;
-		} elseif (@$handle = opendir($base)) {
+		elseif (is_dir($base) && @$handle = opendir($base)) {
 		    while (false !== ($entry = readdir($handle)))
 		        if ($entry != "." && $entry != "..") {
 		        	self::delete_tree($base . "/" . $entry);

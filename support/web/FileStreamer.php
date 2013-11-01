@@ -115,6 +115,8 @@ Class FileStreamer {
 		$remaining = @$range ? $range["bytes"] : $file_size;
 		if (@$range)
 			fseek($handle, $range["start"]);
+		
+		$transferred = 0;
 
 		while (!feof($handle) && ($remaining > 0) && !connection_aborted()) {
 			$read_size = min($remaining, $block_size);
@@ -123,12 +125,14 @@ Class FileStreamer {
 			if ($returned_size > $read_size)
 				throw new FileStreamerException("Read returned more data than requested.");
 			print($data);
+			$transferred += $returned_size;
 			$remaining -= $returned_size;
 			flush();
 			ob_flush();
 		}
 		
 		fclose($handle);
+		return $transferred;
 	}
 	
 }

@@ -1,7 +1,7 @@
 <?php
 
 require_once(dirname(__FILE__) . "/../../support/files/FileUtils.php");
-require_once(dirname(__FILE__) . "/../../support/web/ContentType.php");
+require_once(dirname(__FILE__) . "/../../support/web/FileStreamer.php");
 
 
 Class FileModel extends DatabaseModel {
@@ -10,11 +10,13 @@ Class FileModel extends DatabaseModel {
 		$attrs = parent::initializeScheme();
 		$attrs["removed"] = array(
 			"type" => "boolean",
-			"default" => FALSE
+			"default" => FALSE,
+			"tags" => array("read")
 		);
 		$attrs["prefix_type"] = array(
 			"type" => "string",
-			"default" => "default"
+			"default" => "default",
+			"tags" => array("read")			
 		);
 		$idl = self::classOptionsOf("identifier_length");
 		$attrs["identifier"] = array(
@@ -22,27 +24,28 @@ Class FileModel extends DatabaseModel {
 			"index" => TRUE,
 			"default" => function ($instance) use ($idl) {
 				return Tokens::generate($idl);
-			}
+			},
+			"tags" => array("read")
 		);
-		$attrs["file_type"] = array("type" => "string");
-		$attrs["file_size"] = array("type" => "integer");
-		$attrs["original_file_name"] = array("type" => "string");
-		$attrs["file_name"] = array("type" => "string");
+		$attrs["file_type"] = array(
+			"type" => "string",
+			"tags" => array("read")
+		);
+		$attrs["file_size"] = array(
+			"type" => "integer",
+			"tags" => array("read")
+		);
+		$attrs["original_file_name"] = array(
+			"type" => "string",
+			"tags" => array("read")
+		);
+		$attrs["file_name"] = array(
+			"type" => "string",
+			"tags" => array("read")
+		);
 		return $attrs;
 	}	
 	
-	public function asRecord() {
-		return array(
-			"removed" => $this->removed,
-			"prefix_type" => $this->prefix_type,
-			"identifier" => $this->identifier,
-			"file_type" => $this->file_type,
-			"file_size" => $this->file_size,
-			"original_file_name" => $this->original_file_name,
-			"file_name" => $this->file_name,
-		);
-	}
-
 	protected static function initializeOptions() {
 		$opts = parent::initializeOptions();
 		$opts["directory"] = "";
@@ -129,12 +132,12 @@ Class FileModel extends DatabaseModel {
 	    readfile($this->getFileName());
 	}
 
-	public function httpReadFile() {
+	public function httpReadFile($download = FALSE) {
 		static::log("Reading file " . $this->log_ident() . "", Logger::INFO_2);
-		header('Content-type: ' . $this->contentType());
-		ob_clean();
-		flush();
-		$this->echoReadFile();
+		return FileStreamer::streamFile($this->getFileName(), array(
+			"download" => $download,
+			"download_name" => $this->original_file_name
+		));
 	}
 	
 	public static function createByUpload($FILE, $options = array()) {

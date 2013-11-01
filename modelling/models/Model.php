@@ -68,7 +68,7 @@ class Model {
 		return array();
 	}
 	
-	public function can($key, $args) {
+	public function can($key, $args = array()) {
 		$cans = $this->cans();
 		$can = @$cans[$key];
 		return @$can && $can($this, $args); 
