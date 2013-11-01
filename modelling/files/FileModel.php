@@ -27,15 +27,15 @@ Class FileModel extends DatabaseModel {
 			},
 			"tags" => array("read")
 		);
-		$attrs["file_type"] = array(
-			"type" => "string",
-			"tags" => array("read")
-		);
 		$attrs["file_size"] = array(
 			"type" => "integer",
 			"tags" => array("read")
 		);
 		$attrs["original_file_name"] = array(
+			"type" => "string",
+			"tags" => array("read")
+		);
+		$attrs["extension"] = array(
 			"type" => "string",
 			"tags" => array("read")
 		);
@@ -75,7 +75,7 @@ Class FileModel extends DatabaseModel {
 	}
 	
 	public function getFileName($prefix = NULL) {
-		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . "." . $this->extension();
+		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . "." . $this->extension;
 	}
 	
 	public function getDirectoryPath($prefix = NULL) {
@@ -116,12 +116,8 @@ Class FileModel extends DatabaseModel {
 		return self::allBy($query, $sort, $limit, $skip);
 	}
 	
-	public function extension() {
-		return FileUtils::extensionOf($this->original_file_name);
-	}
-	
 	public function contentType() {
-		return ContentType::byFileName($this->original_file_name);
+		return ContentType::byExtension($this->extension);
 	}
 	
 	private function log_ident() {
@@ -136,7 +132,7 @@ Class FileModel extends DatabaseModel {
 		static::log("Reading file " . $this->log_ident() . "", Logger::INFO_2);
 		return FileStreamer::streamFile($this->getFileName(), array(
 			"download" => $download,
-			"download_name" => $this->original_file_name
+			"download_name" => $this->file_name
 		));
 	}
 	
@@ -152,10 +148,10 @@ Class FileModel extends DatabaseModel {
 			return NULL;
 		}
 		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
-		$file_type = @$options["file_type"] ? $options["file_type"] : FileUtils::extensionOf($original_file_name);
+		$extension = @$options["extension"] ? $options["extension"] : FileUtils::extensionOf($file_name);
 		$class = get_called_class();
 		$instance = new $class(array(
-			"file_type" => $file_type,
+			"extension" => $extension,
 			"file_size" => $file_size,
 			"original_file_name" => $original_file_name,
 			"file_name" => $file_name
@@ -187,10 +183,10 @@ Class FileModel extends DatabaseModel {
 		$original_file_name = basename($filename);
 		$file_size = filesize($filename);
 		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
-		$file_type = @$options["file_type"] ? $options["file_type"] : FileUtils::extensionOf($original_file_name);
+		$extension = @$options["extension"] ? $options["extension"] : FileUtils::extensionOf($file_name);
 		$class = get_called_class();
 		$instance = new static(array(
-			"file_type" => $file_type,
+			"extension" => $extension,
 			"file_size" => $file_size,
 			"original_file_name" => $original_file_name,
 			"file_name" => $file_name

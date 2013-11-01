@@ -372,6 +372,14 @@ class Model {
 		return json_encode(self::asRecords($arr, $tags, $options));
 	}
 
+	public function asHTML($tags = array("read"), $options = array()) {
+		return StringUtils::html_encode($this->asRecord($tags, $options));
+	}
+	
+	public static function asHTMLs($arr, $tags = array("read"), $options = array()) {
+		return StringUtils::html_encode(self::asRecords($arr, $tags, $options));
+	}
+
 	public function setByTags($tags, $data) {
 		$sch = $this->scheme();
 		foreach ($data as $key=>$value) {

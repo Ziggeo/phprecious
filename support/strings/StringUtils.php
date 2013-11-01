@@ -21,6 +21,20 @@ Class StringUtils {
 	public static function subBefore($string, $sub) {
 		$arr = explode($sub, $string, 2);
 		return $arr[0];
-	}		
+	}
+	
+	public static function html_encode($data) {
+		if (is_array($data)) {
+			$s = "";
+			if (count(array_filter(array_keys($data), 'is_string')))
+				foreach ($data as $key=>$value)
+					$s .= "<li>" . $key . ": " . self::html_encode($value) . "</li>";
+			else	
+				foreach ($data as $value)
+					$s .= "<li>" . self::html_encode($value) . "</li>";
+			return "<ul>" . $s . "</ul>";
+		} else
+			return "" . $data;
+	}
 
 }

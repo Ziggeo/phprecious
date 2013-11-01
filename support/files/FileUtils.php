@@ -72,11 +72,8 @@ class FileUtils {
 			@unlink($base);
 		elseif (is_dir($base) && @$handle = opendir($base)) {
 		    while (false !== ($entry = readdir($handle)))
-		        if ($entry != "." && $entry != "..") {
-		        	self::delete_tree($base . "/" . $entry);
-					if (!$files_only)
-						rmdir($base . "/" . $entry);
-		        } 
+		        if ($entry != "." && $entry != "..")
+		        	self::delete_tree($base . "/" . $entry, $files_only);
 		    closedir($handle);
 			if (!$files_only)
 				rmdir($base);
