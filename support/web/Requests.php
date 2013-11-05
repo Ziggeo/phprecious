@@ -20,6 +20,11 @@ Class Requests {
 		return isset($result) && ($result == "on");
 	}
 
+	public static function getVarDefNull($name, $def) {
+		$result = static::getVar($name);
+		return isset($result) ? $result : $def;
+	}
+
 	public static function getMethod() {
 		$method = static::getVar("_method");
 		return $method ? $method : $_SERVER['REQUEST_METHOD'];
