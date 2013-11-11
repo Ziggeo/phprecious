@@ -41,6 +41,20 @@ abstract class ModelAssociation {
 	
 	public function deleteModel() {
 	}
+	
+	public function validate() {
+		if (@$this->options["validate"]) {
+			$value = $this->delegate();
+			$validators = $this->options["validate"];
+			if (!is_array($validators))
+				$validators = array($validators);
+			foreach ($validators as $validator) {
+				$result = $validator->validate($value, $this->parentModel);
+				if ($result != NULL && is_string($result))
+					return $result;
+			}
+		}
+	}
 
 }
 

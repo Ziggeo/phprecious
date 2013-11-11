@@ -40,7 +40,7 @@ Class HttpHeader {
 			case 307: $string = 'Temporary Redirect'; break; // HTTP/1.1
 	
 			// 4xx Client Error
-			case HTTP_STATUS_BAD_REQUEST: $string = 'Bad Request'; break;
+			case self::HTTP_STATUS_BAD_REQUEST: $string = 'Bad Request'; break;
 			case 401: $string = 'Unauthorized'; break;
 			case self::HTTP_STATUS_PAYMENT_REQUIRED: $string = 'Payment Required'; break;
 			case self::HTTP_STATUS_FORBIDDEN: $string = 'Forbidden'; break;

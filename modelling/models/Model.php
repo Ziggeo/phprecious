@@ -278,6 +278,11 @@ class Model {
 				}
 			}
 		}
+		foreach ($this->assocs as $key=>$value) {
+			$result = $value->validate($this);
+			if ($result != NULL && is_string($result))
+				$this->errors[$key] = $result;
+		}
 		$this->errors = $this->customValidate($this->errors);
 	}
 	
