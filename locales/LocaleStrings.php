@@ -40,4 +40,8 @@ Class LocaleStrings {
 			$this->set(@$prefix ? $prefix . "." . $key : $key, $value);
 	}
 	
+	function enumerate() {
+		return $this->table;
+	}
+	
 }
