@@ -129,7 +129,7 @@ Class FileModel extends DatabaseModel {
 	}
 
 	public function httpReadFile($download = FALSE) {
-		static::log("Reading file " . $this->log_ident() . "", Logger::INFO_2);
+		static::log(Logger::INFO_2, "Reading file " . $this->log_ident() . "");
 		return FileStreamer::streamFile($this->getFileName(), array(
 			"download" => $download,
 			"download_name" => $this->file_name
@@ -140,11 +140,11 @@ Class FileModel extends DatabaseModel {
 		if (!@$FILE || $FILE["error"] > 0)
 			return NULL;
 		$original_file_name = $FILE["name"];
-		static::log("Create file by upload " . $original_file_name . "", Logger::INFO);
+		static::log(Logger::INFO, "Create file by upload " . $original_file_name . "");
 		$file_size = $FILE["size"];
 		$tmp_file = $FILE["tmp_name"];
 		if (!file_exists($tmp_file)) {
-			static::log("Error: tmp file does not exist.", Logger::WARN);
+			static::log(Logger::WARN, "Error: tmp file does not exist.");
 			return NULL;
 		}
 		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
@@ -157,17 +157,17 @@ Class FileModel extends DatabaseModel {
 			"file_name" => $file_name
 		));
 		if (file_exists($instance->getFileName())) {
-			static::log("Error: identifier already exists.", Logger::WARN);
+			static::log(Logger::WARN, "Error: identifier already exists.");
 			return NULL;
 		}
 		if (!mkdir($instance->getDirectoryPath(), 0777, TRUE)) {
-			static::log("Error: cannot create directory.", Logger::WARN);
+			static::log(Logger::WARN, "Error: cannot create directory.");
 			return NULL;
 		}
 		if (!$instance->save())
 			return NULL;
 		if (!move_uploaded_file($tmp_file, $instance->getFileName())) {
-			static::log("Error: cannot move file.", Logger::WARN);
+			static::log(Logger::WARN, "Error: cannot move file.");
 			$instance->delete();
 			return NULL;
 		}
@@ -175,9 +175,9 @@ Class FileModel extends DatabaseModel {
 	}
 	
 	public static function createByFile($filename, $options = array(), $move = FALSE) {
-		static::log("Create file by " . $filename . "", Logger::INFO);
+		static::log(Logger::INFO, "Create file by " . $filename . "");
 		if (!file_exists($filename)) {
-			static::log("Error: file does not exist.", Logger::WARN);
+			static::log(Logger::WARN, "Error: file does not exist.");
 			return NULL;
 		}
 		$original_file_name = basename($filename);

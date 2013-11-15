@@ -29,14 +29,15 @@ Class ApiController extends Controller {
 	public $return_encoding = ApiController::RETURN_ENCODING_DEFAULT;
 	
 	function return_status($status = HttpHeader::HTTP_STATUS_OK, $data = NULL) {
+		$success = $status == HttpHeader::HTTP_STATUS_OK || $status == HttpHeader::HTTP_STATUS_CREATED;
 		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
 		    header('Content-Type: application/json');
 			print json_encode($data);	
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
-			?><textarea data-type="application/json">{"success": <?= $status == HttpHeader::HTTP_STATUS_OK ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
+			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
 		}
-		return $status == HttpHeader::HTTP_STATUS_OK;
+		return $success;
 	}
 	
 	function return_forbidden($data = array()) {
