@@ -46,9 +46,7 @@ Class LocaleStringTable extends LocaleStrings {
 			return NULL;
 		if (count($arr) > 1)
 			return $base->get($arr[1]);
-		if (is_string($base))
-			return $base;
-		return call_user_func($base, $this->context);
+		return is_callable($base) ? call_user_func($base, $this->context) : $base;
 	}
 	
 	function set($key, $value) {
