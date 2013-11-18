@@ -53,12 +53,20 @@ Class Application {
 		$this->tags[$tag] = TRUE;
 	}
 	
+	public function removeTag($tag) {
+		unset($this->tags[$tag]);
+	}
+
 	public function hasTag($tag) {
 		return isset($this->tags[$tag]);
 	}
 	
 	public function config($key = "") {
 		return $this->config->get($key);
+	}
+	
+	public function configTable() {
+		return $this->config->table();
 	}
 	
 	public function setConfig($key = "", $value = NULL, $overwrite = TRUE) {

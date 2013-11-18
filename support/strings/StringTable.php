@@ -33,4 +33,8 @@ Class StringTable {
 		return isset($this->string_table[$ident]);
 	}
 	
+	public function table() {
+		return $this->string_table;
+	}
+	
 }

@@ -153,6 +153,7 @@ class Router {
 		$route = $this->paths[$path];
 		$uri = ($this->relative_paths ? "" : "/") . $route["uri"];
 		$uri = str_replace('\/', "/", $uri);
+		$uri = str_replace('\.', ".", $uri);
 		$args = func_get_args();
 		array_shift($args);
 		$arguments = $route["arguments"];
