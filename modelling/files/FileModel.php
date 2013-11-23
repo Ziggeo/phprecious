@@ -136,6 +136,38 @@ Class FileModel extends DatabaseModel {
 		));
 	}
 	
+	public static function createByData($filename, $data, $options = array()) {
+		static::log(Logger::INFO, "Create data file by " . $filename . "");
+		$original_file_name = basename($filename);
+		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
+		$extension = @$options["extension"] ? $options["extension"] : FileUtils::extensionOf($file_name);
+		$class = get_called_class();
+		$instance = new static(array(
+			"extension" => $extension,
+			"original_file_name" => $original_file_name,
+			"file_name" => $file_name
+		));
+		if (file_exists($instance->getFileName())) {
+			static::log("Error: identifier already exists.", Logger::WARN);
+			return NULL;
+		}
+		if (!mkdir($instance->getDirectoryPath(), 0777, TRUE)) {
+			static::log("Error: cannot create directory.", Logger::WARN);
+			return NULL;
+		}
+		$fhandle = fopen($instance->getFileName(), "wb");
+		fwrite($fhandle, $data);
+		fclose($fhandle);
+		$instance->file_size = filesize($instance->getFileName());		
+		if (!$instance->save())
+			return NULL;
+		return $instance;
+	}
+	
+	public function updateSize() {
+		$this->update(array("file_size" => filesize($this->getFileName())));
+	}
+	
 	public static function createByUpload($FILE, $options = array()) {
 		if (!@$FILE || $FILE["error"] > 0)
 			return NULL;
