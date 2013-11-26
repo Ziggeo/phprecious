@@ -13,11 +13,8 @@ Class Required {
 	
 	public static function add_class_paths($root) {
 		self::add_class_path($root);
-		foreach (FileUtils::enumerate($root, TRUE) as $item)
-			if (is_dir($item))
-				self::add_class_paths($item);
-			else
-				self::add_class_path($item);
+		foreach (FileUtils::enumerate_dirs($root, TRUE) as $item)
+			self::add_class_paths($item);
 	}	
 	
 	public static function add_file_path($path) {
