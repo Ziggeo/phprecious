@@ -28,7 +28,7 @@ abstract class Mailer {
 	
 	public function __construct($options = array()) {
 		$this->options = $options;
-		if (@$this->options["default_sender"])
+		if (isset($this->options["default_sender"]))
 			$this->default_sender = $this->options["default_sender"];
 	}
 	

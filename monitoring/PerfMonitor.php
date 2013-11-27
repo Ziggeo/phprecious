@@ -13,7 +13,7 @@ class PerfMonitor {
 	private $sections = array();
 	
 	private function touchSection($section) {
-		if (!@$this->sections[$section]) {
+		if (!isset($this->sections[$section])) {
 			$this->sections[$section] = array();
 			$this->sections[$section]["time"] = 0.0;
 			$this->sections[$section]["stack"] = array(0);

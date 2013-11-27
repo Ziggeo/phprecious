@@ -47,9 +47,9 @@ class MongoDatabaseTable extends DatabaseTable {
 		if (@$options) {
 			if (@$options["sort"])
 				$result = $result->sort($options["sort"]);
-			if (@$options["skip"])
+			if (isset($options["skip"]))
 				$result = $result->skip($options["skip"]);
-			if (@$options["limit"])
+			if (isset($options["limit"]))
 				$result = $result->limit($options["limit"]);
 		}
 		static::perfmon(false);

@@ -20,7 +20,7 @@ class Model {
 	
 	static public function classScheme() {
 		$class = get_called_class();
-		if (!@self::$scheme[$class])
+		if (!isset(self::$scheme[$class]))
 			self::$scheme[$class] = static::initializeScheme();
 		return self::$scheme[$class];
 	}
@@ -31,7 +31,7 @@ class Model {
 	
 	public function schemeOf($key) {
 		$sch = $this->scheme();
-		return @$sch[$key];
+		return isset($sch[$key]) ? $sch[$key] : NULL; 
 	}
 	
 	public function schemeProp($key, $prop, $default = NULL) {
@@ -145,7 +145,7 @@ class Model {
 	protected $attrsChanged = array();
 	
 	protected function getAttr($key) {
-		return @$this->attrs[$key];
+		return isset($this->attrs[$key]) ? $this->attrs[$key] : NULL;
 	}
 	
 	protected function typecastAttr($key, $value) {
@@ -307,9 +307,8 @@ class Model {
 	} 
 		
 	public function __call($key, $args) {
-		$obj = @$this->assocs[$key];
-		if (@$obj)
-			return call_user_method_array("delegate", $obj, $args);
+		if (isset($this->assocs[$key]))
+			return call_user_func_array(array($this->assocs[$key], "delegate"), $args);
 		if (substr($key, -3) == "obj") {
 			$sub = substr($key, 0, -3);
 			$obj = $this->assocs[$sub];

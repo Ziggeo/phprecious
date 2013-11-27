@@ -8,7 +8,7 @@ class VirtualModel extends ActiveModel {
 	
 	private static function &database() {
     	$class = get_called_class();
-		if (!@self::$database[$class]) 
+		if (!isset(self::$database[$class])) 
 			self::$database[$class] = array(
 				"primary" => 0,
 				"table" => array()
@@ -36,7 +36,7 @@ class VirtualModel extends ActiveModel {
 	}
 
 	protected static function findRowBy($query) {
-		if (@$query[self::idKey()])
+		if (isset($query[self::idKey()]))
 			return self::findRowById($query[self::idKey()]);
 		foreach (self::table() as $row) {
 			$match = TRUE;
@@ -53,7 +53,7 @@ class VirtualModel extends ActiveModel {
 
 	// Note: options NOT implemented
 	protected static function allRowsBy($query, $options = NULL) {
-		if (@$query[self::idKey()]) {
+		if (isset($query[self::idKey()])) {
 			$row = self::findRowById($query[self::idKey()]);
 			if ($row)
 				return array($row);
@@ -81,7 +81,7 @@ class VirtualModel extends ActiveModel {
 		$attrs = $this->attrs();
 		if (isset($attrs[self::idKey()])) {
 			$id = $attrs[self::idKey()];
-			if (@$tab[$id])
+			if (isset($tab[$id]))
 				return FALSE;
 		}
 		$attrs = $this->filterPersistentAttrs($attrs);

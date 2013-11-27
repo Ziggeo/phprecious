@@ -22,7 +22,7 @@ Class StringTable {
 		$idents = explode(".", $ident);
 		$current = &$this->string_table;
 		foreach ($idents as $key) {
-			if (!@$current[$key])
+			if (!isset($current[$key]))
 				$current[$key] = array();
 			$current = &$current[$key];
 		}

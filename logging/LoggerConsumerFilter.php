@@ -21,9 +21,9 @@ class LoggerConsumerFilter extends LoggerConsumer {
 	}
 	
 	protected function messageApplies($logger, $logMessage) {
-		if (@$this->options["level"] && $logMessage->level() > $this->options["level"])
+		if (isset($this->options["level"]) && $logMessage->level() > $this->options["level"])
 			return FALSE;
-		if (@$this->options["tags"]) {
+		if (isset($this->options["tags"])) {
 			$found = FALSE;
 			$mytags = $this->options["tags"];
 			$tags = $logMessage->tags();
@@ -36,7 +36,7 @@ class LoggerConsumerFilter extends LoggerConsumer {
 			if (!$found)
 				return FALSE;
 		}
-		if (@$this->options["antitags"]) {
+		if (isset($this->options["antitags"])) {
 			$found = FALSE;
 			$mytags = $this->options["antitags"];
 			$tags = $logMessage->tags();

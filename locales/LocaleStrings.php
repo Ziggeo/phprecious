@@ -56,7 +56,7 @@ Class LocaleStringTable extends LocaleStrings {
 		if (count($arr) == 1)
 			$this->table[$arr[0]] = $value;
 		else {
-			if (!@$this->table[$arr[0]])
+			if (!isset($this->table[$arr[0]]))
 				$this->table[$arr[0]] = new LocaleStringTable($this->defaultText(), $this->context);
 			$this->table[$arr[0]]->set($arr[1], $value);
 		}

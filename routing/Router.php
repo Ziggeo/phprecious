@@ -16,11 +16,11 @@ class Router {
 	function __construct($fullpath_base = "", $controller_path = "", $options = array()) {
 		$this->fullpath_base = $fullpath_base;
 		$this->controller_path = $controller_path;
-		if (@$options["perfmon"])
+		if (isset($options["perfmon"]))
 			$this->perfmon = $options["perfmon"];
-		if (@$options["logger"])
+		if (isset($options["logger"]))
 			$this->logger = $options["logger"];
-		$this->relative_paths = @$options["relative_paths"] ? TRUE : FALSE;
+		$this->relative_paths = isset($options["relative_paths"]) ? TRUE : FALSE;
 	}
 
 	protected function perfmon($enter) {
@@ -55,16 +55,16 @@ class Router {
 			"conditions" => array(),
 			"arguments" => array()
 		);
-		if (@$options["direct"])
+		if (isset($options["direct"]))
 			$entry["direct"] = TRUE;
-		if (@$options["conditions"])
+		if (isset($options["conditions"]))
 			$entry["conditions"] = $options["conditions"];
-		if (@$options["path"])
+		if (isset($options["path"]))
 			$entry["path"] = $options["path"];
-		if (@$options["arguments"])
+		if (isset($options["arguments"]))
 			$entry["arguments"] = $options["arguments"];
 		$this->routes[] = $entry;
-		if (@$options["path"])
+		if (isset($options["path"]))
 			$this->paths[$options["path"]] = $entry; 
 	}
 	
@@ -148,7 +148,7 @@ class Router {
 	
 	public function path($path) {
 		$this->perfmon(true);
-		if (@$this->virtual_paths[$path])
+		if (isset($this->virtual_paths[$path]))
 			return $this->virtual_paths[$path]();
 		$route = $this->paths[$path];
 		$uri = ($this->relative_paths ? "" : "/") . $route["uri"];

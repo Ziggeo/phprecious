@@ -35,12 +35,12 @@ Class Controller {
 	}
 	
 	protected function call_action($action, $args) {
-		call_user_method_array($action, $this, $args);
+		call_user_func_array(array($this, $action), $args);
 	}
 	
 	protected function before_filter($action, $args = array()) {
 		$assert = $this->assert_filter($action, $args);
-		if (@$assert[$action]) {
+		if (isset($assert[$action])) {
 			$asserts = $assert[$action];
 			if (!is_array($asserts))
 				$asserts = array($asserts);

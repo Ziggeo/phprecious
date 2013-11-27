@@ -37,7 +37,7 @@ class Renderer {
 		if (!is_array($options))
 			$options = array("template" => $options);
 		if (isset($options["once"]) && $options["once"]) {
-			if (@$this->render_once[$options["template"]]) {
+			if (isset($this->render_once[$options["template"]])) {
 				static::perfmon(false);
 				return;
 			}
@@ -45,7 +45,7 @@ class Renderer {
 		}
 		$template = $options["template"];
 		static::log(Logger::INFO_3, "Rendering '{$template}'.");
-		$layout = @$options["nolayout"] || !@$this->layouts_directory ? NULL : (@$options["layout"] ? $options["layout"] : $this->default_layout);
+		$layout = isset($options["nolayout"]) || !isset($this->layouts_directory) ? NULL : (isset($options["layout"]) ? $options["layout"] : $this->default_layout);
 		$yield = $this->views_directory . "/" . $template . ".php";
 		foreach ($locals as $key => $value ) {
 			$$key = $value;

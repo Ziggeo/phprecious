@@ -12,7 +12,7 @@ abstract class ModelAssociation {
 	}
 	
 	public function getOption($key) {
-		return @$this->options[$key];
+		return isset($this->options[$key]) ? $this->options[$key] : NULL;
 	}
 	
 	public function __construct($parentModel, $options = array()) {
@@ -43,7 +43,7 @@ abstract class ModelAssociation {
 	}
 	
 	public function validate() {
-		if (@$this->options["validate"]) {
+		if (isset($this->options["validate"])) {
 			$value = $this->delegate();
 			$validators = $this->options["validate"];
 			if (!is_array($validators))

@@ -3,11 +3,10 @@
 Class Requests {
 	
 	public static function getVar($name, $type = "") {
-	    if ($type == "GET") $value = @$_GET[$name];
-	    elseif ($type == "POST") $value = @$_POST[$name];
-		else $value = @$_GET[$name] ? @$_GET[$name] : @$_POST[$name];
-	    $value = stripslashes(strip_tags($value));
-		return $value;
+	    if ($type == "GET") $value = isset($_GET[$name]) ? $_GET[$name] : NULL;
+	    elseif ($type == "POST") $value = isset($_POST[$name]) ? $_POST[$name] : NULL;
+		else $value = isset($_GET[$name]) ? $_GET[$name] : (isset($_POST[$name]) ? $_POST[$name] : NULL);
+		return stripslashes(strip_tags($value));
 	}
 	
 	public static function getVarDef($name, $def) {

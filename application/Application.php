@@ -10,9 +10,14 @@ Class Application {
 	private $config;
 	private $tags = array();
 	private $initializers = array();
-	
+	public $error_messages = array();
+
+	public function error_handler($severity, $message, $filename, $lineno) {
+		$this->error_messages[] = array("severity" => $severity, "message" => $message, "filename" => $filename, "lineno" => $lineno);
+	}		
 	
 	function __construct() {
+		set_error_handler(array($this, "error_handler"));
 		$this->config = new StringTable();
 	}
 	
@@ -21,7 +26,7 @@ Class Application {
 	}
 	
 	public function getFolder($key) {
-		return @$this->folders[$key];
+		return isset($this->folders[$key]) ? $this->folders[$key] : NULL;
 	}
 	
 	public function setFolder($key, $value) {
@@ -79,7 +84,7 @@ Class Application {
 	}
 	
 	private function touchInitializer($ident) {
-		if (!@$this->initializers[$ident]) {
+		if (!isset($this->initializers[$ident])) {
 			$this->initializers[$ident] = array(
 				"initializer" => NULL,
 				"processed" => FALSE,

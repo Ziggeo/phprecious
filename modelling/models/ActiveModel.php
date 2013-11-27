@@ -248,7 +248,7 @@ abstract class ActiveModel extends Model {
 		$result = array();
 		$sch = $this->scheme();
 		foreach ($sch as $key=>$meta) {
-			$key_tags = @$meta["tags"] ? $meta["tags"] : array();
+			$key_tags = isset($meta["tags"]) ? $meta["tags"] : array();
 			if (ArrayUtils::subset($tags, $key_tags)) {
 				if ($key == static::idKey())
 					$result["id"] = $this->$key;

@@ -31,8 +31,10 @@ class DatabaseModel extends ActiveModel {
 		$result = array();
 		foreach ($attrs as $key => $value) {
 			$result[$key] = $value;
-			$meta = @$sch[$key];
-			if (isset($meta) && isset($meta["type"])) 
+			if (!isset($sch[$key]))
+				continue;
+			$meta = $sch[$key];
+			if (isset($meta["type"])) 
 				$result[$key] = static::getDatabase()->decode($meta["type"], $value);
 		}
 		return $result;
@@ -46,7 +48,7 @@ class DatabaseModel extends ActiveModel {
 	
 	public static function table() {
     	$class = get_called_class();
-		if (!@self::$table[$class]) self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
+		if (!isset(self::$table[$class])) self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
 		return self::$table[$class];
 	}
 	

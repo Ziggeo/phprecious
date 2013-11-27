@@ -15,13 +15,13 @@ Class Assets {
 		$root = @$current["root"];
 		$path = @$current["path"];
 		foreach ($args as $domain) {
-			if (@$current["domains"] && @$current["domains"][$domain]) {
+			if (isset($current["domains"]) && isset($current["domains"][$domain])) {
 				$current = $current["domains"][$domain];
-				if (@$current["root"])
+				if (isset($current["root"]))
 					$root = @$current["root"];
-				if (@$current["param"])
+				if (isset($current["param"]))
 					$param = @$current["param"];
-				if (@$current["path"])
+				if (isset($current["path"]))
 					$path = $path . "/" . $current["path"];
 				else
 					$path = $path . "/" . $domain;
