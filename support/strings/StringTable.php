@@ -12,7 +12,7 @@ Class StringTable {
 		$idents = explode(".", $ident);
 		$current = $this->string_table;
 		foreach ($idents as $key) 
-			$current = @$current[$key];
+			$current = isset($current) && isset($current[$key]) ? $current[$key] : NULL;
 		if (!isset($current))
 			return NULL; 
 		return $current;

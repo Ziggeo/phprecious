@@ -19,12 +19,23 @@ abstract class ActiveModel extends Model {
 		return $this->getAttr(static::idKey());
 	}
 	
+	protected static function initializeOptions() {
+		$arr = parent::initializeOptions();
+		$arr["remove_field"] = NULL;
+		return $arr;
+	}
+
 	protected static function initializeScheme() {
 		$attrs = parent::initializeScheme();
 		$attrs[static::idKey()] = array(
 			"readonly" => TRUE,
 			"type" => "id"
 		);
+		if (static::classOptionsOf("remove_field") != NULL)
+			$attrs[static::classOptionsOf("remove_field")] = array(
+				"type" => "boolean",
+				"default" => FALSE
+			);
 		return $attrs;
 	} 
 
@@ -67,8 +78,21 @@ abstract class ActiveModel extends Model {
 	}
 	
 	public function create() {
-		if ($this->saved || $this->deleted || !$this->isValid())
+		if ($this->saved) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not create model: already created");
 			return FALSE;
+		}
+		if ($this->deleted) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not create model: deleted");
+			return FALSE;
+		}
+		if (!$this->isValid()) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not create model: invalid");
+			return FALSE;			
+		}
 		$this->beforeCreate();
 		$id = $this->createModel();
 		if (isset($id)) {
@@ -78,21 +102,34 @@ abstract class ActiveModel extends Model {
 			static::log(Logger::INFO_2, "Created model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->afterCreate();
 			return TRUE;
-		}
-		else
+		} else {
 			static::log(Logger::WARN, "Failed to create model '" . get_called_class() . "'.");
-		return FALSE;
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Model creation failed: No id returned");
+			return FALSE;
+		}
 	}
 	
 	protected abstract function createModel();
 
 	public function update($attrs = array(), $force = FALSE) {
-		if (!$this->saved || $this->deleted)
+		if (!$this->saved) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not update model: not created");
 			return FALSE;
+		}
+		if ($this->deleted) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not update model: deleted");
+			return FALSE;
+		}
 		foreach ($attrs as $key => $value)
 			$this->$key = $value;
-		if (!$force && !$this->isValid())
-			return FALSE;
+		if (!$force && !$this->isValid())  {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not update model: invalid");
+			return FALSE;			
+		}
 		$this->beforeUpdate();
 		$success = !$this->hasChanged() || $this->updateModel();
 		if ($success) {
@@ -101,9 +138,11 @@ abstract class ActiveModel extends Model {
 			$this->newModel = FALSE;
 			$this->resetChanged();
 			$this->afterUpdate();
-		}
-		else
+		} else {
 			static::log(Logger::WARN, "Failed to update model '" . get_called_class() . "' with id {$this->id()}.");
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Model update failed");
+		}
 		return $success;
 	}
 	
@@ -124,9 +163,22 @@ abstract class ActiveModel extends Model {
 	protected function afterDelete() {
 	}
 	
-	public function delete() {
-		if (!$this->saved || $this->deleted)
+	public function delete($ignore_remove_field = FALSE) {
+		if (!$ignore_remove_field && $this->optionsOf("remove_field") != NULL) {
+			$arr = array();
+			$arr[$this->optionsOf("remove_field")] = TRUE;
+			return $this->update($arr, TRUE);
+		}			
+		if (!$this->saved) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not delete model: not created");
 			return FALSE;
+		}
+		if ($this->deleted) {
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Could not delete model: already deleted");
+			return FALSE;
+		}
 		$this->beforeDelete();
 		$success = $this->deleteModel();
 		if ($success) {
@@ -135,15 +187,24 @@ abstract class ActiveModel extends Model {
 			foreach ($this->assocs() as $assoc)
 				$assoc->deleteModel();
 			$this->afterDelete();
-		}
-		else
+		} else {
 			static::log(Logger::WARN, "Failed to delete model '{" . get_called_class() . "' with id {$this->id()}.");
+			if ($this->optionsOf("exceptions"))
+				throw new ModelException("Model deletion failed");
+		}
 		return $success;
 	}
 		
 	protected abstract function deleteModel();
 	
 	public static function findById($id) {
+		$rf = static::classOptionsOf("remove_field");
+		if ($rf != NULL) {
+			$query = array();
+			$query[static::idKey()] = $id;
+			$query[$rf] = FALSE;
+			return self::materializeObject(static::findRowBy($query));
+		}		
 		return self::materializeObject(static::findRowById($id));
 	}
 	
@@ -152,6 +213,9 @@ abstract class ActiveModel extends Model {
 	}
 	
 	public static function findBy($query) {
+		$rf = static::classOptionsOf("remove_field");
+		if ($rf != NULL && !isset($query[$rf]))
+			$query[$rf] = FALSE;
 		return self::materializeObject(static::findRowBy($query));
 	}
 	
@@ -185,7 +249,13 @@ abstract class ActiveModel extends Model {
 		return FALSE;
 	}
 	
-	public static function all($sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE) {
+	public static function all($sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE, $ignore_remove_field = FALSE) {
+		$rf = static::classOptionsOf("remove_field");
+		if ($rf != NULL && !$ignore_remove_field) {
+			$query = array();
+			$query[$rf] = FALSE;
+			return self::allBy($query, $sort, $limit, $skip, $iterator);
+		}
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
@@ -209,7 +279,7 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 
-	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE) {
+	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE, $ignore_remove_field = FALSE) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
@@ -217,6 +287,9 @@ abstract class ActiveModel extends Model {
 			$options["limit"] = $limit;
 		if (@$skip)
 			$options["skip"] = $skip;
+		$rf = static::classOptionsOf("remove_field");
+		if ($rf != NULL && !isset($query[$rf]) && !$ignore_remove_field)
+			$query[$rf] = FALSE;
 		$result = static::allRowsBy($query, $options);
 		if (is_array($result)) {
 			$result = new ArrayObject($result);
@@ -233,8 +306,15 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 	
-	public static function count($query) {
-		return count(self::all($query));
+	protected static function countModels($query = array()) {
+		return count(self::allBy($query));
+	}
+	
+	public static function count($query = array(), $ignore_remove_field = FALSE) {
+		$rf = static::classOptionsOf("remove_field");
+		if ($rf != NULL && !isset($query[$rf]) && !$ignore_remove_field)
+			$query[$rf] = FALSE;
+		return self::countModels($query);
 	}
 	
 	public static function materializeObjects($cursor) {
@@ -290,14 +370,14 @@ abstract class ActiveModel extends Model {
 		}
 	}
 
-	public function isInvalidated() {
+	public function isInvalidated($ignore_remove_field = FALSE) {
 		return FALSE;
 	}
 	
-	public static function invalidateAll($simulate = FALSE) {
+	public static function invalidateAll($simulate = FALSE, $ignore_remove_field = FALSE) {
 		self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
-		foreach (self::all(NULL, NULL, NULL, TRUE) as $instance)
-			if ($instance->isInvalidated()) {
+		foreach (self::all(NULL, NULL, NULL, TRUE, $ignore_remove_field) as $instance)
+			if ($instance->isInvalidated($ignore_remove_field)) {
 				self::log(Logger::INFO_2, get_called_class() . ": Remove Instance {$instance->id()}.");
 				if (!$simulate)
 					$instance->delete();

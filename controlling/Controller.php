@@ -24,7 +24,7 @@ Class Controller {
 		static::perfmon(true);
 		$result = (method_exists($this, $action) && $this->before_filter($action, $args)) &&
 		          (!method_exists($this, "before_filter_" . $action) ||
-		           call_user_method_array("before_filter_" . $action, $this, $args));
+		           call_user_func_array(array($this, "before_filter_" . $action), $args));
 		if ($result) {
 			$class = get_called_class();
 			self::log(Logger::INFO_2, "Dispatch action '{$action}' on controller '{$class}'");

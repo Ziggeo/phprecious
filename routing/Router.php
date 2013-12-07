@@ -179,7 +179,7 @@ class Router {
 	}
 	
 	public function fullpath($path) {
-		$subpath = call_user_method_array("path", $this, func_get_args());
+		$subpath = call_user_func_array(array($this, "path"), func_get_args());
 		return $this->fullpath_base . $subpath;
 	}
 	

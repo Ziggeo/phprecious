@@ -4,7 +4,7 @@
  * Scheme Properties
  *   "default": default value (default: undefined)
  *   "readonly": (default: false)
- *   "validate": array of validators (default: NULL)
+ *   "validate": array of validators or single validator (default: NULL)
  *   "persistent": belongs to database (default: TRUE)
  */
 
@@ -83,7 +83,7 @@ class Model {
 	
 	static public function classOptions() {
 		$class = get_called_class();
-		if (!@self::$options[$class])
+		if (!isset(self::$options[$class]))
 			self::$options[$class] = static::initializeOptions();
 		return self::$options[$class];
 	}
@@ -103,7 +103,9 @@ class Model {
 	}
 
 	protected static function initializeOptions() {
-		return array();
+		return array(
+			"exceptions" => FALSE
+		);
 	}
 		
 	
@@ -395,3 +397,8 @@ class Model {
 	}
 
 }
+
+
+
+
+class ModelException extends Exception {}

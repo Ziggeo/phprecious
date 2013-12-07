@@ -29,7 +29,7 @@ abstract class ModelAssociation {
 			return $this->cache;
 		}
 		else
-			return call_user_method_array("delegateSelect", $this, func_get_args());
+			return call_user_func_array(array($this, "delegateSelect"), func_get_args());
 	}
 	
 	public function invalidateCache() {

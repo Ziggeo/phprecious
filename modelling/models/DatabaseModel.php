@@ -86,7 +86,7 @@ class DatabaseModel extends ActiveModel {
 			$this->setAttr("updated", $t, TRUE);  
 	}	
 	
-	public static function count($query = array()) {
+	protected static function countModels($query = array()) {
 		return self::table()->count(self::encodeData($query));
 	}
 
