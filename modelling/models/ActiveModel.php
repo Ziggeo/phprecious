@@ -346,10 +346,10 @@ abstract class ActiveModel extends Model {
 			if (isset($meta["unique"])) {
 				$conf = $meta["unique"];
 				$value = @$this->attrs[$key];
-				if ((!@$conf["ignore_if_null"] || isset($value)) &&
+				if ((!isset($conf["ignore_if_null"]) || !$conf["ignore_if_null"] || isset($value)) &&
 				    (isset($this->attrsChanged[$key]) || !$this->isSaved())) {
 					$query = array();
-					if (@$conf["query"])
+					if (isset($conf["query"]))
 						foreach($conf["query"] as $item)
 							$query[$item] = $this->attrs[$item];
 					while (TRUE) {

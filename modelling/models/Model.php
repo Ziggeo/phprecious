@@ -55,7 +55,7 @@ class Model {
 	
 	static public function classCans() {
 		$class = get_called_class();
-		if (!@self::$cans[$class])
+		if (!isset(self::$cans[$class]))
 			self::$cans[$class] = static::initializeCan();
 		return self::$cans[$class];
 	}

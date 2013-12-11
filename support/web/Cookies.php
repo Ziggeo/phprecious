@@ -3,7 +3,7 @@
 Class Cookies {
 	
 	private static function normalizeDomain($domain) {
-		$a = split(":", $domain, 2);
+		$a = explode(":", $domain, 2);
 		return $a[0];
 	}
 	
@@ -12,7 +12,7 @@ Class Cookies {
 	}
 	
 	public static function get($name) {
-		return @$_COOKIE[$name];
+		return isset($_COOKIE[$name]) ? $_COOKIE[$name] : NULL;
 	}
 	
 	// if days == 0 then cookie set to expire at end of session
