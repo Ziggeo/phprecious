@@ -156,6 +156,13 @@ class Model {
 			if ($value != NULL && !is_bool($value))
 				$value = ParseType::parseBool($value);
 		}
+		if ($type == "array") {
+			if ($value != NULL && is_string($value)) {
+				$value = explode(",", $value);
+				for ($i = 0; $i < count($value); ++$i)
+					$value[$i] = trim($value[$i]);
+			}
+		}
 		$transform = $this->schemeProp($key, "transform", NULL);
 		if (@$transform)
 			$value = $transform($value);
