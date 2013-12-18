@@ -41,9 +41,9 @@ Class LocaleStringTable extends LocaleStrings {
 		if (!@$key)
 			return $this;
 		$arr = explode(".", $key, 2);
-		$base = @$this->table[$arr[0]];
-		if (!@$base)
+		if (!isset($this->table[$arr[0]]))
 			return NULL;
+		$base = $this->table[$arr[0]];
 		if (count($arr) > 1)
 			return $base->get($arr[1]);
 		return is_callable($base) ? call_user_func($base, $this->context) : $base;
