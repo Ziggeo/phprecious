@@ -19,15 +19,17 @@ class MongoDatabase extends Database {
     private $connection;
     private $database;
     private $dbname;
+	private $uri;
     
-    public function __construct($dbname) {
+    public function __construct($dbname, $uri = "mongodb://localhost:27017") {
     	$this->dbname = strtolower($dbname);
+		$this->uri = $uri;
     }
 	
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
-        	$this->connection = new Mongo();
+        	$this->connection = new Mongo($this->uri);
         	static::perfmon(false);
 		}
 		return $this->connection;
