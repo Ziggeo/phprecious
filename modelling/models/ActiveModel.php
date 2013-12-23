@@ -197,9 +197,9 @@ abstract class ActiveModel extends Model {
 		
 	protected abstract function deleteModel();
 	
-	public static function findById($id) {
+	public static function findById($id, $ignore_remove_field = FALSE) {
 		$rf = static::classOptionsOf("remove_field");
-		if ($rf != NULL) {
+		if (isset($rf) && !$ignore_remove_field) {
 			$query = array();
 			$query[static::idKey()] = $id;
 			$query[$rf] = FALSE;
@@ -314,7 +314,7 @@ abstract class ActiveModel extends Model {
 		$rf = static::classOptionsOf("remove_field");
 		if ($rf != NULL && !isset($query[$rf]) && !$ignore_remove_field)
 			$query[$rf] = FALSE;
-		return self::countModels($query);
+		return static::countModels($query);
 	}
 	
 	public static function materializeObjects($cursor) {
@@ -380,7 +380,7 @@ abstract class ActiveModel extends Model {
 			if ($instance->isInvalidated($ignore_remove_field)) {
 				self::log(Logger::INFO_2, get_called_class() . ": Remove Instance {$instance->id()}.");
 				if (!$simulate)
-					$instance->delete();
+					$instance->delete($ignore_remove_field);
 			}		
 	} 
 

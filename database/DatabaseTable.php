@@ -25,7 +25,7 @@ abstract class DatabaseTable {
 	public abstract function find($values, $options = NULL);
 	
 	public function count($values) {
-		return count(self::find($values));
+		return count($this->find($values));
 	}
 	
 	public function findSort($values, $sort) {
@@ -44,7 +44,7 @@ abstract class DatabaseTable {
 	}
 	
 	public function findOne($values) {
-		$arr = find($values);
+		$arr = $this->find($values);
 		return (count($arr) > 0) ? $arr[0] : NULL;
 	}
 	
@@ -76,7 +76,7 @@ abstract class DatabaseTable {
 		return $this->removeOne(array($this->primaryKey() => $this->database->encode("id", $id)));
 	}
 	
-	public abstract function ensureIndex($keys);
+	public function ensureIndex($keys) {}
 
 }
 
