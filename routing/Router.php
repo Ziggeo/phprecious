@@ -7,6 +7,7 @@ class Router {
 	
 	public $controller_path = "";
 	public $fullpath_base = "";
+    public $functions = array();
 	private $perfmon = NULL;
 	private $logger = NULL;
 	private $relative_paths = FALSE;
@@ -20,6 +21,8 @@ class Router {
 			$this->perfmon = $options["perfmon"];
 		if (isset($options["logger"]))
 			$this->logger = $options["logger"];
+        if (isset($options["functions"]))
+            $this->functions = $options["functions"];
 		$this->relative_paths = isset($options["relative_paths"]) ? TRUE : FALSE;
 	}
 
@@ -55,8 +58,12 @@ class Router {
 			"conditions" => array(),
 			"arguments" => array()
 		);
-		if (isset($options["direct"]))
-			$entry["direct"] = TRUE;
+        if (isset($options["direct"]))
+            $entry["direct"] = TRUE;
+        if (isset($options["force_redirect"]))
+            $entry["force_redirect"] = $options["force_redirect"];
+        if (isset($options["fullpath_base"]))
+            $entry["fullpath_base"] = $options["fullpath_base"];
 		if (isset($options["conditions"]))
 			$entry["conditions"] = $options["conditions"];
 		if (isset($options["path"]))
@@ -102,8 +109,15 @@ class Router {
 			    $conditions = $route["conditions"];
 			    $success = true;
 				while ($success && $condition = array_shift($conditions))
-					$success = $condition();
+					$success = isset($this->functions[$condition]) ? $this->functions[$condition]() : $condition();
 				if ($success) {
+				    if (isset($route["force_redirect"]) && (isset($this->functions[$route["force_redirect"]]) ? $this->functions[$route["force_redirect"]]() : $route["force_redirect"]())) {
+				        $redir = (isset($route["fullpath_base"]) ? $route["fullpath_base"] : $this->fullpath_base) . "/" . $uri;
+				        $this->redirect($redir);
+                        $this->log(Logger::INFO_2, "Redirect to SSL: " . $redir);
+                        $this->perfmon(false);
+				        return;
+				    }
 					$controller_action = $route["controller_action"];
 					$direct = $route["direct"];
 					$arguments = $route["arguments"];
