@@ -118,7 +118,7 @@ abstract class JobModel extends DatabaseModel {
             foreach ($jobs as $job) {
                 if (TimePoint::get($job->created)->increment($opts["timeout"])->earlier()) {
                     $job->inc("timeout_count");
-                    $this->updateStatus(self::STATUS_TIMEOUT, "", Logger::WARN);
+                    $job->updateStatus(self::STATUS_TIMEOUT, "", Logger::WARN);
                 }
             }
         }
