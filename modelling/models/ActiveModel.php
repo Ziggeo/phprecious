@@ -180,12 +180,12 @@ abstract class ActiveModel extends Model {
 			return FALSE;
 		}
 		$this->beforeDelete();
+        foreach ($this->assocs() as $assoc)
+            $assoc->deleteModel();
 		$success = $this->deleteModel();
 		if ($success) {
 			static::log(Logger::INFO_2, "Deleted model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->deleted = TRUE;
-			foreach ($this->assocs() as $assoc)
-				$assoc->deleteModel();
 			$this->afterDelete();
 		} else {
 			static::log(Logger::WARN, "Failed to delete model '{" . get_called_class() . "' with id {$this->id()}.");
