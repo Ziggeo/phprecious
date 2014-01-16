@@ -377,12 +377,12 @@ class Model {
 		return array_map(function ($row) use ($tags, $options) { return $row->asRecord($tags, $options); }, $arr);
 	}
 	
-	public function asJSON($tags = array("read"), $options = array()) {
-		return json_encode($this->asRecord($tags, $options));
+	public function asJSON($tags = array("read"), $options = array(), $pretty_print = FALSE) {
+		return json_encode($this->asRecord($tags, $options), $pretty_print ? JSON_PRETTY_PRINT : 0);
 	}
 	
-	public static function asJSONs($arr, $tags = array("read"), $options = array()) {
-		return json_encode(self::asRecords($arr, $tags, $options));
+	public static function asJSONs($arr, $tags = array("read"), $options = array(), $pretty_print = FALSE) {
+		return json_encode(self::asRecords($arr, $tags, $options), $pretty_print ? JSON_PRETTY_PRINT : 0);
 	}
 
 	public function asHTML($tags = array("read"), $options = array()) {
