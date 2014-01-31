@@ -135,8 +135,8 @@ class Router {
 		$this->perfmon(true);
 		$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
 		krsort($arguments);
-		foreach ($arguments as $key=>$data) {
-			$item = @$data["remove"] ? ArrayUtils::removeByIndex($args, $key) : $args[$key];
+		foreach ($arguments as $argkey=>$data) {
+			$item = @$data["remove"] ? ArrayUtils::removeByIndex($args, $argkey) : $args[$argkey];
 			if (@$data["write"])
 				$data["write"]($item);
 		}
@@ -172,9 +172,9 @@ class Router {
 		array_shift($args);
 		$arguments = $route["arguments"];
 		ksort($arguments);
-		foreach ($arguments as $key=>$data) {
+		foreach ($arguments as $argkey=>$data) {
 			if (@$data["read"])
-				ArrayUtils::insert($args, $key, $data["read"]());
+				ArrayUtils::insert($args, $argkey, $data["read"]());
 		}
 		$in_uri_args = substr_count($uri, "(");
 		while (count($args) > 0 && $in_uri_args > 0) {

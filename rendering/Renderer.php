@@ -47,8 +47,8 @@ class Renderer {
 		static::log(Logger::INFO_3, "Rendering '{$template}'.");
 		$layout = isset($options["nolayout"]) || !isset($this->layouts_directory) ? NULL : (isset($options["layout"]) ? $options["layout"] : $this->default_layout);
 		$yield = $this->views_directory . "/" . $template . ".php";
-		foreach ($locals as $key => $value ) {
-			$$key = $value;
+		foreach ($locals as $lockey => $value ) {
+			$$lockey = $value;
 		}
 		if ($layout)
 			include($this->layouts_directory . "/" . $layout . ".php");
