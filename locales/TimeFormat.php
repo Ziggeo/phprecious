@@ -32,6 +32,10 @@ Class TimeFormat {
 	public static function format_time($t) {
 		return strftime(self::$TIME_FORMAT, TimeSupport::ensure_seconds($t));
 	}
+	
+	public static function format_month_year($t) {
+		return strftime("%b %Y", $t);
+	}
 
 }
 

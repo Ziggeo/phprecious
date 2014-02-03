@@ -29,11 +29,11 @@ class ModelHasManyAssociation extends ModelAssociation {
 		return $query;
 	}
 	
-	public function select($query = NULL, $sort = NULL, $limit = NULL, $skip = NULL) {
+	public function select($query = NULL, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE) {
 		$class = $this->foreignClass;
 		if (!@$sort)
 			$sort = @$this->getOption("sort");
- 		return $class::allBy($this->prepare_query($query), $sort, $limit, $skip);
+ 		return $class::allBy($this->prepare_query($query), $sort, $limit, $skip, $iterator);
 	}
 	
 	public function count($query = NULL) {
@@ -65,7 +65,7 @@ class ModelHasManyAssociation extends ModelAssociation {
 	
 	public function deleteModel() {
 		if (@$this->getOption("delete_cascade")) 
-			foreach ($this->delegate() as $obj)
+			foreach ($this->select(NULL, NULL, NULL, NULL, TRUE) as $obj)
 				$obj->delete();
 	}
 
