@@ -49,6 +49,10 @@ class TimePoint {
 		return new TimePointObj(time() + TimeSupport::ensure_seconds($seconds));
 	}
 	
+	public static function beforeNow($seconds) {
+		return new TimePointObj(time() - TimeSupport::ensure_seconds($seconds));
+	}
+
 	public static function get($seconds = NULL) {
 		return new TimePointObj($seconds);
 	}
