@@ -25,6 +25,7 @@ Class ApiController extends Controller {
 
 	const RETURN_ENCODING_DEFAULT = 0;
 	const RETURN_ENCODING_TEXTAREA = 1;
+	const RETURN_ENCODING_POSTMESSAGE = 2;
 	
 	public $return_encoding = ApiController::RETURN_ENCODING_DEFAULT;
 	
@@ -36,6 +37,9 @@ Class ApiController extends Controller {
 			print json_encode($data);	
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
 			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
+		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_POSTMESSAGE) {
+			$this->header_http_status($status);
+			print "<!DOCTYPE html><script>parent.postMessage(JSON.stringify(" . json_encode($data) . "), '*');</script>";
 		}
 		return $success;
 	}
