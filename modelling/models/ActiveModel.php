@@ -42,9 +42,18 @@ abstract class ActiveModel extends Model {
 	private $saved = FALSE;
 	private $newModel = TRUE;
 	private $deleted = FALSE;
+	private $deleting = FALSE;
 	
 	public function isSaved() {
 		return $this->saved;
+	}
+	
+	public function isDeleting() {
+		return $this->deleting;
+	}
+	
+	public function isDeleted() {
+		return $this->deleted;
 	}
 	
 	protected function beforeSave() {
@@ -83,7 +92,7 @@ abstract class ActiveModel extends Model {
 				throw new ModelException("Could not create model: already created");
 			return FALSE;
 		}
-		if ($this->deleted) {
+		if ($this->deleted || $this->deleting) {
 			if ($this->optionsOf("exceptions"))
 				throw new ModelException("Could not create model: deleted");
 			return FALSE;
@@ -100,6 +109,8 @@ abstract class ActiveModel extends Model {
 			$this->setAttr(static::idKey(), $id);
 			$this->resetChanged();
 			static::log(Logger::INFO_2, "Created model '" . get_called_class() . "' with id {$this->id()}.");
+	        foreach ($this->assocs() as $assoc)
+	            $assoc->createModel();
 			$this->afterCreate();
 			return TRUE;
 		} else {
@@ -118,7 +129,7 @@ abstract class ActiveModel extends Model {
 				throw new ModelException("Could not update model: not created");
 			return FALSE;
 		}
-		if ($this->deleted) {
+		if ($this->deleted || $this->deleting) {
 			if ($this->optionsOf("exceptions"))
 				throw new ModelException("Could not update model: deleted");
 			return FALSE;
@@ -174,11 +185,12 @@ abstract class ActiveModel extends Model {
 				throw new ModelException("Could not delete model: not created");
 			return FALSE;
 		}
-		if ($this->deleted) {
+		if ($this->deleted || $this->deleting) {
 			if ($this->optionsOf("exceptions"))
 				throw new ModelException("Could not delete model: already deleted");
 			return FALSE;
 		}
+		$this->deleting = TRUE;
 		$this->beforeDelete();
         foreach ($this->assocs() as $assoc)
             $assoc->deleteModel();

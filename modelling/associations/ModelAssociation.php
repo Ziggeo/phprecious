@@ -39,6 +39,9 @@ abstract class ModelAssociation {
 	
 	protected abstract function delegateSelect();
 	
+	public function createModel() {
+	}
+	
 	public function deleteModel() {
 	}
 	
