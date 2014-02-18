@@ -12,7 +12,11 @@ class DatabaseModel extends ActiveModel {
     
     protected static function getDatabase() {
         global $database;
-        return $database;
+		if (isset($database))
+			return $database;
+		if (is_callable("DATABASE"))
+			return DATABASE();
+		return NULL;
     }
 
     public static function encodeData($attrs) {
