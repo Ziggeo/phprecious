@@ -109,18 +109,19 @@ Abstract Class DataObjectStats extends DatabaseModel {
             $this->data = $data;
             $this->save();
         }
-        if (count($period_update) > 0) {
+        if (count($period_update) > 0 || count($period_deps) > 0) {
             foreach (static::periods() as $period) {
                 $period_stat = $this->obtainPeriodStats($date, $period);
                 $old_period_data = array_slice($period_stat->data, 0);
                 $period_data = $period_stat->data;
-                $period_stat->data = NULL;
+                $period_stat->data = array();
                 foreach ($period_update as $key=>$action) {
                     self::performAction($statsScheme, $period_data, $key, $action);
                     if (isset($statsScheme[$key]["period_dependencies"]))
                         foreach ($statsScheme[$key]["period_dependencies"] as $dep)
                             $period_deps[$dep] = TRUE;
                 }
+				$old_period_deps = array_slice($period_deps, 0);
                 while (count($period_deps) > 0) {
                     $dep = array_keys(array_splice($period_deps, 0, 1));
                     $key = $dep[0];
@@ -129,6 +130,7 @@ Abstract Class DataObjectStats extends DatabaseModel {
                         foreach ($statsScheme[$key]["period_dependencies"] as $dep)
                             $period_deps[$dep] = TRUE;
                 }
+				$period_deps = $old_period_deps;
                 $period_stat->data = $period_data;
                 $period_stat->save();
             }
