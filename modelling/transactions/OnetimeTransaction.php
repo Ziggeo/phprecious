@@ -39,7 +39,7 @@ class OnetimeTransaction extends DatabaseModel {
 	}
 	
 	public function isExpired() {
-		return TimePoint::get($this->created)->increment(TimePeriod::days(Session::REMOVE_DAYS))->earlier();
+		return TimePoint::get($this->created)->increment(TimePeriod::days(self::REMOVE_DAYS))->earlier();
 	}
 	
 	public static function cleanup($simulate = FALSE) {
