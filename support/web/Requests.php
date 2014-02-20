@@ -6,7 +6,7 @@ Class Requests {
 	    if ($type == "GET") $value = isset($_GET[$name]) ? $_GET[$name] : NULL;
 	    elseif ($type == "POST") $value = isset($_POST[$name]) ? $_POST[$name] : NULL;
 		else $value = isset($_GET[$name]) ? $_GET[$name] : (isset($_POST[$name]) ? $_POST[$name] : NULL);
-		return stripslashes(strip_tags($value));
+		return $value == NULL ? NULL : stripslashes(strip_tags($value));
 	}
 	
 	public static function getVarDef($name, $def) {
