@@ -30,7 +30,7 @@ Class StringTable {
 	}
 	
 	public function exists($ident) {
-		return isset($this->string_table[$ident]);
+		return $this->get($ident) != NULL;
 	}
 	
 	public function table() {
