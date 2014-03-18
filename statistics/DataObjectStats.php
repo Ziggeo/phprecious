@@ -6,6 +6,10 @@ require_once(dirname(__FILE__) . "/../modelling/associations/ModelHasOneAssociat
 
 
 Abstract Class DataObjectStats extends DatabaseModel {
+	
+	protected function time() {
+		return time();
+	}
     
     protected static function periodStatsClassName() { return "DataObjectPeriodStats"; }
     
@@ -38,7 +42,7 @@ Abstract Class DataObjectStats extends DatabaseModel {
      */
     public function readStats($options = array()) {
         $hierarchy = isset($options["hierarchy"]) ? $options["hierarchy"] : FALSE;
-        $date = isset($options["date"]) ? $options["date"] : time();
+        $date = isset($options["date"]) ? $options["date"] : $this->time();
         $period = isset($options["period"]) ? $options["period"] : NULL;
         $options["date"] = $date;
         $result = $this->data;
@@ -61,7 +65,7 @@ Abstract Class DataObjectStats extends DatabaseModel {
      *  key => array(op => value), op: inc, dec, set
      */ 
     public function writeStats($update, $options = array()) {
-        $date = isset($options["date"]) ? $options["date"] : time();
+        $date = isset($options["date"]) ? $options["date"] : $this->time();
         $options["date"] = $date;
         foreach (static::periods() as $period) {
             $period_stat = $this->obtainPeriodStats($date, $period);
