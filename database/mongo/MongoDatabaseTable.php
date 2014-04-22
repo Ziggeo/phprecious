@@ -29,13 +29,22 @@ class MongoDatabaseTable extends DatabaseTable {
 		return "_id";
 	}
 	
+	private function updateOptions($options) {
+		if (isset($options["safe"]) && class_exists("MongoClient")) {
+			$options["w"] = $options["safe"];
+			unset($options["safe"]);
+		}
+		return $options;
+	}
+	
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
+		$options = $this->updateOptions($options);
 		static::perfmon(true);
 		//TODO: Why do I have to create a new mongo id?
         $row[$this->primaryKey()] = new MongoId();
 		//unset($row["_id"]);
 		$success = $this->getCollection()->insert($row, $options);
-        if (@$options["safe"] or @$options["fsync"])
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
         	$success = $success["ok"];
 		static::perfmon(false);
 		return $success;
@@ -71,11 +80,12 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 	
 	public function update($query, $update, $options = array("safe" => TRUE)) { // "multiple" => false
-		if(count($update) == 0)
+		$options = $this->updateOptions($options);
+			if(count($update) == 0)
 			return false;
 		static::perfmon(true);
 		$success = $this->getCollection()->update($query, array('$set' => $update), $options);
-        if (@$options["safe"] || @$options["fsync"] || isset($success["ok"]))
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
         	$success = $success["ok"];
 		static::perfmon(false);
 		return $success;
@@ -94,9 +104,10 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 	
 	public function remove($query, $options = array("safe" => TRUE)) { // "justOne" => true
+		$options = $this->updateOptions($options);
 		static::perfmon(true);
 		$success = $this->getCollection()->remove($query, $options);
-        if (@$options["safe"] or @$options["fsync"])
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
         	$success = $success["ok"];
 		static::perfmon(false);
 		return $success;

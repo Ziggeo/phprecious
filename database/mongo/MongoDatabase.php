@@ -29,7 +29,7 @@ class MongoDatabase extends Database {
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
-        	$this->connection = new Mongo($this->uri);
+        	$this->connection = class_exists("MongoClient") ? new MongoClient($this->uri) : new Mongo($this->uri);
         	static::perfmon(false);
 		}
 		return $this->connection;
