@@ -27,7 +27,9 @@ class LoggerMailConsumer extends LoggerConsumer {
 		
 		foreach ($this->recipients as $email) {
 			$mail->recipient = $email;
-			$this->mailer->send($mail);
+			try {
+				$this->mailer->send($mail);
+			} catch (Exception $e) {}
 		}
 	}
 	

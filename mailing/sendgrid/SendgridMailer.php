@@ -44,16 +44,23 @@ class SendgridMailer extends Mailer
 			             ->setFromName(trim($sender_arr[0]));
 		}
 		
-		$api = @$this->option("api") ? $this->option("api") : "smtp";
-		
-		if ($api == "web")
-			$result = $this->sendgrid->web->send($sendgridmail);
-		elseif ($api == "smtp")
-			$result = $this->sendgrid->smtp->send($sendgridmail);
-		else
-			throw new MailerException("Unknown sendgrid api '{$result}'");
-		
-		return $result;
+		return $this->sendNow($sendgridmail);
 	}
+	
+	private function sendNow($sendgridmail, $tries = 5) {
+		$last_exception = NULL;
+		$api = @$this->option("api") ? $this->option("api") : "smtp";
+		if ($api != "web" && $api != "smtp")
+			throw new MailerException("Unknown sendgrid api '{$api}'");
+		while ($tries > 0) {
+			try {
+				return $api == "web" ? $this->sendgrid->web->send($sendgridmail) : $this->sendgrid->smtp->send($sendgridmail);
+			} catch (Exception $e) {
+				$tries--;
+				$last_exception = $e;
+			}
+		}
+		throw new MailerException($last_exception);
+	} 
 
 }
