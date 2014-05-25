@@ -136,8 +136,8 @@ Class FileModel extends DatabaseModel {
 		));
 	}
 	
-	public static function createByData($filename, $data, $options = array()) {
-		static::log(Logger::INFO, "Create data file by " . $filename . "");
+	public static function createFolderNoFile($filename, $options = array()) {
+		static::log(Logger::INFO, "Create file by " . $filename . "");
 		$original_file_name = basename($filename);
 		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
 		$extension = @$options["extension"] ? $options["extension"] : FileUtils::extensionOf($file_name);
@@ -155,12 +155,24 @@ Class FileModel extends DatabaseModel {
 			static::log("Error: cannot create directory.", Logger::WARN);
 			return NULL;
 		}
+		$instance->file_size = 0;		
+		if (!$instance->save())
+			return NULL;
+		return $instance;
+	}
+
+	public static function createByData($filename, $data, $options = array()) {
+		$instance = self::createFolderNoFile($filename, $options);
+		if ($instance == NULL)
+			return NULL;
 		$fhandle = fopen($instance->getFileName(), "wb");
 		fwrite($fhandle, $data);
 		fclose($fhandle);
 		$instance->file_size = filesize($instance->getFileName());		
-		if (!$instance->save())
+		if (!$instance->save()) {
+			$instance->remove();
 			return NULL;
+		}
 		return $instance;
 	}
 	
@@ -249,7 +261,8 @@ Class FileModel extends DatabaseModel {
 	}
 
 	protected function afterDelete() {
-		@unlink($this->getFileName());
+		if (file_exists($this->getFileName()))
+			@unlink($this->getFileName());
 	}
 	
 	public function remove() {
