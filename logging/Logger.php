@@ -22,7 +22,7 @@ class Logger {
 	public function message($tags, $level, $text) {
 		$f = array();
 		foreach ($this->fields as $key=>$valuefunc)
-			$f[$key] = is_callable($value_func) ? $valuefunc($this, $tags, $level, $text) : $valuefunc;
+			$f[$key] = is_callable($valuefunc) ? $valuefunc($this, $tags, $level, $text) : $valuefunc;
 		$this->process(new LogMessage($tags, $level, $text, $f));
 	}
 	
