@@ -52,6 +52,8 @@ Class FileModel extends DatabaseModel {
 		$opts["identifier_length"] = 16;
 		$opts["split_identifier"] = 2;
 		$opts["keep_files"] = TRUE;
+		$opts["retry_count"] = 1;
+		$opts["retry_delay"] = 10;
 		$opts["prefixes"] = array(
 			"default" => "/default",
 			"removed" => "/removed",
@@ -151,8 +153,8 @@ Class FileModel extends DatabaseModel {
 			static::log("Error: identifier already exists.", Logger::WARN);
 			return NULL;
 		}
-		$retry_count = @$options["retry_count"] || 1;
-		$retry_delay = @$options["retry_delay"] || 10;
+		$retry_count = self::classOptionsOf("retry_count");
+		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
 			if (mkdir($instance->getDirectoryPath(), 0777, TRUE))
 				break;
@@ -213,9 +215,18 @@ Class FileModel extends DatabaseModel {
 			static::log(Logger::WARN, "Error: identifier already exists.");
 			return NULL;
 		}
-		if (!mkdir($instance->getDirectoryPath(), 0777, TRUE)) {
-			static::log(Logger::WARN, "Error: cannot create directory.");
-			return NULL;
+		$retry_count = self::classOptionsOf("retry_count");
+		$retry_delay = self::classOptionsOf("retry_delay");
+		while ($retry_count > 0) {
+			if (mkdir($instance->getDirectoryPath(), 0777, TRUE))
+				break;
+			$retry_count--;
+			if ($retry_count > 0)
+				usleep(1000 * $retry_delay);
+			else {
+				static::log("Error: cannot create directory.", Logger::WARN);
+				return NULL;
+			}
 		}
 		if (!$instance->save())
 			return NULL;
@@ -248,9 +259,18 @@ Class FileModel extends DatabaseModel {
 			static::log("Error: identifier already exists.", Logger::WARN);
 			return NULL;
 		}
-		if (!mkdir($instance->getDirectoryPath(), 0777, TRUE)) {
-			static::log("Error: cannot create directory.", Logger::WARN);
-			return NULL;
+		$retry_count = self::classOptionsOf("retry_count");
+		$retry_delay = self::classOptionsOf("retry_delay");
+		while ($retry_count > 0) {
+			if (mkdir($instance->getDirectoryPath(), 0777, TRUE))
+				break;
+			$retry_count--;
+			if ($retry_count > 0)
+				usleep(1000 * $retry_delay);
+			else {
+				static::log("Error: cannot create directory.", Logger::WARN);
+				return NULL;
+			}
 		}
 		if (!$instance->save())
 			return NULL;
