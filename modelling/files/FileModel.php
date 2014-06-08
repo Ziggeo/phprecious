@@ -230,10 +230,19 @@ Class FileModel extends DatabaseModel {
 		}
 		if (!$instance->save())
 			return NULL;
-		if (!move_uploaded_file($tmp_file, $instance->getFileName())) {
-			static::log(Logger::WARN, "Error: cannot move file.");
-			$instance->delete();
-			return NULL;
+		$retry_count = self::classOptionsOf("retry_count");
+		$retry_delay = self::classOptionsOf("retry_delay");
+		while ($retry_count > 0) {
+			if (move_uploaded_file($tmp_file, $instance->getFileName()))
+				break;
+			$retry_count--;
+			if ($retry_count > 0)
+				usleep(1000 * $retry_delay);
+			else {
+				static::log(Logger::WARN, "Error: cannot move file.");
+				$instance->delete();
+				return NULL;
+			}
 		}
 		return $instance;
 	}
@@ -274,13 +283,16 @@ Class FileModel extends DatabaseModel {
 		}
 		if (!$instance->save())
 			return NULL;
-		if ($move) {
-			if (!rename($filename, $instance->getFileName())) {
-				$instance->delete();
-				return NULL;
-			}
-		} else {
-			if (!copy($filename, $instance->getFileName())) {
+		$retry_count = self::classOptionsOf("retry_count");
+		$retry_delay = self::classOptionsOf("retry_delay");
+		while ($retry_count > 0) {
+			$success = ($move && rename($filename, $instance->getFileName())) || (!$move && copy($filename, $instance->getFileName()));
+			if ($success)
+				break;
+			$retry_count--;
+			if ($retry_count > 0)
+				usleep(1000 * $retry_delay);
+			else {
 				static::log("Error: cannot move file.", Logger::WARN);
 				$instance->delete();
 				return NULL;
