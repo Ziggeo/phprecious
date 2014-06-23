@@ -91,6 +91,14 @@ Class Application {
             $this->config->set($key, $value);
     }
     
+    public function pushConfig($key = "", $value) {
+    	$arr = array();
+    	if (@$this->config->exists($key))
+			$arr = $this->config($key);
+		$arr[] = $value;
+        $this->config->set($key, $arr);
+    }
+
     public function hasConfig($key) {
         return $this->config->exists($key);
     }
