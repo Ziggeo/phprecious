@@ -151,7 +151,8 @@ class Router {
 		}
 		else {
 			$cls = $controller_file . "Controller";
-			include($this->controller_path . "/" . $cls . ".php");
+			if (!class_exists($cls))
+				include($this->controller_path . "/" . $cls . ".php");
 			$i = strrchr($cls, "/");
 			$clsname = $i ? substr($i, 1) : $cls;
 			$this->perfmon(false);
