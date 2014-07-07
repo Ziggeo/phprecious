@@ -85,6 +85,10 @@ Class Application {
     public function configTable() {
         return $this->config->table();
     }
+	
+	public function getConfig() {
+		return $this->config;
+	}
     
     public function setConfig($key = "", $value = NULL, $overwrite = TRUE) {
         if ($overwrite || !@$this->config->exists($key))

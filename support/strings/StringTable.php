@@ -37,4 +37,17 @@ Class StringTable {
 		return $this->string_table;
 	}
 	
+	public function setAll($arr) {
+		foreach ($arr as $ident=>$value)
+			$this->set($ident, $value);
+	}
+	
+	public function setFromJSON($json) {
+		$this->setAll(json_decode($json));
+	}
+	
+	public function setFromFile($filename) {
+		$this->setFromJSON(file_get_contents($filename));
+	}
+	
 }
