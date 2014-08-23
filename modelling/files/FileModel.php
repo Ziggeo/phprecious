@@ -54,6 +54,7 @@ Class FileModel extends DatabaseModel {
 		$opts["keep_files"] = TRUE;
 		$opts["retry_count"] = 1;
 		$opts["retry_delay"] = 10;
+		$opts["block_size"] = 8 * 1024;
 		$opts["prefixes"] = array(
 			"default" => "/default",
 			"removed" => "/removed",
@@ -134,7 +135,8 @@ Class FileModel extends DatabaseModel {
 		static::log(Logger::INFO_2, "Reading file " . $this->log_ident() . "");
 		return FileStreamer::streamFile($this->getFileName(), array(
 			"download" => $download,
-			"download_name" => $this->file_name
+			"download_name" => $this->file_name,
+			"block_size" => $this->optionsOf("block_size")
 		));
 	}
 	

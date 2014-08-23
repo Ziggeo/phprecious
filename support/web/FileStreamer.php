@@ -26,7 +26,7 @@ Class FileStreamer {
 				list($range, $extra_ranges) = explode(',', $range_orig, 2);
 			    list($seek_start, $seek_end) = explode('-', $range, 2);
 				$seek_start = max(0, intval($seek_start));
-				$seek_end = min($seek_start, intval($seek_end));
+				$seek_end = !!$seek_end ? min($seek_start, intval($seek_end)) : ($size-1);
 				if (isset($size)) {
 					$seek_start = min($seek_start, $size - 1);
 					$seek_end = min($seek_end, $size - 1);
@@ -89,9 +89,11 @@ Class FileStreamer {
 
 		if (@$range) {
             header('HTTP/1.1 206 Partial Content');
-	        header('Accept-Ranges: bytes');
 	        header('Content-Range: bytes ' . $range["start"] . '-' . $range["end"] . '/' . $file_size);			
+		} else {
+            header('HTTP/1.1 200 Ok');
 		}
+        header('Accept-Ranges: bytes');
 
 		if (isset($options["content_type"])) {
 			if (StringUtils::has_sub($options["content_type"], "/"))
