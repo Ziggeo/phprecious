@@ -36,7 +36,7 @@ Class Required {
 	
 	public static function required_class($class_name) {
 		foreach (Required::$class_paths as $class_dir) {
-			$filename = $class_dir . "/" . $class_name . ".php";
+			$filename = $class_dir . "/" . str_replace("\\", "/", $class_name) . ".php";
 			if (is_file($filename))
 				require_once $filename;
 		}
