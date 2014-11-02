@@ -163,6 +163,15 @@ class Model {
 					$value[$i] = trim($value[$i]);
 			}
 		}
+		if ($type == "json") {
+			if (is_string($value)) {
+				try {
+					$value = json_decode($value, TRUE);
+				} catch (Exception $e) {
+					$value = NULL;
+				}
+			}
+		}
 		$transform = $this->schemeProp($key, "transform", NULL);
 		if (@$transform)
 			$value = $transform($value);
