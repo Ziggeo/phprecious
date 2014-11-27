@@ -37,4 +37,26 @@ Class StringUtils {
 			return "" . $data;
 	}
 
+	public static function simpleTemplate($begin, $end, $input, $callback) {
+		return preg_replace_callback('/' . $begin . "(.*?(?=" . $end . "))" . $end . '/', $callback, $input);
+	}
+	
+	public static function jsonLookup($json, $path) {
+		$tokens = explode(".", $path);
+		for ($i = 0; $i < count($tokens); ++$i) {
+			if (isset($json[$tokens[$i]]))
+				$json = $json[$tokens[$i]];
+			else
+				return NULL;
+		}
+		return $json;
+	}
+	
+	public static function jsonTemplate($begin, $end, $input, $json) {
+		return self::simpleTemplate($begin, $end, $input, function ($var) use ($json) {
+			return StringUtils::jsonLookup($json, $var[1]);
+		});
+	}
+	
+
 }
