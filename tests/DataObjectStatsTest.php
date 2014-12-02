@@ -107,9 +107,8 @@ class DataObjectStatsTest extends PHPUnit_Framework_TestCase {
     
     public function test() {
         global $database;
-        $base_time = time();
-        $date = getdate($base_time);
-        $next_time = mktime(1, 1, 1, $date["mon"] + 1, 1, $date["year"]);
+        $base_time = mktime(1, 1, 1, 1, 1, 2020);
+        $next_time = mktime(1, 1, 1, 2, 1, 2020);
         $database = new MemoryDatabase();
         $stats_parent = new DataObjectStatsTestModelParent();
         $stats_parent->save();
