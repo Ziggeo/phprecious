@@ -10,6 +10,7 @@ Class FileModel extends DatabaseModel {
 		$attrs = parent::initializeScheme();
 		$attrs["removed"] = array(
 			"type" => "boolean",
+            "index" => TRUE,
 			"default" => FALSE,
 			"tags" => array("read")
 		);
@@ -29,6 +30,7 @@ Class FileModel extends DatabaseModel {
 		);
 		$attrs["file_size"] = array(
 			"type" => "integer",
+            "index" => TRUE,
 			"tags" => array("read")
 		);
 		$attrs["original_file_name"] = array(
@@ -41,6 +43,7 @@ Class FileModel extends DatabaseModel {
 		);
 		$attrs["file_name"] = array(
 			"type" => "string",
+            "index" => TRUE,
 			"tags" => array("read")
 		);
 		return $attrs;

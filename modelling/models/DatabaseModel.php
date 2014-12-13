@@ -9,7 +9,11 @@ require_once(dirname(__FILE__) . "/ActiveModel.php");
 class DatabaseModel extends ActiveModel {
     
     private static $table = array();
-    
+
+	protected static function multiTableInheritance() {
+		return NULL;
+	}
+
     protected static function getDatabase() {
         global $database;
 		if (isset($database))
@@ -54,7 +58,17 @@ class DatabaseModel extends ActiveModel {
         return $result;
     }
 
+    protected static function materializeClass($attrs) {
+    	$multi = static::multiTableInheritance();
+		if ($multi !== NULL)
+	        return $attrs[$multi["typeColumn"]];
+		return parent::materializeClass($attrs);
+    }
+
     public static function tableName() {
+    	$multi = static::multiTableInheritance();
+		if ($multi !== NULL)
+			return $multi["tableName"];
         $class = get_called_class();
         $name = strtolower($class) . "s";
         return $name;
@@ -62,7 +76,8 @@ class DatabaseModel extends ActiveModel {
     
     public static function table() {
         $class = get_called_class();
-        if (!isset(self::$table[$class])) self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
+        if (!isset(self::$table[$class]))
+        	self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
         return self::$table[$class];
     }
     
@@ -82,6 +97,17 @@ class DatabaseModel extends ActiveModel {
             "index" => TRUE,
             "type" => "date",
         );
+    	$multi = static::multiTableInheritance();
+		if ($multi !== NULL) {
+	        $attrs[$multi["typeColumn"]] = array(
+	            "type" => "string",
+	            "index" => TRUE,
+	            "default" => function ($instance) {
+	                return get_class($instance);
+	            },
+	            "validate" => array(new PresentValidator())
+	        );
+		}
         return $attrs;
     }
     
