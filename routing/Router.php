@@ -56,7 +56,8 @@ class Router {
 			"controller_action" => $controller_action,
 			"direct" => FALSE,
 			"conditions" => array(),
-			"arguments" => array()
+			"arguments" => array(),
+			"sitemap" => FALSE
 		);
         if (isset($options["direct"]))
             $entry["direct"] = TRUE;
@@ -70,9 +71,36 @@ class Router {
 			$entry["path"] = $options["path"];
 		if (isset($options["arguments"]))
 			$entry["arguments"] = $options["arguments"];
+		if (isset($options["sitemap"]))
+			$entry["sitemap"] = $options["sitemap"];
 		$this->routes[] = $entry;
 		if (isset($options["path"]))
 			$this->paths[$options["path"]] = $entry; 
+	}
+	
+	public function getSitemap() {
+		$result = array();
+		foreach ($this->routes as $entry) {
+			if (@$entry["sitemap"])
+				$result[] = $this->fullpath($entry);
+		}
+		return $result;
+	}
+	
+	public function formatSitemap() {
+		$s = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
+		     '<urlset' . "\n" . 
+             '        xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n" .
+             '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' . "\n" .
+             '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">' . "\n";
+		$urls = $this->getSitemap();
+		foreach ($urls as $url) {
+			$s .= "  <url>\n" .
+			      "    <loc>" . $url . "</loc>\n" .
+			      "  </url>\n";
+		}
+		$s .= "</urlset>\n";
+		return $s;
 	}
 	
 	public function addMetaRoute($key, $controller_action) {
@@ -163,9 +191,12 @@ class Router {
 	
 	public function path($path) {
 		$this->perfmon(true);
-		if (isset($this->virtual_paths[$path]))
-			return $this->virtual_paths[$path]();
-		$route = $this->paths[$path];
+		$route = $path;
+		if (is_string($path)) {
+			if (isset($this->virtual_paths[$path]))
+				return $this->virtual_paths[$path]();
+			$route = $this->paths[$path];
+		}
 		$uri = ($this->relative_paths ? "" : "/") . $route["uri"];
 		$uri = str_replace('\/', "/", $uri);
 		$uri = str_replace('\.', ".", $uri);
