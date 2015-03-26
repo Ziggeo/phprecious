@@ -1,6 +1,8 @@
 <?php
 
-function _($s) { return $s; }
+if (!@is_callable(_)) {
+	function _($s) { return $s; }
+}
 
 require_once(dirname(__FILE__) . "/../validating/Validator.php");
 require_once(dirname(__FILE__) . "/../validating/LengthValidator.php");

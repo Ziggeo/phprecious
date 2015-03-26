@@ -172,6 +172,14 @@ class Model {
 				}
 			}
 		}
+		if ($type == "float") {
+			if (is_string($value)) {
+				if ($value === "")
+					$value = $this->getAttr($key);
+				else
+					$value = floatval($value);
+			}
+		}
 		$transform = $this->schemeProp($key, "transform", NULL);
 		if (@$transform)
 			$value = $transform($value);
