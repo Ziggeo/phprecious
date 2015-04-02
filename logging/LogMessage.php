@@ -54,15 +54,15 @@ class LogMessage {
 		$f = "";
 		foreach ($this->fields() as $key=>$value)
 			$f .= $key . ": " . $value . PHP_EOL;
-		return sprintf("Date: %s" . PHP_EOL .
+		return sprintf("Message: %s" . PHP_EOL .
+					   "Date: %s" . PHP_EOL .
 		               "Level: %s" . PHP_EOL .
 		               "Tags: %s" . PHP_EOL .
-		               $f .
-		               "Message: %s",
+		               $f,
+				       $this->text(),
 		               $this->datetime(),
 		               $this->level(),
-		               join(",", $this->tags()),
-		               $this->text());
+		               join(",", $this->tags()));
 	}
 
 }
