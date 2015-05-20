@@ -8,6 +8,7 @@ abstract class JobModel extends DatabaseModel {
     const STATUS_CLOSED = 3;
     const STATUS_FAILED = 4;
     const STATUS_TIMEOUT = 5;
+    const STATUS_NOT_READY = 6;
     
     private static $STATUS_STRINGS = array(
         self::STATUS_OPEN => "OPEN",
@@ -15,7 +16,8 @@ abstract class JobModel extends DatabaseModel {
         self::STATUS_DISCARDED => "DISCARDED",
         self::STATUS_CLOSED => "CLOSED",
         self::STATUS_FAILED => "FAILED",
-        self::STATUS_TIMEOUT => "TIMEOUT"
+        self::STATUS_TIMEOUT => "TIMEOUT",
+    	self::STATUS_NOT_READY => "NOTREADY"
     );
     
     protected static function jobOptions() {
@@ -31,7 +33,8 @@ abstract class JobModel extends DatabaseModel {
             /* Delete after closing */
             "delete_on_close" => FALSE,
             /* Delete after discard */
-            "delete_on_discard" => FALSE
+            "delete_on_discard" => FALSE,
+        	"not_ready_max" => 1
         );
     }
     
@@ -53,6 +56,10 @@ abstract class JobModel extends DatabaseModel {
             "default" => FALSE
         );
         $attrs["failure_count"] = array(
+            "type" => "integer",
+            "default" => 0
+        );
+        $attrs["not_ready_count"] = array(
             "type" => "integer",
             "default" => 0
         );
@@ -80,6 +87,10 @@ abstract class JobModel extends DatabaseModel {
         static::log($level, "Job: " . $this->id() . " Status: " . self::$STATUS_STRINGS[$status] . ($message != "" ? " Message: " . $message : ""));
         $this->update(array("status" => $status));
     }
+    
+    protected function isReady() {
+    	return TRUE;
+    }
 
     public function processJob() {
         $opts = static::jobOptions();
@@ -91,8 +102,16 @@ abstract class JobModel extends DatabaseModel {
                     $this->delete();
                 return TRUE;
             }
+            if (!$this->isReady()) {
+            	$this->inc("not_ready_count");
+            	if ($opts["not_ready_max"] != NULL && $this->not_ready_count < $opts["not_ready_max"])
+            		$this->updateStatus(self::STATUS_NOT_READY);
+            	else
+            		$this->updateStatus(self::STATUS_FAILED, "Not ready");
+            	return TRUE;
+            }
             try {
-                $this->performJob();
+            	$this->performJob();
                 $this->updateStatus(self::STATUS_CLOSED);
                 if ($opts["delete_on_close"])
                     $this->delete();
@@ -137,6 +156,14 @@ abstract class JobModel extends DatabaseModel {
             $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
             foreach ($jobs as $job) 
                 $job->updateStatus(self::STATUS_OPEN, "Reopen after failure");
+        }
+		if ($opts["not_ready_max"] == NULL || $opts["not_ready_max"] > 1) {
+            $query = array("status" => self::STATUS_NOT_READY);
+            if ($opts["not_ready_max"] != NULL)
+                $query["not_ready_count"] = array('$lte' => $opts["not_ready_max"]);
+            $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
+            foreach ($jobs as $job) 
+                $job->updateStatus(self::STATUS_OPEN, "Reopen after not ready");
         }
     }
     
