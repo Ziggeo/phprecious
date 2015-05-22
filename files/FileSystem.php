@@ -21,15 +21,6 @@ Class FileSystem extends AbstractFileSystem {
 
 Class File extends AbstractFile {
 	
-	protected $file_handle = NULL;
-	
-	protected function _open($options) {
-		$mode = isset($options["mode"]) ? $options["mode"] : "a";
-		$this->file_handle = fopen($this->file_name, $mode);
-		if (!$this->file_handle)
-			throw new FileSystemException("Could not open file");
-	}
-	
 	public function size() {
 		return filesize($this->file_name);
 	}
@@ -38,23 +29,29 @@ Class File extends AbstractFile {
 		return file_exists($this->file_name);
 	}
 	
-	public function isDir() {
-		throw new FileSystemException("Unsupported Operation");
-	}
-	
 	public function delete() {
 		if (!unlink($this->file_name))
 			throw new FileSystemException("Could not delete file");
 	}
 	
-	protected function _close() {
-		if (!fclose($this->file_handle))
-			throw new FileSystemException("Could not close file");
-		unset($this->file_handle);		
+	protected function readStream() {
+		return fopen($this->file_name, "r");
 	}
 	
-	protected function _write($string) {
-		return fwrite($this->file_handle, $string);
+	protected function writeStream() {
+		return fopen($this->file_name, "w");
 	}
 	
+	public function toLocalFile($file) {
+		copy($this->file_name, $file);
+	}
+	
+	public function fromLocalFile($file) {
+		copy($file, $this->file_name);
+	}	
+	
+	public function materialize() {
+		return new FileMaterializedFile($this);
+	}
+
 }

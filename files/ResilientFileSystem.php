@@ -71,16 +71,12 @@ Class ResilientFile extends AbstractFile {
 		$this->resilient_execute("delete");
 	}
 	
-	protected function _open($options) {
-		$this->resilient_execute("open", array($options));
+	protected function writeStream($string) {
+		return $this->resilient_execute("writeStream");
+	}
+
+	protected function readStream($string) {
+		return $this->resilient_execute("readStream");
 	}
 	
-	protected function _close() {
-		$this->resilient_execute("close");
-	}
-
-	protected function _write($string) {
-		return $this->file->write($string);
-	}
-
 }
