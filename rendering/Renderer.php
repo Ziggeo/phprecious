@@ -26,13 +26,16 @@ class Renderer {
 	private $default_layout;
 	private $render_once = array();
 	
-	public function __construct($views_directory, $layouts_directory = NULL, $default_layout = "application") {
+	private $postprocess_render = NULL;
+	
+	public function __construct($views_directory, $layouts_directory = NULL, $default_layout = "application", $postprocess_render = NULL) {
 		$this->default_layout = $default_layout;
 		$this->views_directory = $views_directory;
 		$this->layouts_directory = $layouts_directory;
+		$this->postprocess_render = $postprocess_render;
 	}
 	
-	public function render($options, $locals = array()) {
+	public function render_output($options, $locals = array()) {
 		static::perfmon(true);
 		if (!is_array($options))
 			$options = array("template" => $options);
@@ -57,10 +60,20 @@ class Renderer {
 		static::perfmon(false);
 	}
 	
+	public function render($options, $locals = array()) {
+		if ($this->postprocess_render !== NULL) {
+			$s = $this->render_to_string($options, $locals);
+			$f = $this->postprocess_render;
+			$p = $f($s);
+			echo $p;
+		} else
+			$this->render_output($options, $locals);
+	}
+	
 	public function render_to_string($options, $locals = array()) {
 		static::perfmon(true);
 		ob_start();
-		$this->render($options, $locals);
+		$this->render_output($options, $locals);
 		$str = ob_get_contents();
 		ob_end_clean();
 		static::perfmon(false);
@@ -72,7 +85,7 @@ class Renderer {
 		if (!is_array($options))
 			$options = array("template" => $options);
 		$options["nolayout"] = true;
-		$this->render($options, $locals);
+		$this->render_output($options, $locals);
 		static::perfmon(false);
 	}
 	
