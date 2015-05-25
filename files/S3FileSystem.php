@@ -14,7 +14,6 @@ Class S3FileSystem extends AbstractFileSystem {
 	
 	function __construct($key, $secret, $bucket) {
 		// parent::__construct();
-		$this->file_system = $file_system;
 		$this->s3 = Aws\S3\S3Client::factory(array(
 			"key" => $key,
 			"secret" => $secret

@@ -23,6 +23,10 @@ Abstract Class AbstractMaterializedFile {
 
 	public function release() {}
 	
+	function __destruct() {
+		$this->release();
+	} 
+	
 }
 
 
