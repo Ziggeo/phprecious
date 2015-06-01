@@ -77,34 +77,52 @@ Class S3File extends AbstractFile {
 	}
 	
 	public function delete() {
-		$meta = $this->s3()->deleteObject(array(
-			"Bucket" => $this->bucket(),
-			"Key" => $this->file_name
-		));
+		try {
+			$meta = $this->s3()->deleteObject(array(
+				"Bucket" => $this->bucket(),
+				"Key" => $this->file_name
+			));
+		} catch (Exception $e) {
+			throw new FileSystemException("Could not delete file");
+		}
 	}
 	
 	protected function readStream() {
-		return fopen($this->s3path(), "r");
+		$handle = fopen($this->s3path(), "r");
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open file");
+		return $handle;
 	}
 	
 	protected function writeStream() {
-		return fopen($this->s3path(), "w");
+		$handle = fopen($this->s3path(), "w");
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open file");
+		return $handle;
 	}
 			
 	public function toLocalFile($file) {
-		$this->s3()->getObject(array(
-			'Bucket' => $this->bucket(),
-			'Key'    => $this->file_name,
-			'SaveAs' => $file
-		));
+		try {
+			$this->s3()->getObject(array(
+				'Bucket' => $this->bucket(),
+				'Key'    => $this->file_name,
+				'SaveAs' => $file
+			));
+		} catch (Exception $e) {
+			throw new FileSystemException("Could not save to local file");
+		}
 	}
 	
 	public function fromLocalFile($file) {
-		 $this->s3()->putObject(array(
-			'Bucket' => $this->bucket(),
-			'Key'    => $this->file_name,
-			'SourceFile' => $file
-		));
+		try {
+			 $this->s3()->putObject(array(
+				'Bucket' => $this->bucket(),
+				'Key'    => $this->file_name,
+				'SourceFile' => $file
+			));
+		} catch (Exception $e) {
+			throw new FileSystemException("Could not save to local file");
+		}
 	}	
 
 }

@@ -35,19 +35,27 @@ Class File extends AbstractFile {
 	}
 	
 	protected function readStream() {
-		return fopen($this->file_name, "r");
+		$handle = fopen($this->file_name, "r");
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open file");
+		return $handle;
 	}
 	
 	protected function writeStream() {
-		return fopen($this->file_name, "w");
+		$handle = fopen($this->file_name, "w");
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open file");
+		return $handle;
 	}
 	
 	public function toLocalFile($file) {
-		copy($this->file_name, $file);
+		if (!copy($this->file_name, $file))
+			throw new FileSystemException("Could not save to local file");
 	}
 	
 	public function fromLocalFile($file) {
-		copy($file, $this->file_name);
+		if (!copy($file, $this->file_name))
+			throw new FileSystemException("Could not load from local file");
 	}	
 	
 	public function materialize() {

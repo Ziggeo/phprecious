@@ -19,8 +19,13 @@ Class FTPFileSystem extends AbstractFileSystem {
 		$port = @$options["port"] ? $options["port"] : 21;
 		$timeout = @$options["timeout"] ? $options["timeout"] : 90;
 		$this->ftp = $connect($host, $port, $timeout);
-		if (@$options["username"] && @$options["password"])
-			ftp_login($this->ftp, $options["username"], $options["password"]);
+		if ($this->ftp === FALSE)
+			throw new FileSystemException("Could not connect to FTP");
+		if (@$options["username"] && @$options["password"]) {
+			$result = ftp_login($this->ftp, $options["username"], $options["password"]);
+			if ($result === FALSE)
+				throw new FileSystemException("Could not sign into FTP - wrong username / password?");
+		}
 		ftp_pasv($this->ftp, TRUE);
 	}
 	
@@ -50,7 +55,8 @@ Class FTPFile extends AbstractFile {
 	}
 	
 	public function delete() {
-		ftp_delete($this->ftp(), $this->file_name);
+		if (!ftp_delete($this->ftp(), $this->file_name))
+			throw new FileSystemException("Could not delete file");
 	}
 	
 	private function get_ftp_mode($file) {
@@ -89,11 +95,13 @@ Class FTPFile extends AbstractFile {
 	*/
 			
 	public function toLocalFile($file) {
-		ftp_get($this->ftp(), $file, $this->file_name, $this->get_ftp_mode($this->file_name));
+		if (!ftp_get($this->ftp(), $file, $this->file_name, $this->get_ftp_mode($this->file_name)))
+			throw new FileSystemException("Could not save to local file");
 	}
 	
 	public function fromLocalFile($file) {
-		ftp_put($this->ftp(), $this->file_name, $file, $this->get_ftp_mode($this->file_name));
+		if (!ftp_put($this->ftp(), $this->file_name, $file, $this->get_ftp_mode($this->file_name)))
+			throw new FileSystemException("Could not load from local file");
 	}	
 
 }

@@ -47,7 +47,7 @@ Class ResilientFile extends AbstractFile {
 		while ($repeat_count > 0) {
 			try {
 				return call_user_func_array(array($this->file, $method), $args);
-			} catch (Exception $e) {
+			} catch (FileSystemException $e) {
 				$repeat_count--;
 				usleep($wait_time);
 			}
