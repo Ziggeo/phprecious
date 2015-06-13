@@ -71,6 +71,23 @@ Class Controller {
 		return $result;
 	}	
 	
+	public function getRequestArgs($get = FALSE, $post = FALSE, $post_raw = FALSE) {
+		$result = array();
+		if ($get)
+			$result = array_merge($result, $_GET);
+		if ($post)
+			$result = array_merge($result, $_POST);
+		if ($post_raw && count($_FILES) == 0) {
+			try {
+				$parsed = array();
+				parse_str(file_get_contents('php://input'), $parsed);
+				$result = array_merge($result, $parsed);
+			} catch (Exception $e) {
+			}
+		}
+		return $result;
+	}
+	
 	function json_data($filter = NULL) {
 		$raw = json_decode(Requests::getVar("data") ? Requests::getVar("data") : file_get_contents('php://input'), true);
 		if (!is_array($filter))
