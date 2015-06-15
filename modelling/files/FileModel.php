@@ -387,4 +387,24 @@ Class FileModel extends DatabaseModel {
 		}
 	}
 	
+	public function fileExists() {
+		return file_exists($this->getFileName());
+	}
+	
+	protected function createFileSystem() {
+		return FileSystem::singleton();
+	}
+	
+	private $fileSystem = NULL;
+	
+	protected function fileSystem() {
+		if ($this->fileSystem === NULL)
+			$this->fileSystem = $this->createFileSystem();
+		return $this->fileSystem;
+	} 
+	
+	public function materialize() {
+		return static::fileSystem()->getFile($this->getFileName());
+	}
+	
 }
