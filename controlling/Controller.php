@@ -106,13 +106,57 @@ Class Controller {
 			header("HTTP/1.1 " . $status . " " . $string);
 	}	
 
+    // The status and data of the response to the last request.
+    private $last_status;
+    private $last_data;
+
+    /**
+     * `get_last_status` returns the HTTP status code the controller
+     * returned when processing its last request. It is useful for
+     * testing the result controllers/routing.
+     *
+     * @return Http Status Code.
+     */
+    function get_last_status() {
+        return $this->last_status;
+    }
+
+    /**
+     * `get_last_data` returns the data the controller returned when
+     * processing its last request. ApiController, and controllers
+     * extending ApiController, are predominant users of this method.
+     * Again, this is helpful for testing.
+     *
+     * @return JSON type data from last request.
+     */
+    function get_last_data() {
+        return $this->last_data;
+    }
 
 	const RETURN_ENCODING_DEFAULT = 0;
 	const RETURN_ENCODING_TEXTAREA = 1;
 	const RETURN_ENCODING_POSTMESSAGE = 2;
+
+    /**
+     * Return a status without doing any formatting/json printing. This setting
+     * is used heavily with controllers serving Static pages. The controllers
+     * should still return a status code, but should not render their result in
+     * JSON format.
+     */
+    const RETURN_ENCODING_STATUS_ONLY = 3;
 	
 	public $return_encoding = ApiController::RETURN_ENCODING_DEFAULT;
-	
+
+    /**
+     * `return_status` sets a status using the header method and json encodes
+     * and prints any data passed as an argument. It also saves copies of the
+     * status and json for local access when testing.
+     *
+     * @param HttpHeader::Status $status The status code to return.
+     * @param mixed $data The data to json encode.
+     *
+     * @return Boolean indicating successful status codes.
+     */
 	function return_status($status = HttpHeader::HTTP_STATUS_OK, $data = NULL) {
 		$success = $status == HttpHeader::HTTP_STATUS_OK || $status == HttpHeader::HTTP_STATUS_CREATED;
 		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
@@ -124,7 +168,13 @@ Class Controller {
 		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_POSTMESSAGE) {
 			$this->header_http_status($status);
 			print "<!DOCTYPE html><script>parent.postMessage(JSON.stringify(" . json_encode($data) . "), '*');</script>";
-		}
+        } elseif ($this->return_encoding == Controller::RETURN_ENCODING_STATUS_ONLY) {
+            $this->header_http_status($status);
+        }
+
+        $this->last_status = $status;
+        $this->last_data = $data;
+
 		return $success;
 	}
 	
