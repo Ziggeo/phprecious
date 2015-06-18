@@ -47,6 +47,14 @@ class Router {
 	private $routes;
 	private $metaRoutes;
 	private $currentController;
+
+    /**
+     * The controller responsible for handling the last Http request.
+     * Necessary for accessing the status_code and data the controller
+     * stores from its last Http request when testing.
+     */
+    private $lastControllerInstance;
+
 	private $currentAction;
 	
 	public function addRoute($method, $uri, $controller_action, $options = array()) {
@@ -186,6 +194,7 @@ class Router {
 			$clsname = $i ? substr($i, 1) : $cls;
 			$this->perfmon(false);
 			$controller = new $clsname();
+            $this->lastControllerInstance = $controller;
 			$controller->dispatch($action_function, $args);
 		}
 	}
@@ -238,6 +247,18 @@ class Router {
 		return $this->currentController;
 	}
 	
+    /**
+     * `getLastControllerInstance` is a simple getter.
+     * It is useful in testing for finding the last controller
+     * handling an HTTP request, because that controller stores
+     * information useful for testing.
+     *
+     * @return The last controller to which a call was dispatched.
+     */
+    public function getLastControllerInstance() {
+        return $this->lastControllerInstance;
+    }
+
 	public function getCurrentAction() {
 		return $this->currentAction;
 	}
