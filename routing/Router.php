@@ -62,13 +62,10 @@ class Router {
 			"method" => $method,
 			"uri" => $uri,
 			"controller_action" => $controller_action,
-			"direct" => FALSE,
 			"conditions" => array(),
 			"arguments" => array(),
 			"sitemap" => FALSE
 		);
-        if (isset($options["direct"]))
-            $entry["direct"] = TRUE;
         if (isset($options["force_redirect"]))
             $entry["force_redirect"] = $options["force_redirect"];
         if (isset($options["fullpath_base"]))
@@ -138,7 +135,6 @@ class Router {
 		$uri = trim($uri, '/');
 		$controller_action = $this->metaRoutes["404"];
 		$args = array();
-		$direct = FALSE;
 		$arguments = array();
 		foreach ($this->routes as $route) {
 			if ((($route["method"] == "*") || ($route["method"] == $method)) &&
@@ -156,7 +152,6 @@ class Router {
 				        return;
 				    }
 					$controller_action = $route["controller_action"];
-					$direct = $route["direct"];
 					$arguments = $route["arguments"];
 					array_shift($matches);
 					$args = $matches;
@@ -165,10 +160,10 @@ class Router {
 			}
 		}
 		$this->perfmon(false);
-		$this->dispatchControllerAction($controller_action, $args, $direct, $arguments);
+		$this->dispatchControllerAction($controller_action, $args, $arguments);
 	}
 		
-	public function dispatchControllerAction($controller_action, $args = array(), $direct = FALSE, $arguments = array()) {
+	public function dispatchControllerAction($controller_action, $args = array(), $arguments = array()) {
 		$this->perfmon(true);
 		$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
 		krsort($arguments);
@@ -180,23 +175,16 @@ class Router {
 		@list($controller_file, $action_function) = explode("#", $controller_action);
 		$this->currentController = $controller_file;
 		$this->currentAction = $action_function;
-		if ($direct) {
-			include($controller_file . ".php");
-			$this->perfmon(false);
-			if ($action_function)
-				call_user_func_array($action_function, $args);
-		}
-		else {
-			$cls = $controller_file . "Controller";
-			if (!class_exists($cls))
-				include($this->controller_path . "/" . $cls . ".php");
-			$i = strrchr($cls, "/");
-			$clsname = $i ? substr($i, 1) : $cls;
-			$this->perfmon(false);
-			$controller = new $clsname();
-            $this->lastControllerInstance = $controller;
-			$controller->dispatch($action_function, $args);
-		}
+
+        $cls = $controller_file . "Controller";
+        if (!class_exists($cls))
+            include_once($this->controller_path . "/" . $cls . ".php");
+        $i = strrchr($cls, "/");
+        $clsname = $i ? substr($i, 1) : $cls;
+        $this->perfmon(false);
+        $controller = new $clsname();
+        $this->lastControllerInstance = $controller;
+        $controller->dispatch($action_function, $args);
 	}
 	
 	public function path($path) {
