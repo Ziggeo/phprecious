@@ -181,7 +181,7 @@ class Router {
 		$this->currentController = $controller_file;
 		$this->currentAction = $action_function;
 		if ($direct) {
-			include($controller_file . ".php");
+			include_once($controller_file . ".php");
 			$this->perfmon(false);
 			if ($action_function)
 				call_user_func_array($action_function, $args);
@@ -189,7 +189,7 @@ class Router {
 		else {
 			$cls = $controller_file . "Controller";
 			if (!class_exists($cls))
-				include($this->controller_path . "/" . $cls . ".php");
+				include_once($this->controller_path . "/" . $cls . ".php");
 			$i = strrchr($cls, "/");
 			$clsname = $i ? substr($i, 1) : $cls;
 			$this->perfmon(false);
