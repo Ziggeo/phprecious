@@ -123,8 +123,8 @@ Class Controller {
 
     /**
      * `get_last_data` returns the data the controller returned when
-     * processing its last request. ApiController, and controllers
-     * extending ApiController, are predominant users of this method.
+     * processing its last request. Controller, and controllers
+     * extending Controller, are predominant users of this method.
      * Again, this is helpful for testing.
      *
      * @return JSON type data from last request.
@@ -145,7 +145,7 @@ Class Controller {
      */
     const RETURN_ENCODING_STATUS_ONLY = 3;
 	
-	public $return_encoding = ApiController::RETURN_ENCODING_DEFAULT;
+	public $return_encoding = self::RETURN_ENCODING_DEFAULT;
 
     /**
      * `return_status` sets a status using the header method and json encodes
@@ -159,16 +159,16 @@ Class Controller {
      */
 	function return_status($status = HttpHeader::HTTP_STATUS_OK, $data = NULL) {
 		$success = $status == HttpHeader::HTTP_STATUS_OK || $status == HttpHeader::HTTP_STATUS_CREATED;
-		if ($this->return_encoding == ApiController::RETURN_ENCODING_DEFAULT) {
+		if ($this->return_encoding == self::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
 		    header('Content-Type: application/json');
 			print json_encode($data);	
-		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_TEXTAREA) {
+		} elseif ($this->return_encoding == self::RETURN_ENCODING_TEXTAREA) {
 			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
-		} elseif ($this->return_encoding == ApiController::RETURN_ENCODING_POSTMESSAGE) {
+		} elseif ($this->return_encoding == self::RETURN_ENCODING_POSTMESSAGE) {
 			$this->header_http_status($status);
 			print "<!DOCTYPE html><script>parent.postMessage(JSON.stringify(" . json_encode($data) . "), '*');</script>";
-        } elseif ($this->return_encoding == Controller::RETURN_ENCODING_STATUS_ONLY) {
+        } elseif ($this->return_encoding == self::RETURN_ENCODING_STATUS_ONLY) {
             $this->header_http_status($status);
         }
 
