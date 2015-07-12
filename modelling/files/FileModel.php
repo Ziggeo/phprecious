@@ -134,11 +134,11 @@ Class FileModel extends DatabaseModel {
 	    readfile($this->getFileName());
 	}
 
-	public function httpReadFile($download = FALSE) {
+	public function httpReadFile($download = FALSE, $download_name = NULL) {
 		static::log(Logger::INFO_2, "Reading file " . $this->log_ident() . "");
 		return FileStreamer::streamFile($this->getFileName(), array(
 			"download" => $download,
-			"download_name" => $this->file_name,
+			"download_name" => @$download_name ? $download_name : $this->file_name,
 			"block_size" => $this->optionsOf("block_size")
 		));
 	}
