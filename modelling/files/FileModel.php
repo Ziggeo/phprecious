@@ -238,7 +238,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			if (move_uploaded_file($tmp_file, $instance->getFileName()))
+			if (FileUtils::move_uploaded_file($tmp_file, $instance->getFileName()))
 				break;
 			$retry_count--;
 			if ($retry_count > 0)

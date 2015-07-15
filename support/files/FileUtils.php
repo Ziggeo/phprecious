@@ -80,4 +80,12 @@ class FileUtils {
 		}
 	}
 	
+	public static function safeFileName($filename) {
+		return str_replace("/", "", str_replace("..", "", $filename));
+	}
+	
+	public static function move_uploaded_file($tmp_name, $target) {
+		return move_uploaded_file($tmp_name, $target) || rename($tmp_name, $target);
+	}
+	
 }
