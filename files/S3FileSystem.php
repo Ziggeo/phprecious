@@ -14,13 +14,17 @@ Class S3FileSystem extends AbstractFileSystem {
 	
 	function __construct($key, $secret, $bucket, $region = "") {
 		// parent::__construct();
-		$this->s3 = Aws\S3\S3Client::factory(array(
-			"key" => $key,
-			"secret" => $secret,
-			"region" => $region
-		));
-		$this->s3->registerStreamWrapper();
-		$this->bucket = $bucket;
+		try {
+			$this->s3 = Aws\S3\S3Client::factory(array(
+				"key" => $key,
+				"secret" => $secret,
+				"region" => $region
+			));
+			$this->s3->registerStreamWrapper();
+			$this->bucket = $bucket;
+		} catch (Exception $e) {
+			throw new FileSystemException($e . "");
+		}
 	}
 	
 	public function s3() {
