@@ -4,6 +4,7 @@ Class HttpHeader {
 	
 	const HTTP_STATUS_OK = 200;
 	const HTTP_STATUS_CREATED = 201;
+	const HTTP_STATUS_RESET_CONTENT = 205;
 	const HTTP_STATUS_BAD_REQUEST = 400;
 	const HTTP_STATUS_PAYMENT_REQUIRED = 402;
 	const HTTP_STATUS_FORBIDDEN = 403;
@@ -25,7 +26,7 @@ Class HttpHeader {
 			case 202: $string = 'Accepted'; break;
 			case 203: $string = 'Non-Authoritative Information'; break; // HTTP/1.1
 			case 204: $string = 'No Content'; break;
-			case 205: $string = 'Reset Content'; break;
+			case self::HTTP_STATUS_RESET_CONTENT: $string = 'Reset Content'; break;
 			case 206: $string = 'Partial Content'; break;
 			case 207: $string = 'Multi-Status'; break; // WebDAV
 	
