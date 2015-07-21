@@ -67,7 +67,12 @@ class FileUploads {
 			$i++;
 		}
 		fclose ( $fp );
-		FileUtils::delete_tree($parsed["chunkDirectory"]);
+		$i = 1;
+		while (file_exists($parsed["chunkDirectory"] . "/part." . $i)) {
+			@unlink($parsed["chunkDirectory"] . "/part." . $i);
+			$i++;
+		}
+		rmdir($parsed["chunkDirectory"]);
 		return TRUE;
 	}
 	
