@@ -81,7 +81,7 @@ class FileUtils {
 	}
 	
 	public static function safeFileName($filename) {
-		return str_replace("/", "", str_replace("..", "", $filename));
+		return str_replace(" ", "", str_replace("/", "", str_replace("..", "", $filename)));
 	}
 	
 	public static function move_uploaded_file($tmp_name, $target) {
