@@ -80,7 +80,7 @@ Class Controller {
      */
 	public function read_requests($arr, $return_null = true) {
 		$result = array();
-		foreach ($arr as $key)
+		foreach ($arr as $key) {
             if ($return_null) {
                 $result[$key] = Requests::getVar($key);
             } else {
@@ -90,6 +90,7 @@ Class Controller {
                     $result[$key] = $val;
                 }
             }
+        }
 		return $result;
 	}	
 	
