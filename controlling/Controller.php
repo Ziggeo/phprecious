@@ -64,10 +64,32 @@ Class Controller {
 		return array();
 	}
 	
-	public function read_requests($arr) {
+    /**
+     * `read_requests` returns the values of requests variables for the array of
+     * keys passed as an argument.
+     *
+     * @TODO `read_requests` and `getRequestsArg` should defined in `Requests`.
+     * There is no real reason for them to be in `Controller`, as they rely
+     * on no information from the instance of the `Controller` class.
+     *
+     * @param array $arr Array of variables to return the value of.
+     * @param boolean $return_null If the variables should be set in the `requests`
+     * array even if they are null.
+     *
+     * @return array
+     */
+	public function read_requests($arr, $return_null = true) {
 		$result = array();
 		foreach ($arr as $key)
-			$result[$key] = Requests::getVar($key);
+            if ($return_null) {
+                $result[$key] = Requests::getVar($key);
+            } else {
+                $val = Requests::getVar($key);
+
+                if (!is_null($val)) {
+                    $result[$key] = $val;
+                }
+            }
 		return $result;
 	}	
 	
