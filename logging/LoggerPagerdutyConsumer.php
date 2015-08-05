@@ -22,7 +22,7 @@ class LoggerPagerdutyConsumer extends LoggerConsumer {
 					"service_key" => $this->service_key,
 					"event_type" => "trigger",
 					"description" => $logMessage->text(),
-					"details" => $logMessage->fields()
+					"details" => $logMessage->asRecord()
 			)));
 			curl_setopt($session, CURLOPT_HTTPHEADER, array('Content-type' => 'application/json'));
 			$result = curl_exec($session);

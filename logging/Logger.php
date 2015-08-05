@@ -4,12 +4,11 @@ require_once(dirname(__FILE__) . "/LogMessage.php");
 
 class Logger {
 	
-	const ERROR=1;
-	const WARNING=2;
-	const WARN=2;
-	const INFO=3;
-	const INFO_2=4;
-	const INFO_3=5;
+	const ERROR = 1;
+	const WARNING = 2;
+	const WARN = 2;
+	const INFO = 3;
+	const INFO_2 = 4;
 	
 	private $consumers = array();
 	private $fields = array();

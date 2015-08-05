@@ -39,6 +39,20 @@ class LogMessage {
 		return $this->fields;
 	}
 	
+	public function asRecord() {
+		return array(
+			"Text" => $this->text(),
+			"Date" => $this->datetime(),
+			"Level" => $this->level(),
+			"Tags" => $this->tags(),
+			"Fields" => $this->fields()
+		);
+	}
+	
+	public function toJSON() {
+		return json_encode($this->asRecord());
+	}
+	
 	public function formatOneLine() {
 		$fieldval = array_values($this->fields());
 		$f = count($fieldval) > 0 ? join(" | ", $fieldval) . " | " : ""; 
