@@ -78,6 +78,8 @@ class Router {
 			$entry["arguments"] = $options["arguments"];
 		if (isset($options["sitemap"]))
 			$entry["sitemap"] = $options["sitemap"];
+		if (isset($options["preargs"]))
+			$entry["preargs"] = $options["preargs"];
 		$this->routes[] = $entry;
 		if (isset($options["path"]))
 			$this->paths[$options["path"]] = $entry; 
@@ -100,7 +102,7 @@ class Router {
              '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">' . "\n";
 		$urls = $this->getSitemap();
 		foreach ($urls as $url) {
-			$url = preg_replace("/[^A-Za-z0-9\/:.]/", '', $url);
+			$url = preg_replace("/[^A-Za-z0-9\/:.-]/", '', $url);
 			$s .= "  <url>\n" .
 			      "    <loc>" . $url . "</loc>\n" .
 			      "  </url>\n";
@@ -155,6 +157,8 @@ class Router {
 					$arguments = $route["arguments"];
 					array_shift($matches);
 					$args = $matches;
+					if (@$route["preargs"])
+						$args = array_merge($route["preargs"], $args);
 					break;
 				}
 			}
