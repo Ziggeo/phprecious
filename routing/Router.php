@@ -68,6 +68,8 @@ class Router {
 		);
         if (isset($options["force_redirect"]))
             $entry["force_redirect"] = $options["force_redirect"];
+        if (isset($options["forward_redirect"]))
+            $entry["forward_redirect"] = $options["forward_redirect"];
         if (isset($options["fullpath_base"]))
             $entry["fullpath_base"] = $options["fullpath_base"];
 		if (isset($options["conditions"]))
@@ -149,9 +151,15 @@ class Router {
 				    if (isset($route["force_redirect"]) && (isset($this->functions[$route["force_redirect"]]) ? $this->functions[$route["force_redirect"]]() : $route["force_redirect"]())) {
 				        $redir = (isset($route["fullpath_base"]) ? $route["fullpath_base"] : $this->fullpath_base) . "/" . $uri;
 				        $this->redirect($redir);
-                        $this->log(Logger::INFO_2, "Redirect to SSL: " . $redir);
+                        $this->log(Logger::INFO_2, "Redirect to: " . $redir);
                         $this->perfmon(false);
 				        return;
+				    }
+				    if (isset($route["forward_redirect"])) {
+				    	$redir = $route["forward_redirect"];
+				    	$this->redirect($redir);
+                        $this->log(Logger::INFO_2, "Redirect to: " . $redir);
+				    	return;
 				    }
 					$controller_action = $route["controller_action"];
 					$arguments = $route["arguments"];
