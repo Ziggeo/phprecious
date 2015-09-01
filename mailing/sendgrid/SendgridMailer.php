@@ -56,6 +56,7 @@ class SendgridMailer extends Mailer
 			try {
 				return $api == "web" ? $this->sendgrid->web->send($sendgridmail) : $this->sendgrid->smtp->send($sendgridmail);
 			} catch (Exception $e) {
+				$this->sendgrid = new SendGrid($this->option('username'), $this->option('password'));
 				$tries--;
 				$last_exception = $e;
 			}
