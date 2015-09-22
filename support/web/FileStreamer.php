@@ -109,12 +109,16 @@ Class FileStreamer {
 		
 	    header('Content-Length: ' . (@$range ? $range["bytes"] : $file_size));
 	  		
+		$remaining = @$range ? $range["bytes"] : $file_size;
+	    
+		if (@$options["head_only"])
+			return $remaining;
+		
 		set_time_limit(0);
 		$handle = $open_context ? fopen($file, $open_mode, FALSE, $open_context) : fopen($file, $open_mode);
 		if (!$handle)
 			throw new FileStreamerException("Could not open file.");
 		
-		$remaining = @$range ? $range["bytes"] : $file_size;
 		if (@$range)
 			fseek($handle, $range["start"]);
 		
