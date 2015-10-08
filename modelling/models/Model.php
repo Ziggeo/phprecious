@@ -180,6 +180,14 @@ class Model {
 					$value = floatval($value);
 			}
 		}
+		if ($type == "integer") {
+			if (is_string($value)) {
+				if ($value === "")
+					$value = $this->getAttr($key);
+				else
+					$value = intval($value);
+			}
+		}
 		$transform = $this->schemeProp($key, "transform", NULL);
 		if (@$transform)
 			$value = $transform($value);
