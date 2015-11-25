@@ -62,8 +62,11 @@ class FileUploads {
 		$i = 1;
 		while (file_exists($parsed["chunkDirectory"] . "/part." . $i)) {
 			$chunkName = $parsed["chunkDirectory"] . "/part." . $i;
-			$chunkContent = file_get_contents($chunkName);
-			fwrite ( $fp, $chunkContent );
+			$src = fopen($chunkName, 'r');
+			stream_copy_to_stream($src, $fp);
+			fclose($src);
+			//$chunkContent = file_get_contents($chunkName);
+			//fwrite ( $fp, $chunkContent );
 			$i++;
 		}
 		fclose ( $fp );
