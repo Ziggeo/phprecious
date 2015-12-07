@@ -386,14 +386,42 @@ abstract class ActiveModel extends Model {
 		return FALSE;
 	}
 	
-	public static function invalidateAll($simulate = FALSE, $ignore_remove_field = FALSE) {
+	public static function invalidateAll($simulate = FALSE, $ignore_remove_field = FALSE, $ignore_iterator_exceptions = TRUE) {
 		self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
-		foreach (self::all(NULL, NULL, NULL, TRUE, $ignore_remove_field) as $instance)
+		try {
+			$it = self::all(NULL, NULL, NULL, TRUE, $ignore_remove_field);
+			$it->rewind();
+		} catch (Exception $e) {
+			if (!$ignore_iterator_exceptions)
+				throw $e;
+			return;
+		}
+		while (TRUE) {
+			$instance = NULL;
+			try {
+				if (!$it->valid())
+					return;
+				$instance = $it->current();
+			} catch (Exception $e) {
+				if (!$ignore_iterator_exceptions)
+					throw $e;
+				return;
+			}
+			if (!@$instance)
+				return;
 			if ($instance->isInvalidated($ignore_remove_field)) {
 				self::log(Logger::INFO_2, get_called_class() . ": Remove Instance {$instance->id()}.");
 				if (!$simulate)
 					$instance->delete($ignore_remove_field);
 			}		
+			try {
+				$it->next();
+			} catch (Exception $e) {
+				if (!$ignore_iterator_exceptions)
+					throw $e;
+				return;
+			}
+		}
 	} 
 
 }
