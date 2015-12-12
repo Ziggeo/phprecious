@@ -23,7 +23,7 @@ Class S3FileSystem extends AbstractFileSystem {
 			$this->s3->registerStreamWrapper();
 			$this->bucket = $bucket;
 		} catch (Exception $e) {
-			throw new FileSystemException($e . "");
+			throw new FileSystemException($e->getMessage());
 		}
 	}
 	
@@ -92,14 +92,14 @@ Class S3File extends AbstractFile {
 		}
 	}
 	
-	protected function readStream() {
+	public function readStream() {
 		$handle = fopen($this->s3path(), "r");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
 		return $handle;
 	}
 	
-	protected function writeStream() {
+	public function writeStream() {
 		$handle = fopen($this->s3path(), "w");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
@@ -114,7 +114,7 @@ Class S3File extends AbstractFile {
 				'SaveAs' => $file
 			));
 		} catch (Exception $e) {
-			throw new FileSystemException("Could not save to local file");
+			throw new FileSystemException($e->getMessage());
 		}
 	}
 	
@@ -126,7 +126,7 @@ Class S3File extends AbstractFile {
 				'SourceFile' => $file
 			));
 		} catch (Exception $e) {
-			throw new FileSystemException("Could not save to local file");
+			throw new FileSystemException($e->getMessage());
 		}
 	}	
 

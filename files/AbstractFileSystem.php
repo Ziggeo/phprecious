@@ -27,6 +27,10 @@ Abstract Class AbstractMaterializedFile {
 		$this->release();
 	} 
 	
+	public function materialize() {
+		return $this;
+	}
+
 }
 
 

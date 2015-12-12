@@ -74,7 +74,7 @@ Class FTPFile extends AbstractFile {
 		return FTP_BINARY;
 	}	
 	
-	protected function readStream() {
+	public function readStream() {
 		$sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
 		stream_set_write_buffer($sockets[0], 0);
 		stream_set_timeout($sockets[1], 0);
@@ -85,7 +85,7 @@ Class FTPFile extends AbstractFile {
 	}
 
 	/*
-	protected function writeStream() {
+	public function writeStream() {
 		$sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
 		stream_set_write_buffer($sockets[0], 0);
 		stream_set_timeout($sockets[1], 0);
@@ -93,7 +93,12 @@ Class FTPFile extends AbstractFile {
 		return $sockets[0];
 	}
 	*/
-			
+
+	public function fromFile($file) {
+		$file = $file->materialize();
+		return $this->fromLocalFile($file->filename());
+	}
+		       	
 	public function toLocalFile($file) {
 		if (!ftp_get($this->ftp(), $file, $this->file_name, $this->get_ftp_mode($this->file_name)))
 			throw new FileSystemException("Could not save to local file");
@@ -101,7 +106,7 @@ Class FTPFile extends AbstractFile {
 	
 	public function fromLocalFile($file) {
 		if (!ftp_put($this->ftp(), $this->file_name, $file, $this->get_ftp_mode($this->file_name)))
-			throw new FileSystemException("Could not load from local file");
+			throw new FileSystemException("Could not upload file to ftp.");
 	}	
 
 }

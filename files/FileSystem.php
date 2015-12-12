@@ -34,14 +34,14 @@ Class File extends AbstractFile {
 			throw new FileSystemException("Could not delete file");
 	}
 	
-	protected function readStream() {
+	public function readStream() {
 		$handle = fopen($this->file_name, "r");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
 		return $handle;
 	}
 	
-	protected function writeStream() {
+	public function writeStream() {
 		$handle = fopen($this->file_name, "w");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
