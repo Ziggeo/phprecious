@@ -43,7 +43,7 @@ Class StringTable {
 	}
 	
 	public function setFromJSON($json) {
-		$this->setAll(json_decode($json));
+		$this->setAll(json_decode($json, TRUE));
 	}
 	
 	public function setFromFile($filename) {
