@@ -7,5 +7,6 @@ class Mail {
 	var $subject;
 	var $message;
 	var $message_html;
+	var $attachments;
 	  
 }

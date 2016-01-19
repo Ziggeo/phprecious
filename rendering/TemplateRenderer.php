@@ -2,7 +2,7 @@
 
 require_once(dirname(__FILE__) . "/../logging/Logger.php");
 
-class Renderer {
+class TemplateRenderer {
 	
 	protected static function log($level, $s) {
 		global $LOGGER;
