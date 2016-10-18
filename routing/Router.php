@@ -159,7 +159,7 @@ class Router {
 				    }
 				    if (isset($route["forward_redirect"])) {
 				    	$redir = $route["forward_redirect"];
-				    	$this->redirect($redir);
+				    	$this->redirect($redir, 301);
                         $this->log(Logger::INFO_2, "Redirect to: " . $redir);
 				    	return;
 				    }
@@ -241,8 +241,11 @@ class Router {
 		return $this->fullpath_base . $subpath;
 	}
 	
-	public function redirect($uri) {
-        header("Location: " . $uri);		
+	public function redirect($uri, $statusCode = NULL) {
+		if (@$statusCode !== NULL)
+        	header("Location: " . $uri, true, $statusCode);
+		else
+			header("Location: " . $uri);		
 	}
 		
 	public function getCurrentController() {
