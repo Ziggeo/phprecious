@@ -16,7 +16,7 @@ Class Requests {
 	
 	public static function getVarCheckBox($name) {
 		$result = static::getVar($name);
-		return isset($result) && ($result == "on");
+		return isset($result) && ($result == "on" || $result == "true");
 	}
 
 	public static function getVarDefNull($name, $def) {
