@@ -15,6 +15,8 @@ Class ImplicitFTPFileSystem extends AbstractFileSystem {
 
         $ftp_server = 'ftps://' . $options["host"];
         $ch = curl_init();
+        if ($ch === FALSE)
+            throw new FileSystemException("Could not connect to FTP");
         curl_setopt($ch, CURLOPT_URL, $ftp_server);
         curl_setopt($ch, CURLOPT_USERPWD, $options["username"] . ':' . $options["password"]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -53,8 +55,6 @@ Class ImplicitFTPFile extends AbstractFile {
     }
 
     public function delete() {
-        if (!ftp_delete($this->ftp(), $this->file_name))
-            throw new FileSystemException("Could not delete file");
     }
 
     private function get_ftp_mode($file) {
@@ -73,13 +73,6 @@ Class ImplicitFTPFile extends AbstractFile {
     }
 
     public function readStream() {
-        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        stream_set_write_buffer($sockets[0], 0);
-        stream_set_timeout($sockets[1], 0);
-        $ret = ftp_nb_fget($this->ftp(), $sockets[0], $this->file_name, $this->get_ftp_mode($this->file_name));
-        while ($ret == FTP_MOREDATA)
-            $ret = ftp_nb_continue($this->ftp());
-        return $sockets[1];
     }
 
     /*
@@ -98,8 +91,6 @@ Class ImplicitFTPFile extends AbstractFile {
     }
 
     public function toLocalFile($file) {
-        if (!ftp_get($this->ftp(), $file, $this->file_name, $this->get_ftp_mode($this->file_name)))
-            throw new FileSystemException("Could not save to local file");
     }
 
     public function fromLocalFile($file) {
