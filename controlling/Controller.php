@@ -169,6 +169,8 @@ Class Controller {
     const RETURN_ENCODING_STATUS_ONLY = 3;
 	
 	public $return_encoding = self::RETURN_ENCODING_DEFAULT;
+	
+	public $wrap_status = FALSE;
 
     /**
      * `return_status` sets a status using the header method and json encodes
@@ -182,6 +184,13 @@ Class Controller {
      */
 	function return_status($status = HttpHeader::HTTP_STATUS_OK, $data = NULL) {
 		$success = $status == HttpHeader::HTTP_STATUS_OK || $status == HttpHeader::HTTP_STATUS_CREATED;
+		if ($this->wrap_status) {
+			$data = array(
+				"status" => $status,
+				"responseText" => $data
+			);
+			$status = HttpHeader::HTTP_STATUS_OK;
+		}
 		if ($this->return_encoding == self::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
 		    header('Content-Type: application/json');
