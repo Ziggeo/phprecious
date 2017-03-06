@@ -26,7 +26,7 @@ Class FTPFileSystem extends AbstractFileSystem {
 			if ($result === FALSE)
 				throw new FileSystemException("Could not sign into FTP - wrong username / password?");
 		}
-		if ($options->passive)
+		if ($options["passive"])
 			ftp_pasv($this->ftp, TRUE);
 	}
 	
