@@ -68,6 +68,8 @@ class Router {
         );
         if (isset($options["force_redirect"]))
             $entry["force_redirect"] = $options["force_redirect"];
+        if (isset($options["redirect_code"]))
+            $entry["redirect_code"] = $options["redirect_code"];
         if (isset($options["forward_redirect"]))
             $entry["forward_redirect"] = $options["forward_redirect"];
         if (isset($options["fullpath_base"]))
