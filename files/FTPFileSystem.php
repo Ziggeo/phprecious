@@ -4,62 +4,67 @@ require_once(dirname(__FILE__) . "/AbstractFileSystem.php");
 
 
 Class FTPFileSystem extends AbstractFileSystem {
-	
+
 	private $ftp;
-	
+
 	protected function getClass() {
 		return FTPFile;
 	}
-	
+
 	function __construct($options) {
-		// parent::__construct();
-		$ssl = @$options["ssl"] ? $options["ssl"] : FALSE;
-		$connect = $ssl ? ftp_ssl_connect : ftp_connect;
-		$host = $options["host"];
-		$port = @$options["port"] ? $options["port"] : 21;
-		$timeout = @$options["timeout"] ? $options["timeout"] : 90;
-		$this->ftp = $connect($host, $port, $timeout);
-		if ($this->ftp === FALSE)
+		$ftp_server = 'ftp://' . $options["host"];
+		$ch = curl_init();
+		if ($ch === FALSE)
 			throw new FileSystemException("Could not connect to FTP");
-		if (@$options["username"] && @$options["password"]) {
-			$result = ftp_login($this->ftp, $options["username"], $options["password"]);
-			if ($result === FALSE)
-				throw new FileSystemException("Could not sign into FTP - wrong username / password?");
-		}
-		if ($options["passive"])
-			ftp_pasv($this->ftp, TRUE);
+		curl_setopt($ch, CURLOPT_URL, $ftp_server);
+		curl_setopt($ch, CURLOPT_USERPWD, $options["username"] . ':' . $options["password"]);
+		curl_setopt($ch, CURLOPT_PORT, $options["port"]);
+		if (!empty($options["passive"]) && !$options["passive"])
+			curl_setopt($ch, CURLOPT_FTPPORT, "-");
+		if (!empty($options["disable_epsv"]) && !$options["disable_epsv"])
+			curl_setopt ( $ch , CURLOPT_FTP_USE_EPSV, 0 );
+
+		$this->ftp = $ch;
 	}
-	
+
 	function __destruct() {
-		ftp_close($this->ftp);
+		curl_close($this->ftp);
+		$this->ftp = null;
 	}
-	
+
 	public function ftp() {
 		return $this->ftp;
 	}
-	
+
 }
 
 
 Class FTPFile extends AbstractFile {
-	
+
 	private function ftp() {
 		return $this->file_system->ftp();
 	}
-	
-	public function size() {		
+
+	public function size() {
 		return ftp_size($this->ftp(), $this->file_name);
 	}
-	
+
 	public function exists() {
 		return $this->size() >= 0;
 	}
-	
+
 	public function delete() {
-		if (!ftp_delete($this->ftp(), $this->file_name))
-			throw new FileSystemException("Could not delete file");
+		$ftp = $this->ftp();
+		$url = curl_getinfo($ftp, CURLINFO_EFFECTIVE_URL);
+		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ftp, CURLOPT_CUSTOMREQUEST, "DELETE");
+		curl_setopt($ftp, CURLOPT_RETURNTRANSFER, true);
+		$result = curl_exec($ftp);
+		$error_no = curl_errno($ftp);
+		if ($error_no != 0)
+			throw new FileSystemException("Could not delete file from ftp." . " - Error No: " . $error_no );
 	}
-	
+
 	private function get_ftp_mode($file) {
 		$path_parts = pathinfo($file);
 		if (!isset($path_parts['extension'])) return FTP_BINARY;
@@ -70,11 +75,11 @@ Class FTPFile extends AbstractFile {
 			case 'nsi':case 'pas':case 'patch':case 'php':case 'php3':case 'php4':case 'php5':
 			case 'phtml':case 'pl':case 'po':case 'py':case 'qmail':case 'sh':case 'shtml':
 			case 'sql':case 'tcl':case 'tpl':case 'txt':case 'vbs':case 'xml':case 'xrc':
-				return FTP_ASCII;
+			return FTP_ASCII;
 		}
 		return FTP_BINARY;
-	}	
-	
+	}
+
 	public function readStream() {
 		$sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
 		stream_set_write_buffer($sockets[0], 0);
@@ -85,29 +90,37 @@ Class FTPFile extends AbstractFile {
 		return $sockets[1];
 	}
 
-	/*
-	public function writeStream() {
-		$sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-		stream_set_write_buffer($sockets[0], 0);
-		stream_set_timeout($sockets[1], 0);
-		ftp_nb_fput($this->ftp(), $this->file_name, $sockets[1], $this->get_ftp_mode($this->file_name));
-		return $sockets[0];
-	}
-	*/
-
 	public function fromFile($file) {
 		$file = $file->materialize();
 		return $this->fromLocalFile($file->filename());
 	}
-		       	
+
 	public function toLocalFile($file) {
-		if (!ftp_get($this->ftp(), $file, $this->file_name, $this->get_ftp_mode($this->file_name)))
-			throw new FileSystemException("Could not save to local file");
+		$file = fopen($file, 'w');
+		$ftp = $this->ftp();
+		$url = curl_getinfo($ftp, CURLINFO_EFFECTIVE_URL);
+		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ftp, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ftp, CURLOPT_FILE, $file); #
+		curl_exec($ftp);
+		fclose($file);
+		$error_no = curl_errno($ftp);
+		if ($error_no != 0)
+			throw new FileSystemException("Could not download file from ftp." . " - Error No: " . $error_no );
 	}
-	
+
 	public function fromLocalFile($file) {
-		if (!ftp_put($this->ftp(), $this->file_name, $file, $this->get_ftp_mode($this->file_name)))
-			throw new FileSystemException("Could not upload file to ftp.");
-	}	
+		$ch = $this->ftp();
+		$fileStream = fopen($file, "r");
+		$url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+		curl_setopt($ch, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ch, CURLOPT_UPLOAD, 1);
+		curl_setopt($ch, CURLOPT_INFILE, $fileStream);
+
+		$output = curl_exec($ch);
+		$error_no = curl_errno($ch);
+		if ($error_no != 0)
+			throw new FileSystemException("Could not upload file to ftp." . " - Error No: " . $error_no );
+	}
 
 }
