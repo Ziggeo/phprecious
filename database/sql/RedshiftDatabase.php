@@ -2,7 +2,7 @@
 
 
 require_once(dirname(__FILE__) . "/../Database.php");
-require_once(dirname(__FILE__) . "/SqlDatabaseTable.php");
+require_once(dirname(__FILE__) . "/RedshiftDatabaseTable.php");
 
 class RedshiftDatabase extends Database {
 
@@ -16,38 +16,57 @@ class RedshiftDatabase extends Database {
 		}
 	}
 
-    private $connection;
-    private $database;
-    private $dbname;
-	private $uri;
-    
-    public function __construct($dbname, $uri = "jdbc:postgres://localhost:5432") {
-    	$this->dbname = strtolower($dbname);
-		$this->uri = $uri;
-    }
-	
+	private $connection;
+	private $database;
+	private $user;
+	private $password;
+	private $host;
+	private $port;
+	private $dbname;
+
+	/**
+	 * PostgreDatabase constructor.
+	 * @param $user
+	 * @param $password
+	 * @param $host
+	 * @param $port
+	 * @param $dbname
+	 */
+	public function __construct($user, $password, $host, $port, $dbname)
+	{
+		$this->user = $user;
+		$this->password = $password;
+		$this->host = $host;
+		$this->port = $port;
+		$this->dbname = strtolower($dbname);
+	}
+
 	private function getConnection() {
-        if (!$this->connection) {
-        	static::perfmon(true);
-        	$this->connection = class_exists("MongoClient") ? new MongoClient($this->uri) : new Mongo($this->uri);
-        	static::perfmon(false);
+		if (!$this->connection) {
+			static::perfmon(true);
+			try {
+				$this->connection = new PDO("pgsql:host=$this->host;port=$this->port;dbname=$this->dbname",$this->user, $this->password);
+			} catch (PDOException $e) {
+				die($e->getMessage());
+			}
+			static::perfmon(false);
 		}
 		return $this->connection;
 	}
-	
+
 	public function getDatabase() {
-        if (!$this->database) {
-        	static::perfmon(true);
-        	$this->database = $this->getConnection()->selectDB($this->dbname);
-        	static::perfmon(false);
+		if (!$this->database) {
+			static::perfmon(true);
+			$this->database = $this->getConnection();
+			static::perfmon(false);
 		}
 		return $this->database;
 	}
 
-    public function selectTable($name) {
-        return new SqlDatabaseTable($this, $name);
-    }
-	
+	public function selectTable($name) {
+		return new PostgresDatabaseTable($this, $name);
+	}
+
 	public function encode($type, $value) {
 		if ($type == "id")
 			return $value == NULL ? NULL : new MongoId($value);
@@ -55,7 +74,7 @@ class RedshiftDatabase extends Database {
 			return $value == NULL ? NULL : new MongoDate($value);
 		return $value;
 	}
-	
+
 	public function decode($type, $value) {
 		if ($type == "id")
 			return $value == NULL ? NULL : $value . "";
