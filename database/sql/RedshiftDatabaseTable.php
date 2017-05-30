@@ -83,49 +83,49 @@ class RedshiftDatabaseTable extends DatabaseTable {
 	}
 
 
-	private function findQuery($whereParams = array(), $options = array()) {
-		$query = $this->prepareQueryFind($whereParams, $options);
+	private function findQuery($where_params = array(), $options = array()) {
+		$query = $this->prepareQueryFind($where_params, $options);
 		$query->execute();
 		return $query->fetchAll(PDO::FETCH_ASSOC);
 	}
 
-	private function findQueryOne($whereParams = array(), $options = array()) {
-		$query = $this->prepareQueryFind($whereParams, $options);
+	private function findQueryOne($where_params = array(), $options = array()) {
+		$query = $this->prepareQueryFind($where_params, $options);
 		$query->execute();
 		return $query->fetch(PDO::FETCH_ASSOC);
 	}
 
 
-	private function findQueryCount($whereParams = array(), $options = array()) {
+	private function findQueryCount($where_params = array(), $options = array()) {
 		$options["count"] = true;
-		$query = $this->prepareQueryFind($whereParams, $options);
+		$query = $this->prepareQueryFind($where_params, $options);
 		$query->execute();
 		return $query->fetchColumn();
 	}
 
-	private function prepareQueryFind($whereParams = array(), $options = array()) {
+	private function prepareQueryFind($where_params = array(), $options = array()) {
 		$conn = $this->getConn()->getDatabase();
-		$tablename = $this->getTablename();
+		$table_name = $this->getTablename();
 		if (!empty($options["count"]) && $options["count"]) {
-			$queryString = "SELECT COUNT (*) from $tablename";
+			$query_string = "SELECT COUNT (*) from $table_name";
 		} else {
-			$queryString = "SELECT * from $tablename";
+			$query_string = "SELECT * from $table_name";
 		}
-		if (!empty($whereParams)) {
-			$queryString .= " WHERE";
+		if (!empty($where_params)) {
+			$query_string .= " WHERE";
 			$i = 1;
-			foreach ($whereParams as $whereParam => $value) {
-				$queryString .= " $whereParam = :$whereParam";
-				if ($i < count($whereParams))
-					$queryString .= " AND";
+			foreach ($where_params as $where_param => $value) {
+				$query_string .= " $where_param = :$where_param";
+				if ($i < count($where_params))
+					$query_string .= " AND";
 				$i++;
 			}
 		}
 
-		$query = $conn->prepare($queryString);
+		$query = $conn->prepare($query_string);
 
-		foreach ($whereParams as $whereParam => $value) {
-			$query->bindParam(":$whereParam", $value);
+		foreach ($where_params as $where_param => $value) {
+			$query->bindParam(":$where_param", $value);
 		}
 
 		return $query;
