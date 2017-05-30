@@ -3,7 +3,7 @@
 require_once(dirname(__FILE__) . "/../DatabaseTable.php");
 
 class RedshiftDatabaseTable extends DatabaseTable {
-	
+
 	protected static function perfmon($enter) {
 		global $PERFMON;
 		if (@$PERFMON) {
@@ -14,116 +14,121 @@ class RedshiftDatabaseTable extends DatabaseTable {
 		}
 	}
 
-	private $collection;
-	
-	private function getCollection() {
-		if (!$this->collection) {
+	private $conn;
+
+	private function getConn() {
+		if (!$this->conn) {
 			static::perfmon(true);
-			$this->collection = $this->getDatabase()->getDatabase()->selectCollection($this->getTablename());
+			$this->conn = $this->getDatabase();
 			static::perfmon(false);
 		}
-		return $this->collection;
+		return $this->conn;
 	}
-	
+
 	public function primaryKey() {
-		return "_id";
+		return "id";
 	}
-	
+
 	private function updateOptions($options) {
-		if (isset($options["safe"]) && class_exists("MongoClient")) {
-			$options["w"] = $options["safe"];
-			unset($options["safe"]);
-		}
 		return $options;
 	}
-	
+
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
-		$options = $this->updateOptions($options);
-		static::perfmon(true);
-		//TODO: Why do I have to create a new mongo id?
-        $row[$this->primaryKey()] = new MongoId();
-		//unset($row["_id"]);
-		$success = $this->getCollection()->insert($row, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
-		static::perfmon(false);
-		return $success;
+		//TODO
 	}
-	
-	public function find($values, $options = NULL) {
+
+	public function find($values = array(), $options = array()) {
 		static::perfmon(true);
-		$result = $this->getCollection()->find($values);
-		if (@$options) {
-			if (@$options["sort"])
-				$result = $result->sort($options["sort"]);
-			if (isset($options["skip"]))
-				$result = $result->skip($options["skip"]);
-			if (isset($options["limit"]))
-				$result = $result->limit($options["limit"]);
-		}
+		$result = $this->findQuery($values, $options);
 		static::perfmon(false);
 		return $result;
 	}
-	
-	public function count($values) {
+
+	public function count($values = array(), $options = array()) {
 		static::perfmon(true);
-		$result = $this->getCollection()->find($values);
-		static::perfmon(false);
-		return $result->count();
-	}
-	
-	public function findOne($values) {
-		static::perfmon(true);
-		$result = $this->getCollection()->findOne($values);
+		$result = $this->findQueryCount($values, $options);
 		static::perfmon(false);
 		return $result;
 	}
-	
+
+	public function findOne($values = array(), $options = array()) {
+		static::perfmon(true);
+		$result = $this->findQueryOne($values, $options);
+		static::perfmon(false);
+		return $result;
+	}
+
 	public function update($query, $update, $options = array("safe" => TRUE)) { // "multiple" => false
-		$options = $this->updateOptions($options);
-			if(count($update) == 0)
-			return false;
-		static::perfmon(true);
-		$success = $this->getCollection()->update($query, array('$set' => $update), $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
-		static::perfmon(false);
-		return $success;
+		//TODO
 	}
-	
+
 	public function incrementCell($id, $key, $value) {
-		static::perfmon(true);
-		$success = $this->getCollection()->update(array("_id" => $id), array('$inc' => array($key => $value)));
-		static::perfmon(false);
-		return isset($success["ok"]) ? $success["ok"] : $success;
+		//TODO
 	}
-	
+
 	public function updateOne($query, $update, $options = array("safe" => TRUE)) {
-		$options["multiple"] = FALSE;
-		return $this->update($query, $update, $options);
+		//TODO
 	}
-	
+
 	public function remove($query, $options = array("safe" => TRUE)) { // "justOne" => true
-		$options = $this->updateOptions($options);
-		static::perfmon(true);
-		$success = $this->getCollection()->remove($query, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
-		static::perfmon(false);
-		return $success;
+		//TODO
 	}
-	
+
 	public function removeOne($query, $options = array("safe" => TRUE)) {
-		$options["justOne"] = TRUE;
-		return $this->remove($query, $options);
+		//TODO
 	}
-	
+
 	public function ensureIndex($keys) {
-		$arr = array();
-		foreach($keys as $key)
-			$arr[$key] = 1;
-		return $this->getCollection()->ensureIndex($arr);
+		//TODO
 	}
-		
-	
+
+
+	private function findQuery($whereParams = array(), $options = array()) {
+		$query = $this->prepareQueryFind($whereParams, $options);
+		$query->execute();
+		return $query->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	private function findQueryOne($whereParams = array(), $options = array()) {
+		$query = $this->prepareQueryFind($whereParams, $options);
+		$query->execute();
+		return $query->fetch(PDO::FETCH_ASSOC);
+	}
+
+
+	private function findQueryCount($whereParams = array(), $options = array()) {
+		$options["count"] = true;
+		$query = $this->prepareQueryFind($whereParams, $options);
+		$query->execute();
+		return $query->fetchColumn();
+	}
+
+	private function prepareQueryFind($whereParams = array(), $options = array()) {
+		$conn = $this->getConn()->getDatabase();
+		$tablename = $this->getTablename();
+		if (!empty($options["count"]) && $options["count"]) {
+			$queryString = "SELECT COUNT (*) from $tablename";
+		} else {
+			$queryString = "SELECT * from $tablename";
+		}
+		if (!empty($whereParams)) {
+			$queryString .= " WHERE";
+			$i = 1;
+			foreach ($whereParams as $whereParam => $value) {
+				$queryString .= " $whereParam = :$whereParam";
+				if ($i < count($whereParams))
+					$queryString .= " AND";
+				$i++;
+			}
+		}
+
+		$query = $conn->prepare($queryString);
+
+		foreach ($whereParams as $whereParam => $value) {
+			$query->bindParam(":$whereParam", $value);
+		}
+
+		return $query;
+	}
+
 }

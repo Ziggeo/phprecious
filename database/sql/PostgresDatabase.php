@@ -68,18 +68,10 @@ class PostgresDatabase extends Database {
     }
 	
 	public function encode($type, $value) {
-		if ($type == "id")
-			return $value == NULL ? NULL : new MongoId($value);
-		if ($type == "date")
-			return $value == NULL ? NULL : new MongoDate($value);
 		return $value;
 	}
 	
 	public function decode($type, $value) {
-		if ($type == "id")
-			return $value == NULL ? NULL : $value . "";
-		if ($type == "date")
-			return $value == NULL ? NULL : TimeSupport::microtime_to_seconds($value);
 		return $value;
 	}
 
