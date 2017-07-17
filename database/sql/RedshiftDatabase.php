@@ -64,7 +64,7 @@ class RedshiftDatabase extends Database {
 	}
 
 	public function selectTable($name) {
-		return new PostgresDatabaseTable($this, $name);
+		return new RedshiftDatabaseTable($this, $name);
 	}
 
 	public function encode($type, $value) {
