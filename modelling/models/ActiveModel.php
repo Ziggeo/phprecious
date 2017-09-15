@@ -385,11 +385,15 @@ abstract class ActiveModel extends Model {
 	public function isInvalidated($ignore_remove_field = FALSE) {
 		return FALSE;
 	}
-	
-	public static function invalidateAll($simulate = FALSE, $ignore_remove_field = FALSE, $ignore_iterator_exceptions = TRUE) {
-		self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
-		try {
-			$it = self::all(NULL, NULL, NULL, TRUE, $ignore_remove_field);
+
+    protected function expiredQuery() {
+        return array();
+    }
+
+    public static function invalidateAll($simulate = FALSE, $ignore_remove_field = FALSE, $ignore_iterator_exceptions = TRUE) {
+        self::log(Logger::INFO, get_called_class() . ": Removing invalid models...");
+        try {
+            $it = self::allBy(static::expiredQuery(),NULL, NULL, NULL, TRUE, $ignore_remove_field);
 			$it->rewind();
 		} catch (Exception $e) {
 			if (!$ignore_iterator_exceptions)

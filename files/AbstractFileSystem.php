@@ -1,5 +1,7 @@
 <?php
 
+require_once(dirname(__FILE__) . "/FileSystemException.php");
+
 Class AbstractFileSystem {
 	
 	protected function getClass() {
@@ -13,8 +15,6 @@ Class AbstractFileSystem {
 		
 }
 
-
-Class FileSystemException extends Exception {}
 
 
 Abstract Class AbstractMaterializedFile {
