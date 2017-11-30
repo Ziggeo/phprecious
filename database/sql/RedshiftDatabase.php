@@ -32,8 +32,23 @@ class RedshiftDatabase extends Database {
 	 * @param $port
 	 * @param $dbname
 	 */
-	public function __construct($user, $password, $host, $port, $dbname)
+	public function __construct()
 	{
+		if (func_num_args() ===  2) {
+			$parsed = parse_url(func_get_arg(1));
+			$dbname = func_get_arg(0);
+			$host = $parsed["host"];
+			$port = $parsed["port"];
+			$user = $parsed["user"];
+			$password = $parsed["pass"];
+		} else {
+			$user = func_get_arg(0);
+			$password = func_get_arg(1);
+			$host = func_get_arg(2);
+			$port = func_get_arg(3);
+			$dbname = func_get_arg(4);
+		}
+
 		$this->user = $user;
 		$this->password = $password;
 		$this->host = $host;
