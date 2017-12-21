@@ -137,7 +137,7 @@ class Router {
             $method = Requests::getMethod();
             $uri = Requests::getPath();
         }
-        $this->log(Logger::INFO_2, "Dispatch Route: " . $method . " " . $uri);
+        $this->log(Logger::INFO_3, "Dispatch Route: " . $method . " " . $uri);
         if ($method === "DESTROY")
             $method = "DELETE";
         $uri = trim($uri, '/');

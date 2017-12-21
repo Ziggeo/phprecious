@@ -27,7 +27,7 @@ Class Controller {
 		           call_user_func_array(array($this, "before_filter_" . $action), $args));
 		if ($result) {
 			$class = get_called_class();
-			self::log(Logger::INFO_2, "Dispatch action '{$action}' on controller '{$class}'");
+			self::log(Logger::INFO_3, "Dispatch action '{$action}' on controller '{$class}'");
 			$this->call_action($action, $args);
 		}
 		static::perfmon(true);
