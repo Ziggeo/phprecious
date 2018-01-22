@@ -1,5 +1,6 @@
 <?php
 
+require_once(dirname(__FILE__) . "/FileSystemException.php");
 require_once(dirname(__FILE__) . "/AbstractFileSystem.php");
 
 Class ResilientFileSystem extends AbstractFileSystem {

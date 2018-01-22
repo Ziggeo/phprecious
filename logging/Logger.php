@@ -9,6 +9,7 @@ class Logger {
 	const WARN = 2;
 	const INFO = 3;
 	const INFO_2 = 4;
+	const INFO_3 = 5;
 	
 	private $consumers = array();
 	private $fields = array();

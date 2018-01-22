@@ -27,7 +27,7 @@ Class Controller {
 		           call_user_func_array(array($this, "before_filter_" . $action), $args));
 		if ($result) {
 			$class = get_called_class();
-			self::log(Logger::INFO_2, "Dispatch action '{$action}' on controller '{$class}'");
+			self::log(Logger::INFO_3, "Dispatch action '{$action}' on controller '{$class}'");
 			$this->call_action($action, $args);
 		}
 		static::perfmon(true);
@@ -194,7 +194,8 @@ Class Controller {
 		if ($this->return_encoding == self::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
 		    header('Content-Type: application/json');
-			print json_encode($data);	
+            header("X-Content-Type-Options: nosniff");
+            print json_encode($data);
 		} elseif ($this->return_encoding == self::RETURN_ENCODING_TEXTAREA) {
 			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
 		} elseif ($this->return_encoding == self::RETURN_ENCODING_POSTMESSAGE) {
@@ -209,7 +210,13 @@ Class Controller {
 
 		return $success;
 	}
-	
+
+    protected function noCacheHeader() {
+        header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' );
+        header( 'Cache-Control: no-store, no-cache, must-revalidate' );
+        header( 'Pragma: no-cache' );
+    }
+
 	function return_forbidden($data = array()) {
 		return $this->return_status("403", $data);
 	}
