@@ -2,7 +2,7 @@
 
 require_once(dirname(__FILE__) . "/../support/time/TimeSupport.php");
 
-class TimeSupportTest extends PHPUnit_Framework_TestCase {
+class TimeSupportTest extends PHPUnit\Framework\TestCase {
 	
 	public function testEnsureSecondsNumber() {
 		$this->assertEquals(TimeSupport::ensure_seconds(12345), 12345);

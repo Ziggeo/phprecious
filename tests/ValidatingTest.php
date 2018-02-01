@@ -8,7 +8,7 @@ require_once(dirname(__FILE__) . "/../validating/Validator.php");
 require_once(dirname(__FILE__) . "/../validating/LengthValidator.php");
 require_once(dirname(__FILE__) . "/../validating/NumberValidator.php");
 
-class ValidatingTest extends PHPUnit_Framework_TestCase {
+class ValidatingTest extends PHPUnit\Framework\TestCase {
 	
 	public function testLengthValidator() {
 		$val = new LengthValidator(5);

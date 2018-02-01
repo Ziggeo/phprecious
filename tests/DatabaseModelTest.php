@@ -26,7 +26,7 @@ Class DatabaseModelTestRemovableModel extends DatabaseModelTestModel {
 }
 
 
-class DatabaseModelTest extends PHPUnit_Framework_TestCase {
+class DatabaseModelTest extends PHPUnit\Framework\TestCase {
 	
 	public function testInsertQueryRemove() {
 		global $database;

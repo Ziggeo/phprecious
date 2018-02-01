@@ -103,7 +103,7 @@ Class DataObjectPeriodStatsTestModel extends DataObjectPeriodStats {
 
 
 
-class DataObjectStatsTest extends PHPUnit_Framework_TestCase {
+class DataObjectStatsTest extends PHPUnit\Framework\TestCase {
     
     public function test() {
         global $database;

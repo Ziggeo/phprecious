@@ -42,7 +42,7 @@ Class JobModelTestModel extends JobModel {
 }
 
 
-class JobModelTest extends PHPUnit_Framework_TestCase {
+class JobModelTest extends PHPUnit\Framework\TestCase {
     
     public function testExecuteDirectSuccess() {
         global $database, $test_valid_job, $test_fail_job, $test_job_model_options;

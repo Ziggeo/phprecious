@@ -2,7 +2,7 @@
 
 require_once(dirname(__FILE__) . "/../support/strings/ParseType.php");
 
-class ParseTypeTest extends PHPUnit_Framework_TestCase {
+class ParseTypeTest extends PHPUnit\Framework\TestCase {
 	
 	public function testBool() {
 		$this->assertTrue(ParseType::parseBool(1));
