@@ -114,7 +114,7 @@ class RedshiftDatabaseTable extends DatabaseTable {
 		$where_params_ext = array();
 		if (!empty($where_params)) {
 			$query_string .= " WHERE";
-			$where_params_ext = $this->extractWhereParams($where_params);
+			$where_params_ext = RedshiftDatabase::extractWhereParams($where_params);
 			$i = 1;
 			foreach ($where_params_ext as $where_param) {
 				extract($where_param);
@@ -134,39 +134,5 @@ class RedshiftDatabaseTable extends DatabaseTable {
 		}
 
 		return $query;
-	}
-
-	private function extractWhereParams($where_params) {
-		$where_params_ext = array();
-
-		foreach ($where_params as $where_param => $param) {
-			$operator = "=";
-			$where_param_name = $where_param;
-			$value = $param;
-			if (is_array($param) && isset($param["operator"])) {
-				$operator = $param["operator"];
-				$value = $param["value"];
-			} elseif (is_array($param)) {
-				foreach ($param as $id => $item) {
-					$operator = $item["operator"];
-					$where_params_ext[] = array(
-						"operator" => $operator,
-						"name" => $where_param_name . "_$id",
-						"base" => $where_param_name,
-						"value" => $item["value"]
-					);
-				}
-				continue;
-			}
-			$where_params_ext[] = array(
-				"operator" => $operator,
-				"value" => $value,
-				"name" => $where_param_name,
-				"base" => $where_param_name
-			);
-
-		}
-
-		return $where_params_ext;
 	}
 }

@@ -32,13 +32,22 @@ class RedshiftDatabase extends Database {
 	 * @param $port
 	 * @param $dbname
 	 */
-	public function __construct($user, $password, $host, $port, $dbname)
+	public function __construct()
 	{
-		$this->user = $user;
-		$this->password = $password;
-		$this->host = $host;
-		$this->port = $port;
-		$this->dbname = strtolower($dbname);
+		if (func_num_args() <> 2) {
+			$this->user = func_get_arg(0);
+			$this->password = func_get_arg(1);
+			$this->host = func_get_arg(2);
+			$this->port = func_get_arg(3);
+			$this->dbname = func_get_arg(4);
+		} else {
+			$this->dbname = func_get_arg(0);
+			$parsed = parse_url(func_get_arg(1));
+			$this->user = $parsed["user"];
+			$this->password = $parsed["pass"];
+			$this->host = $parsed["host"];
+			$this->port = $parsed["port"];
+		}
 	}
 
 	private function getConnection() {
@@ -73,6 +82,85 @@ class RedshiftDatabase extends Database {
 
 	public function decode($type, $value) {
 		return $value;
+	}
+
+	public function runQueryRaw($query_string) {
+		$conn = $this->getDatabase();
+		$query = $conn->prepare($query_string);
+		$query->execute();
+		return $query->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public function runQuery($query_string_base, $query_params) {
+		$conn = $this->getDatabase();
+		if (!empty($query_params["where"])) {
+			$where_string = "AND";
+			$where_params_ext = RedshiftDatabase::extractWhereParams($query_params["where"]);
+			$i = 1;
+			$params = array();
+			foreach ($where_params_ext as $where_param) {
+				extract($where_param);
+				switch ($operator) {
+					case "BETWEEN":
+						$where_string .= " $base $operator :" . $where_id[0] . " AND :" .$where_id[1];
+						$params[$where_id[0]] = $value[0];
+						$params[$where_id[1]] = $value[1];
+						break;
+					default:
+						$where_string .= " $base $operator :$where_id";
+						$params[$where_id] = $value;
+						break;
+
+				}
+				if ($i < count($where_params_ext))
+					$where_string .= " AND";
+				$i++;
+			}
+		}
+		$query_string = str_replace(
+			array("%where_params%"),
+			$where_string,
+			$query_string_base
+		);
+
+		$query = $conn->prepare($query_string);
+
+		if (!empty($params)) {
+			foreach ($params as $id_pa => &$param) {
+				$query->bindParam(":$id_pa", $param);
+			}
+		}
+		$query->execute();
+		$err = $conn->errorInfo();
+		return $query->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	public static function extractWhereParams($where_params) {
+		$where_params_ext = array();
+
+		foreach ($where_params as $where_param => $param) {
+			$operator = "=";
+			$where_param_name = $where_param;
+			$value = $param;
+			$where_id = rand(0, 10000000);
+			if (is_array($param) && isset($param["operator"])) {
+				$operator = $param["operator"];
+				$value = $param["value"];
+				if (is_array($param["value"])) {
+					$where_id = array(rand(0, 10000000), rand(0, 10000000));
+				}
+			}
+			$where_params_ext[] = array(
+				"operator" => $operator,
+				"value" => $value,
+				"where_id" => $where_id,
+				"name" => $where_param_name,
+				"base" => $where_param_name
+			);
+
+		}
+
+		return $where_params_ext;
 	}
 
 
