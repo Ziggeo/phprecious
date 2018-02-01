@@ -1,5 +1,6 @@
 <?php
 
+require_once(dirname(__FILE__) . "/../../vendor/autoload.php");
 require_once(dirname(__FILE__) . "/../DatabaseTable.php");
 
 class MongoDatabaseTable extends DatabaseTable {
@@ -30,7 +31,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 	
 	private function updateOptions($options) {
-		if (isset($options["safe"]) && class_exists("MongoClient")) {
+		if (isset($options["safe"]) && class_exists("\MongoDB\Client")) {
 			$options["w"] = $options["safe"];
 			unset($options["safe"]);
 		}
@@ -41,40 +42,37 @@ class MongoDatabaseTable extends DatabaseTable {
 		$options = $this->updateOptions($options);
 		static::perfmon(true);
 		//TODO: Why do I have to create a new mongo id?
-        $row[$this->primaryKey()] = new MongoId();
+        $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
 		//unset($row["_id"]);
-		$success = $this->getCollection()->insert($row, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
+		$success = $this->getCollection()->insertOne($row, $options);
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged())
+        	$success = $success->isAcknowledged();
 		static::perfmon(false);
 		return $success;
 	}
 	
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
-		$result = $this->getCollection()->find($values);
-		if (@$options) {
-			if (@$options["sort"])
-				$result = $result->sort($options["sort"]);
-			if (isset($options["skip"]))
-				$result = $result->skip($options["skip"]);
-			if (isset($options["limit"]))
-				$result = $result->limit($options["limit"]);
-		}
+		$options["typeMap"] = array("object");
+		$result = $this->getCollection()->find($values, $options);
+		if ($result)
+			$result = new IteratorIterator($result);
 		static::perfmon(false);
 		return $result;
 	}
 	
 	public function count($values) {
 		static::perfmon(true);
-		$result = $this->getCollection()->find($values);
+		$result = $this->getCollection()->count($values);
 		static::perfmon(false);
-		return $result->count();
+		return $result;
 	}
 	
 	public function findOne($values) {
 		static::perfmon(true);
 		$result = $this->getCollection()->findOne($values);
+		if ($result)
+			$result = new IteratorIterator($result);
 		static::perfmon(false);
 		return $result;
 	}
@@ -84,18 +82,19 @@ class MongoDatabaseTable extends DatabaseTable {
 			if(count($update) == 0)
 			return false;
 		static::perfmon(true);
-		$success = $this->getCollection()->update($query, array('$set' => $update), $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
+		$action = (isset($options["multiple"]) && $options["multiple"]) ? "updateMany" : "updateOne";
+		$success = $this->getCollection()->$action($query, array('$set' => $update), $options);
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged())
+        	$success = $success->isAcknowledged();
 		static::perfmon(false);
 		return $success;
 	}
 	
 	public function incrementCell($id, $key, $value) {
 		static::perfmon(true);
-		$success = $this->getCollection()->update(array("_id" => $id), array('$inc' => array($key => $value)));
+		$success = $this->getCollection()->updateOne(array("_id" => $id), array('$inc' => array($key => $value)));
 		static::perfmon(false);
-		return isset($success["ok"]) ? $success["ok"] : $success;
+		return $success->isAcknowledged() ? $success->isAcknowledged() : $success;
 	}
 	
 	public function updateOne($query, $update, $options = array("safe" => TRUE)) {
@@ -106,9 +105,10 @@ class MongoDatabaseTable extends DatabaseTable {
 	public function remove($query, $options = array("safe" => TRUE)) { // "justOne" => true
 		$options = $this->updateOptions($options);
 		static::perfmon(true);
-		$success = $this->getCollection()->remove($query, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || isset($success["ok"]))
-        	$success = $success["ok"];
+		$action = (isset($options["justOne"]) && $options["justOne"]) ? "deleteOne" : "deleteMany";
+		$success = $this->getCollection()->$action($query, $options);
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged())
+        	$success = $success->isAcknowledged();
 		static::perfmon(false);
 		return $success;
 	}

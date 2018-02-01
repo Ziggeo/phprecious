@@ -1,6 +1,7 @@
 <?php
 
 
+require_once(dirname(__FILE__) . "/../../vendor/autoload.php");
 require_once(dirname(__FILE__) . "/../Database.php");
 require_once(dirname(__FILE__) . "/MongoDatabaseTable.php");
 
@@ -29,7 +30,7 @@ class MongoDatabase extends Database {
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
-        	$this->connection = class_exists("MongoClient") ? new MongoClient($this->uri) : new Mongo($this->uri);
+        	$this->connection = class_exists("\MongoDB\Client") ? new MongoDB\Client($this->uri) : new MongoClient($this->uri);
         	static::perfmon(false);
 		}
 		return $this->connection;
@@ -38,7 +39,7 @@ class MongoDatabase extends Database {
 	public function getDatabase() {
         if (!$this->database) {
         	static::perfmon(true);
-        	$this->database = $this->getConnection()->selectDB($this->dbname);
+        	$this->database = $this->getConnection()->selectDatabase($this->dbname);
         	static::perfmon(false);
 		}
 		return $this->database;
@@ -50,9 +51,9 @@ class MongoDatabase extends Database {
 	
 	public function encode($type, $value) {
 		if ($type == "id")
-			return $value == NULL ? NULL : new MongoId($value);
+			return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
 		if ($type == "date")
-			return $value == NULL ? NULL : new MongoDate($value);
+			return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value);
 		return $value;
 	}
 	
