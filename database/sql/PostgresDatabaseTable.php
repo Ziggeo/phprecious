@@ -111,12 +111,15 @@ class PostgresDatabaseTable extends DatabaseTable {
 		} else {
 			$query_string = "SELECT * from $table_name";
 		}
+		$where_params_ext = array();
 		if (!empty($where_params)) {
 			$query_string .= " WHERE";
+			$where_params_ext = RedshiftDatabase::extractWhereParams($where_params);
 			$i = 1;
-			foreach ($where_params as $where_param => $value) {
-				$query_string .= " $where_param = :$where_param";
-				if ($i < count($where_params))
+			foreach ($where_params_ext as $where_param) {
+				extract($where_param);
+				$query_string .= " $base $operator :$name";
+				if ($i < count($where_params_ext))
 					$query_string .= " AND";
 				$i++;
 			}
@@ -124,12 +127,12 @@ class PostgresDatabaseTable extends DatabaseTable {
 
 		$query = $conn->prepare($query_string);
 
-		foreach ($where_params as $where_param => $value) {
-			$query->bindParam(":$where_param", $value);
+		if (!empty($where_params_ext)) {
+			foreach ($where_params_ext as $where_param) {
+				$query->bindParam(":" . $where_param["name"], $where_param["value"]);
+			}
 		}
 
 		return $query;
 	}
-		
-	
 }
