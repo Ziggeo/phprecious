@@ -128,7 +128,13 @@ class PostgresDatabase extends Database {
 		}
 		$query->execute();
 		$err = $conn->errorInfo();
-		return $query->fetchAll(PDO::FETCH_ASSOC);
+		if (!($err[0] <> 0)) {
+			$ret = $query->fetchAll(PDO::FETCH_ASSOC);
+		} else {
+			$ret = "ERROR: " . $err[0] . " - " . $err[1] . ": " . $err[2];
+		}
+
+		return $ret;
 	}
 
 	public static function extractWhereParams($where_params) {
