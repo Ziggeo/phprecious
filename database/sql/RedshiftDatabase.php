@@ -94,7 +94,7 @@ class RedshiftDatabase extends Database {
 	public function runQuery($query_string_base, $query_params) {
 		$conn = $this->getDatabase();
 		if (!empty($query_params["where"])) {
-			$where_string = "AND";
+			$where_string = "";
 			$where_params_ext = RedshiftDatabase::extractWhereParams($query_params["where"]);
 			$i = 1;
 			$params = array();
