@@ -53,7 +53,6 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
-		$options["typeMap"] = array("object");
 		$result = $this->getCollection()->find($values, $options);
 		if ($result)
 			$result = new IteratorIterator($result);
@@ -71,8 +70,6 @@ class MongoDatabaseTable extends DatabaseTable {
 	public function findOne($values) {
 		static::perfmon(true);
 		$result = $this->getCollection()->findOne($values);
-		if ($result)
-			$result = new IteratorIterator($result);
 		static::perfmon(false);
 		return $result;
 	}

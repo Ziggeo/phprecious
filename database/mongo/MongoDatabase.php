@@ -30,7 +30,13 @@ class MongoDatabase extends Database {
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
-        	$this->connection = class_exists("\MongoDB\Client") ? new MongoDB\Client($this->uri) : new MongoClient($this->uri);
+        	$this->connection = class_exists("\MongoDB\Client") ? new MongoDB\Client($this->uri, [], [
+                'typeMap' => [
+                    'array' => 'array',
+                    'document' => 'array',
+                    'root' => 'array',
+                ],
+            ] ) : new MongoClient($this->uri);
         	static::perfmon(false);
 		}
 		return $this->connection;
