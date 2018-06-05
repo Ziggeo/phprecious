@@ -144,7 +144,7 @@ abstract class ActiveModel extends Model {
 		$this->beforeUpdate();
 		$success = !$this->hasChanged() || $this->updateModel();
 		if ($success) {
-			static::log(Logger::INFO_2, "Updated model '" . get_called_class() . "' with id {$this->id()}.");
+			static::log(Logger::INFO_3, "Updated model '" . get_called_class() . "' with id {$this->id()}.");
 			$this->saved = TRUE;
 			$this->newModel = FALSE;
 			$this->resetChanged();
