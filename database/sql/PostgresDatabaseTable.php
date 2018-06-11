@@ -114,7 +114,7 @@ class PostgresDatabaseTable extends DatabaseTable {
 		$where_params_ext = array();
 		if (!empty($where_params)) {
 			$query_string .= " WHERE";
-			$where_params_ext = RedshiftDatabase::extractWhereParams($where_params);
+			$where_params_ext = PostgresDatabase::extractWhereParams($where_params);
 			$i = 1;
 			foreach ($where_params_ext as $where_param) {
 				extract($where_param);
