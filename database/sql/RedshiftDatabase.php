@@ -106,6 +106,19 @@ class RedshiftDatabase extends Database {
 						$params[$where_id[0]] = $value[0];
 						$params[$where_id[1]] = $value[1];
 						break;
+					case "IN":
+						$where_string .= " $base $operator (";
+						end($where_id);
+						$last_key = key($where_id);
+						foreach ($where_id as $id_w => $w) {
+							$where_string .= ":$w";
+							$params[$w] = $value[$id_w];
+							if ($id_w !== $last_key) {
+								$where_string .= ",";
+							}
+						}
+						$where_string .= ")";
+						break;
 					default:
 						$where_string .= " $base $operator :$where_id";
 						$params[$where_id] = $value;
@@ -148,12 +161,15 @@ class RedshiftDatabase extends Database {
 			$operator = "=";
 			$where_param_name = $where_param;
 			$value = $param;
-			$where_id = rand(0, 10000000);
+			$where_id = rand(0, 1000000000);
 			if (is_array($param) && isset($param["operator"])) {
 				$operator = $param["operator"];
 				$value = $param["value"];
 				if (is_array($param["value"])) {
-					$where_id = array(rand(0, 10000000), rand(0, 10000000));
+					$where_id = array();
+					while (count($param["value"]) !== count($where_id)) {
+						$where_id[] = rand(0, 1000000000);
+					}
 				}
 			}
 			$where_params_ext[] = array(
@@ -168,7 +184,5 @@ class RedshiftDatabase extends Database {
 
 		return $where_params_ext;
 	}
-
-
 }
 

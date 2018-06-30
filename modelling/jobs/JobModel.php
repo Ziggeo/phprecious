@@ -162,8 +162,9 @@ abstract class JobModel extends DatabaseModel {
             if ($opts["not_ready_max"] != NULL)
                 $query["not_ready_count"] = array('$lte' => $opts["not_ready_max"]);
             $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
-            foreach ($jobs as $job) 
-                $job->updateStatus(self::STATUS_OPEN, "Reopen after not ready");
+            foreach ($jobs as $job)
+                if ($job->isReady())
+                    $job->updateStatus(self::STATUS_OPEN, "Reopen after not ready");
         }
     }
     
