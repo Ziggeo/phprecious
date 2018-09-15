@@ -25,6 +25,8 @@ Class ImplicitFTPFileSystem extends AbstractFileSystem {
 		curl_setopt($ch, CURLOPT_FTP_SSL, CURLFTPSSL_TRY);
 		curl_setopt($ch, CURLOPT_FTPSSLAUTH, CURLFTPAUTH_TLS);
 		curl_setopt($ch, CURLOPT_PORT, $options["port"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 		if (!empty($options["passive"]) && !$options["passive"])
 			curl_setopt($ch, CURLOPT_FTPPORT, "-");
 
