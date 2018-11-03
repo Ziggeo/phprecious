@@ -74,9 +74,9 @@ class DatabaseModel extends ActiveModel {
         return $name;
     }
     
-    public static function table() {
+    public static function table($force = FALSE) {
         $class = get_called_class();
-        if (!isset(self::$table[$class]))
+        if (!isset(self::$table[$class]) || $force)
         	self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
         return self::$table[$class];
     }

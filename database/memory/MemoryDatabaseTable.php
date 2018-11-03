@@ -61,6 +61,10 @@ class MemoryDatabaseTable extends DatabaseTable {
                     return $data < $value;
                 if ($keys == '$gt')
                     return $data > $value;
+                if ($keys == '$lte')
+                    return $data <= $value;
+                if ($keys == '$gte')
+                    return $data >= $value;
             }
         }
         return $data == $arg;

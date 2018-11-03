@@ -7,11 +7,12 @@ require_once(dirname(__FILE__) . "/../modelling/jobs/JobModel.php");
 $database = NULL;
 $test_job_model_options = array(
     "direct_execute" => FALSE,
-    "timeout" => NULL,
-    "timeout_max" => NULL,
+    "timeout" => -1,
+    "timeout_max" => 1,
     "failure_max" => 1,
     "delete_on_close" => FALSE,
-    "delete_on_discard" => FALSE
+    "delete_on_discard" => FALSE,
+    "not_ready_max" => 1
 );
 $test_valid_job = TRUE;
 $test_fail_job = FALSE;
@@ -43,7 +44,7 @@ Class JobModelTestModel extends JobModel {
 
 
 class JobModelTest extends PHPUnit_Framework_TestCase {
-    
+
     public function testExecuteDirectSuccess() {
         global $database, $test_valid_job, $test_fail_job, $test_job_model_options;
         $test_valid_job = TRUE;
@@ -73,7 +74,7 @@ class JobModelTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(count($jobs), 0);
         $this->assertEquals($job->status, JobModel::STATUS_CLOSED);
     }
-    
+
     public function testExecuteInvalid() {
         global $database, $test_valid_job, $test_fail_job, $test_job_model_options;
         $test_valid_job = FALSE;
@@ -106,6 +107,25 @@ class JobModelTest extends PHPUnit_Framework_TestCase {
         $jobs = JobModelTestModel::nextJob(NULL);
         $this->assertEquals(count($jobs), 0);
         $this->assertEquals($job->status, JobModel::STATUS_FAILED);
+    }
+
+    public function testTimeout() {
+        global $database;
+        $database = new MemoryDatabase();
+        JobModelTestModel::table(TRUE);
+        $job = new JobModelTestModel();
+        $job->save();
+        $this->assertEquals($job->status, JobModel::STATUS_OPEN);
+        $job->update(array("status" => JobModel::STATUS_EXECUTING));
+        $job->reload();
+        $this->assertEquals($job->status, JobModel::STATUS_EXECUTING);
+        JobModelTestModel::updateJobs();
+        $job->reload();
+        $this->assertEquals($job->status, JobModel::STATUS_OPEN);
+        $job->update(array("status" => JobModel::STATUS_EXECUTING));
+        JobModelTestModel::updateJobs();
+        $job->reload();
+        $this->assertEquals($job->status, JobModel::STATUS_TIMEOUT);
     }
 
 }
