@@ -20,6 +20,8 @@ Class FTPFileSystem extends AbstractFileSystem {
 		curl_setopt($ch, CURLOPT_URL, $ftp_server);
 		curl_setopt($ch, CURLOPT_USERPWD, $options["username"] . ':' . $options["password"]);
 		curl_setopt($ch, CURLOPT_PORT, $options["port"]);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 		if (!empty($options["passive"]) && !$options["passive"])
 			curl_setopt($ch, CURLOPT_FTPPORT, "-");
 		if (!empty($options["disable_epsv"]) && !$options["disable_epsv"])
