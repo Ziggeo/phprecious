@@ -59,7 +59,7 @@ class MongoDatabase extends Database {
 		if ($type == "id")
 			return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
 		if ($type == "date")
-			return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime(TimeSupport::seconds_to_microtime($value));
+			return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value * 1000);
 		return $value;
 	}
 	
@@ -67,7 +67,7 @@ class MongoDatabase extends Database {
 		if ($type == "id")
 			return $value == NULL ? NULL : $value . "";
 		if ($type == "date")
-			return $value == NULL ? NULL : $value;
+			return $value == NULL ? NULL : (strlen($value) > 10) ? $value / 1000 : $value / 1;
 		return $value;
 	}
 
