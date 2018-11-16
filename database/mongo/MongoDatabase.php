@@ -54,22 +54,36 @@ class MongoDatabase extends Database {
     public function selectTable($name) {
         return new MongoDatabaseTable($this, $name);
     }
-	
-	public function encode($type, $value) {
-		if ($type == "id")
-			return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
-		if ($type == "date")
-			return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value);
-		return $value;
-	}
-	
-	public function decode($type, $value) {
-		if ($type == "id")
-			return $value == NULL ? NULL : $value . "";
-		if ($type == "date")
-			return $value == NULL ? NULL : TimeSupport::microtime_to_seconds($value);
-		return $value;
-	}
 
+    public function encode($type, $value) {
+        if ($type == "id")
+            return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
+        if ($type == "date" || $type == "datetime")
+            return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value * 1000);
+        return $value;
+    }
+
+    public function decode($type, $value) {
+        if ($type == "id")
+            return $value == NULL ? NULL : $value . "";
+        //Workaround to keep backwards compatibility
+        if ($type == "date" || $type == "datetime") {
+            if ($value == NULL)
+                return NULL;
+            if (is_a($value, "MongoDB\BSON\UTCDatetime")) {
+                $serialized = $value->jsonSerialize();
+                $time_value = $serialized['$date']['$numberLong'];
+                if (preg_match('/^\d{10}$/', $time_value)) {
+                    $value = $time_value;
+                } else {
+                    $value = $value->toDateTime()->getTimestamp();
+                }
+                return $value;
+            }
+            if (is_numeric($value))
+                return preg_match('/^\d{10}$/', $value) ? $value : $value / 1000;
+        }
+        return $value;
+    }
 }
 
