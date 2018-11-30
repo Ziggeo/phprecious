@@ -40,6 +40,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
 		$options = $this->updateOptions($options);
+        $options = $this->sanitizeOptions($options);
 		static::perfmon(true);
 		//TODO: Why do I have to create a new mongo id?
         $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
@@ -53,6 +54,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
+        $options = $this->sanitizeOptions($options);
 		$result = $this->getCollection()->find($values, $options);
 		if ($result)
 			$result = new IteratorIterator($result);
@@ -76,6 +78,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function update($query, $update, $options = array("safe" => TRUE)) { // "multiple" => false
 		$options = $this->updateOptions($options);
+        $options = $this->sanitizeOptions($options);
 			if(count($update) == 0)
 			return false;
 		static::perfmon(true);
@@ -101,6 +104,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	
 	public function remove($query, $options = array("safe" => TRUE)) { // "justOne" => true
 		$options = $this->updateOptions($options);
+        $options = $this->sanitizeOptions($options);
 		static::perfmon(true);
 		$action = (isset($options["justOne"]) && $options["justOne"]) ? "deleteOne" : "deleteMany";
 		$success = $this->getCollection()->$action($query, $options);
@@ -121,6 +125,11 @@ class MongoDatabaseTable extends DatabaseTable {
 			$arr[$key] = 1;
 		return $this->getCollection()->ensureIndex($arr);
 	}
-		
-	
+
+    public function sanitizeOptions($options) {
+        if (isset($options["skip"]))
+            $options["skip"] = intval($options["skip"]);
+        return $options;
+    }
+    
 }
