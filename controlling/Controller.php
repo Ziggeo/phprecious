@@ -191,18 +191,15 @@ Class Controller {
 			);
 			$status = HttpHeader::HTTP_STATUS_OK;
 		}
-		/* Adding no-sniff and no-cache headers */
-		if (in_array($_SERVER['REQUEST_METHOD'], array('POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH'))) {
-			header('Cache-Control: no-cache,no-store');
-			header('Pragma: no-cache');
-			header('X-Content-Type-Options: nosniff');
-		}
 		if ($this->return_encoding == self::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
 		    header('Content-Type: application/json');
-		    //Prevent duplicated header
-		    if (!in_array($_SERVER['REQUEST_METHOD'], array('POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH')))
-                header("X-Content-Type-Options: nosniff");
+            /* Adding no-sniff and no-cache headers */
+            if (in_array(Requests::getMethod(), array('POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH'))) {
+                header('Cache-Control: no-cache,no-store');
+                header('Pragma: no-cache');
+            }
+            header('X-Content-Type-Options: nosniff');
             print json_encode($data);
 		} elseif ($this->return_encoding == self::RETURN_ENCODING_TEXTAREA) {
 			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
