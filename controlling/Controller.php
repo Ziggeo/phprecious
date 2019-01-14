@@ -196,7 +196,7 @@ Class Controller {
 		    header('Content-Type: application/json');
             /* Adding no-sniff and no-cache headers */
             if (in_array(Requests::getMethod(), array('POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH'))) {
-                header('Cache-Control: no-cache,no-store');
+                header('Cache-Control: no-cache,no-store,must-revalidate');
                 header('Pragma: no-cache');
             }
             header('X-Content-Type-Options: nosniff');
