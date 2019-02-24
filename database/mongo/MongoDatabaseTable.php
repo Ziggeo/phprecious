@@ -129,6 +129,8 @@ class MongoDatabaseTable extends DatabaseTable {
     public function sanitizeOptions($options) {
         if (isset($options["skip"]))
             $options["skip"] = intval($options["skip"]);
+        if (isset($options["limit"]))
+            $options["limit"] = intval($options["limit"]);
         return $options;
     }
     
