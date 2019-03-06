@@ -38,7 +38,7 @@ class DatabaseModel extends ActiveModel {
                         continue;
                     }
                 }
-                $result[$key] = static::getDatabase()->encode($meta["type"], $value);
+                $result[$key] = static::getDatabase()->encode($meta["type"], $value, $meta);
             }
         }
         return $result;
@@ -53,7 +53,7 @@ class DatabaseModel extends ActiveModel {
                 continue;
             $meta = $sch[$key];
             if (isset($meta["type"])) 
-                $result[$key] = static::getDatabase()->decode($meta["type"], $value);
+                $result[$key] = static::getDatabase()->decode($meta["type"], $value, $meta);
         }
         return $result;
     }

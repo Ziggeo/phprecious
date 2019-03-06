@@ -54,15 +54,18 @@ class MongoDatabase extends Database {
         return new MongoDatabaseTable($this, $name);
     }
 
-    public function encode($type, $value) {
+    public function encode($type, $value, $attrs = array()) {
         if ($type == "id")
             return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
         if ($type == "date" || $type == "datetime")
             return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value * 1000);
+		//Added to prevent storing empty arrays when empty objects are needed
+		if ($type === "object" && $value === array() && @$attrs["force_object"])
+			return (object) $value;
         return $value;
     }
 
-    public function decode($type, $value) {
+    public function decode($type, $value, $attrs = array()) {
         if ($type == "id")
             return $value == NULL ? NULL : $value . "";
         //Workaround to keep backwards compatibility
@@ -82,6 +85,9 @@ class MongoDatabase extends Database {
             if (is_numeric($value))
                 return preg_match('/^\d{10}$/', $value) ? $value : $value / 1000;
         }
+        //Added to prevent returning empty arrays when empty objects are needed
+        if ($type === "object" && $value === array() && @$attrs["force_object"])
+        	return (object) $value;
         return $value;
     }
 }
