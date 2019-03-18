@@ -18,7 +18,11 @@ class SendgridApiMailer extends Mailer
 
     protected function sendMail($mail) {
         $sendgridmail = new SendGrid\Mail\Mail();
-        $sendgridmail->addTo($mail->recipient);
+        $recipient_arr = explode("<", $mail->recipient);
+        if (count($recipient_arr) == 1)
+            $sendgridmail->addTo($mail->recipient);
+        else
+            $sendgridmail->addTo(trim(trim($recipient_arr[1], ">")), trim($recipient_arr[0]));
         $sendgridmail->setSubject($mail->subject);
         if(@$mail->message)
             $sendgridmail->addContent("text/plain", $mail->message);
