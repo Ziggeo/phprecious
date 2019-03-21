@@ -117,7 +117,7 @@ Class AbstractFile {
 		throw new FileSystemException("Unsupported Operation");
 	} 
 
-	protected function readStream() {
+	public function readStream($options = array()) {
 		throw new FileSystemException("Unsupported Operation");
 	}
 	
@@ -127,11 +127,8 @@ Class AbstractFile {
 		fclose($stream);
 	}
 	
-	public function getContents() {
-		$stream = $this->readStream();
-		$data = fread($stream, $this->size());
-		fclose($stream);
-		return $data;
+	public function getContents($options = array()) {
+		return $this->readStream($options);
 	}
 	
 	public function toLocalFile($file) {

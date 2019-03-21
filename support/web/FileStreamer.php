@@ -68,22 +68,22 @@ Class FileStreamer {
 	 *   - block_size (int, default 8 KB): Block size to read and stream
 	 *
 	 */
-
+	
 	public static function streamFile($file, $options = array()) {
-		if (!is_file($file))
+		if (!$file->exists())
 			throw new FileStreamerException("String given is not a file.");
 		
 		$download = isset($options["download"]) ? $options["download"] : FALSE;
 		
 		if ($download)
-			$download_name = isset($options["download_name"]) ? $options["download_name"] : self::getDownloadName($file);
+			$download_name = isset($options["download_name"]) ? $options["download_name"] : self::getDownloadName($file->filename());
 		
 		$resume = isset($options["resume"]) ? $options["resume"] : TRUE;
 		$open_mode = isset($options["open_mode"]) ? $options["open_mode"] : "rb";
 		$open_context = isset($options["open_context"]) ? $options["open_context"] : NULL;
 		$block_size = isset($options["block_size"]) ? $options["block_size"] : 8 * 1024;
 		
-		$file_size = filesize($file);
+		$file_size = $file->size();
 		
 		$range = $resume ? self::parseHttpRange($file_size) : NULL;
 
@@ -101,44 +101,40 @@ Class FileStreamer {
 			else
 				$content_type = ContentType::byExtension($options["content_type"], $download ? TRUE : FALSE);	
 		} else
-			$content_type = ContentType::byFileName($download ? $download_name : $file, $download ? TRUE : FALSE);
+			$content_type = ContentType::byFileName($download ? $download_name : $file->filename(), $download ? TRUE : FALSE);
 	    header('Content-Type: ' . $content_type);
 	  				
 		if ($download)
 	    	header('Content-Disposition: attachment; filename="' . $download_name . '"');
 		
 	    header('Content-Length: ' . (@$range ? $range["bytes"] : $file_size));
-	  		
-		$remaining = @$range ? $range["bytes"] : $file_size;
-	    
-		if (@$options["head_only"])
-			return $remaining;
 		
-		set_time_limit(0);
-		$handle = $open_context ? fopen($file, $open_mode, FALSE, $open_context) : fopen($file, $open_mode);
-		if (!$handle)
-			throw new FileStreamerException("Could not open file.");
-		
-		if (@$range)
-			fseek($handle, $range["start"]);
-		
-		$transferred = 0;
+		$resp = $file->readStream(array(
+				"range" => $range,
+				"open_mode" => $open_mode,
+				"open_context" => $open_context,
+				"block_size" => $block_size,
+				"head_only" => $options["head_only"]
+			)
+		);
+		return $resp;
+	}
 
-		while (!feof($handle) && ($remaining > 0) && !connection_aborted()) {
-			$read_size = min($remaining, $block_size);
-			$data = fread($handle, $read_size);
-			$returned_size = strlen($data);
-			if ($returned_size > $read_size)
-				throw new FileStreamerException("Read returned more data than requested.");
-			print($data);
-			$transferred += $returned_size;
-			$remaining -= $returned_size;
-			flush();
-			ob_flush();
-		}
+	/**
+	 * @param $file_path
+	 * @param array $options
+	 * @return mixed
+	 * @throws FileStreamerException
+	 */
+	public static function streamFileFromPath($file_path, $options = array()) {
+		//We're creating a ResilientFile object from the file_path as a default. We can change it later
+		$file_system = new ResilientFileSystem(FileSystem::singleton(), array(
+			"repeat_count" => 100,
+			"wait_time" => 100
+		));
 		
-		fclose($handle);
-		return $transferred;
+		return self::streamFile(new ResilientFile($file_system, $file_path), $options);
+		
 	}
 	
 }
