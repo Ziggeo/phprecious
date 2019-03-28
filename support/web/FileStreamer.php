@@ -126,9 +126,11 @@ Class FileStreamer {
 	 * @return mixed
 	 * @throws FileStreamerException
 	 */
-	public static function streamFileFromPath($file_path, $options = array()) {
+	public static function streamFileFromPath($file_path, $base_file_system = NULL, $options = array()) {
+		if (!@$base_file_system) //DEFAULTING to LocalFileSystem
+			$base_file_system = LocalFileSystem::singleton();
 		//We're creating a ResilientFile object from the file_path as a default. We can change it later
-		$file_system = new ResilientFileSystem(FileSystem::singleton(), array(
+		$file_system = new ResilientFileSystem($base_file_system, array(
 			"repeat_count" => 100,
 			"wait_time" => 100
 		));

@@ -40,7 +40,7 @@ Class LocalFile extends AbstractFile {
 		$open_mode = isset($options["open_mode"]) ? $options["open_mode"] : "rb";
 		$open_context = $options["open_context"];
 		$block_size = $options["block_size"];
-		$file_size = filesize($this->filename());
+		$file_size = $this->size();
 		$remaining = @$range ? $range["bytes"] : $file_size;
 
 		if (@$options["head_only"])
