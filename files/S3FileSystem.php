@@ -5,22 +5,21 @@ require_once(dirname(__FILE__) . "/AbstractFileSystem.php");
 
 
 Class S3FileSystem extends AbstractFileSystem {
-	
+
 	private $s3;
 	private $bucket;
-	
+
 	protected function getClass() {
 		return "S3File";
 	}
-	
-	function __construct($key, $secret, $bucket, $region = "", $signature = "", $accelerated = FALSE) {
+
+	function __construct($key, $secret, $bucket, $region = "us-east-1", $signature = "") {
 		// parent::__construct();
 		try {
 			$conf = array(
 				"key" => $key,
 				"secret" => $secret,
-				"region" => $region,
-				"@use_accelerate_endpoint" => $accelerated
+				"region" => $region
 			);
 			if ($signature !== "v2")
 				$conf["signature"] = $signature;
@@ -31,11 +30,11 @@ Class S3FileSystem extends AbstractFileSystem {
 			throw new FileSystemException($e->getMessage());
 		}
 	}
-	
+
 	public function s3() {
 		return $this->s3;
 	}
-	
+
 	public function bucket() {
 		return $this->bucket;
 	}
@@ -43,19 +42,19 @@ Class S3FileSystem extends AbstractFileSystem {
 
 
 Class S3File extends AbstractFile {
-	
+
 	private function s3() {
 		return $this->file_system->s3();
 	}
-	
+
 	private function bucket() {
 		return $this->file_system->bucket();
 	}
-	
+
 	public function s3path() {
 		return 's3://' . $this->bucket() . '/' . $this->filename();
 	}
-	
+
 	public function waitUntilExists($options = array("wait_time" => 1000, "repeat_count" => 3)) {
 		$this->s3()->waitUntil('ObjectExists', array(
 			'Bucket' => $this->bucket(),
@@ -64,7 +63,7 @@ Class S3File extends AbstractFile {
 			'waiter.max_attempts' => $options["repeat_count"]
 		));
 	}
-	
+
 	public function size() {
 		$meta = $this->s3()->headObject(array(
 			"Bucket" => $this->bucket(),
@@ -72,7 +71,7 @@ Class S3File extends AbstractFile {
 		));
 		return intval($meta["ContentLength"]);
 	}
-	
+
 	public function exists() {
 		try {
 			$meta = $this->s3()->headObject(array(
@@ -81,10 +80,11 @@ Class S3File extends AbstractFile {
 			));
 			return !!@$meta;
 		} catch (Exception $e) {
+			APP()->debug_logger(NULL, NULL, $e->getMessage());
 			return FALSE;
 		}
 	}
-	
+
 	public function delete() {
 		try {
 			$meta = $this->s3()->deleteObject(array(
@@ -95,7 +95,7 @@ Class S3File extends AbstractFile {
 			throw new FileSystemException("Could not delete file");
 		}
 	}
-	
+
 	public function readStream($options = array()) {
 		$range = @$options["range"];
 		$block_size = $options["block_size"];
@@ -134,12 +134,12 @@ Class S3File extends AbstractFile {
 	public function readFile() {
 		$file = $this->s3()->getObject(array(
 			'Bucket' => $this->bucket(),
-			'Key'    => $this->filename()
+			'Key' => $this->filename()
 		));
 
 		return $file["Body"];
 	}
-	
+
 	public function writeStream() {
 		//TODO Refactor write stream
 		$handle = fopen($this->s3path(), "w");
@@ -147,29 +147,29 @@ Class S3File extends AbstractFile {
 			throw new FileSystemException("Could not open file");
 		return $handle;
 	}
-			
+
 	public function toLocalFile($file) {
 		try {
 			$this->s3()->getObject(array(
 				'Bucket' => $this->bucket(),
-				'Key'    => $this->filename(),
+				'Key' => $this->filename(),
 				'SaveAs' => $file
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		}
 	}
-	
+
 	public function fromLocalFile($file) {
 		try {
-			 $this->s3()->putObject(array(
+			$this->s3()->putObject(array(
 				'Bucket' => $this->bucket(),
-				'Key'    => $this->filename(),
+				'Key' => $this->filename(),
 				'SourceFile' => $file
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		}
-	}	
+	}
 
 }
