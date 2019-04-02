@@ -13,13 +13,14 @@ Class S3FileSystem extends AbstractFileSystem {
 		return "S3File";
 	}
 	
-	function __construct($key, $secret, $bucket, $region = "", $signature = "") {
+	function __construct($key, $secret, $bucket, $region = "", $signature = "", $accelerated = FALSE) {
 		// parent::__construct();
 		try {
 			$conf = array(
 				"key" => $key,
 				"secret" => $secret,
-				"region" => $region
+				"region" => $region,
+				"@use_accelerate_endpoint" => $accelerated
 			);
 			if ($signature !== "v2")
 				$conf["signature"] = $signature;
