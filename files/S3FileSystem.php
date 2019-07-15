@@ -16,9 +16,9 @@ Class S3FileSystem extends AbstractFileSystem {
 	function __construct($key, $secret, $bucket, $region = "us-east-1", $signature = "") {
 		// parent::__construct();
 		try {
+			$credentials = new Aws\Credentials\Credentials($key, $secret);
 			$conf = array(
-				"key" => $key,
-				"secret" => $secret,
+				"credentials" => $credentials,
 				"region" => $region,
 				"profile" => "default",
 				"version" => "2006-03-01"
