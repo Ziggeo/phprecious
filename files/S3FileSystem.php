@@ -13,18 +13,20 @@ Class S3FileSystem extends AbstractFileSystem {
 		return S3File;
 	}
 	
-	function __construct($key, $secret, $bucket, $region = "", $signature = "") {
+	function __construct($key, $secret, $bucket, $region = "us-east-1", $signature = "") {
 		// parent::__construct();
 		try {
 			$conf = array(
 				"key" => $key,
 				"secret" => $secret,
-				"region" => $region
+				"region" => $region,
+				"profile" => "default",
+				"version" => "2006-03-01"
+
 			);
 			if ($signature !== "v2")
 				$conf["signature"] = $signature;
-			$this->s3 = Aws\S3\S3Client::factory($conf);
-			$this->s3->registerStreamWrapper();
+			$this->s3 = new Aws\S3\S3Client($conf);
 			$this->bucket = $bucket;
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
