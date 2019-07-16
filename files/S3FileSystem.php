@@ -60,7 +60,7 @@ Class S3File extends AbstractFile {
 	}
 
 	public function s3path() {
-		return "s3://" . $this->bucket() . ""/"" . $this->filename();
+		return "s3://" . $this->bucket() . "/" . $this->filename();
 	}
 
 	public function waitUntilExists($options = array("wait_time" => 1000, "repeat_count" => 3)) {
