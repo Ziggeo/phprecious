@@ -84,6 +84,8 @@ class Router {
             $entry["sitemap"] = $options["sitemap"];
         if (isset($options["preargs"]))
             $entry["preargs"] = $options["preargs"];
+		if (isset($options["log_route"]))
+			$entry["log_route"] = $options["log_route"];
         $this->routes[] = $entry;
         if (isset($options["path"]))
             $this->paths[$options["path"]] = $entry;
@@ -144,6 +146,7 @@ class Router {
         $controller_action = $this->metaRoutes["404"];
         $args = array();
         $arguments = array();
+		$log_route = TRUE; //By default we're logging the route
         foreach ($this->routes as $route) {
             if ((($route["method"] == "*") || ($route["method"] == $method)) &&
                 (preg_match("/^" . $route["uri"] . "$/", $uri, $matches))) {
@@ -165,6 +168,8 @@ class Router {
                         $this->log(Logger::INFO_2, "Redirect to: " . $redir);
                         return;
                     }
+					if (isset($route["log_route"]))
+						$log_route = $route["log_route"];
                     $controller_action = $route["controller_action"];
                     $arguments = $route["arguments"];
                     array_shift($matches);
@@ -176,12 +181,13 @@ class Router {
             }
         }
         $this->perfmon(false);
-        $this->dispatchControllerAction($controller_action, $args, $arguments);
+        $this->dispatchControllerAction($controller_action, $args, $arguments, $log_route);
     }
 
-    public function dispatchControllerAction($controller_action, $args = array(), $arguments = array()) {
+    public function dispatchControllerAction($controller_action, $args = array(), $arguments = array(), $log_route = TRUE) {
         $this->perfmon(true);
-        $this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
+        if ($log_route) //Used to prevent route logging on demand.
+        	$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
         krsort($arguments);
         foreach ($arguments as $argkey=>$data) {
             $item = @$data["remove"] ? ArrayUtils::removeByIndex($args, $argkey) : $args[$argkey];

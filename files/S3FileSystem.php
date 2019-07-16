@@ -13,19 +13,22 @@ Class S3FileSystem extends AbstractFileSystem {
 		return "S3File";
 	}
 
-	function __construct($key, $secret, $bucket, $region = "us-east-1", $signature = "") {
-		// parent::__construct();
+	function __construct($opts) {
 		try {
 			$conf = array(
-				"key" => $key,
-				"secret" => $secret,
-				"region" => $region
+				"region" => $opts["region"],
+				"version" => "2006-03-01"
 			);
-			if ($signature !== "v2")
-				$conf["signature"] = $signature;
-			$this->s3 = Aws\S3\S3Client::factory($conf);
-			//$this->s3->registerStreamWrapper(); SHOULD BE SAFE TO REMOVE THIS
-			$this->bucket = $bucket;
+			//Using credentials when set in the config.
+			if ($opts["key"] <> "" && $opts["secret"] <> "")
+				$conf["credentials"] = new Aws\Credentials\Credentials($opts["key"], $opts["secret"]);
+			//Allowing the use of profiles.
+			if (($opts["key"] === "" || $opts["secret"] === "") && $opts["profile"] <> "")
+				$conf["profile"] = $opts["profile"];
+			if ($opts["signature"] !== "v2")
+				$conf["signature"] = $opts["signature"];
+			$this->s3 = new Aws\S3\S3Client($conf);
+			$this->bucket = $opts["bucket"];
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		}
@@ -38,10 +41,15 @@ Class S3FileSystem extends AbstractFileSystem {
 	public function bucket() {
 		return $this->bucket;
 	}
+
 }
 
 
 Class S3File extends AbstractFile {
+
+	public function filename() {
+		return ltrim($this->file_name, "/"); //For the new version the string shouldn"t start with "/"
+	}
 
 	private function s3() {
 		return $this->file_system->s3();
@@ -52,15 +60,15 @@ Class S3File extends AbstractFile {
 	}
 
 	public function s3path() {
-		return 's3://' . $this->bucket() . '/' . $this->filename();
+		return "s3://" . $this->bucket() . ""/"" . $this->filename();
 	}
 
 	public function waitUntilExists($options = array("wait_time" => 1000, "repeat_count" => 3)) {
-		$this->s3()->waitUntil('ObjectExists', array(
-			'Bucket' => $this->bucket(),
-			'Key' => $this->filename(),
-			'waiter.interval' => ceil($options["wait_time"] / 1000),
-			'waiter.max_attempts' => $options["repeat_count"]
+		$this->s3()->waitUntil("ObjectExists", array(
+			"Bucket" => $this->bucket(),
+			"Key" => $this->filename(),
+			"waiter.interval" => ceil($options["wait_time"] / 1000),
+			"waiter.max_attempts" => $options["repeat_count"]
 		));
 	}
 
@@ -80,7 +88,6 @@ Class S3File extends AbstractFile {
 			));
 			return !!@$meta;
 		} catch (Exception $e) {
-			APP()->debug_logger(NULL, NULL, $e->getMessage());
 			return FALSE;
 		}
 	}
@@ -141,7 +148,6 @@ Class S3File extends AbstractFile {
 	}
 
 	public function writeStream() {
-		//TODO Refactor write stream
 		$handle = fopen($this->s3path(), "w");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
@@ -151,9 +157,9 @@ Class S3File extends AbstractFile {
 	public function toLocalFile($file) {
 		try {
 			$this->s3()->getObject(array(
-				'Bucket' => $this->bucket(),
-				'Key' => $this->filename(),
-				'SaveAs' => $file
+				"Bucket" => $this->bucket(),
+				"Key" => $this->filename(),
+				"SaveAs" => $file
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
@@ -163,9 +169,9 @@ Class S3File extends AbstractFile {
 	public function fromLocalFile($file) {
 		try {
 			$this->s3()->putObject(array(
-				'Bucket' => $this->bucket(),
-				'Key' => $this->filename(),
-				'SourceFile' => $file
+				"Bucket" => $this->bucket(),
+				"Key" => $this->filename(),
+				"SourceFile" => $file
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
