@@ -16,7 +16,7 @@ Class S3FileSystem extends AbstractFileSystem {
 	function __construct($opts) {
 		try {
 			if (((!@$opts["key"] || !@$opts["secret"]) && (!@$opts["profile"])) || !@$opts["region"])
-				throw new ServiceServerErrorException("Key, Secret and Region must be present to configure an AWS instance");
+				throw new Exception("Key, Secret and Region must be present to configure an AWS instance");
 			$conf = array(
 				"region" => $opts["region"],
 				"version" => "2006-03-01"
