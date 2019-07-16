@@ -15,6 +15,8 @@ Class S3FileSystem extends AbstractFileSystem {
 
 	function __construct($opts) {
 		try {
+			if (((!@$opts["key"] || !@$opts["secret"]) && (!@$opts["profile"])) || !@$opts["region"])
+				throw new ServiceServerErrorException("Key, Secret and Region must be present to configure an AWS instance");
 			$conf = array(
 				"region" => $opts["region"],
 				"version" => "2006-03-01"
@@ -132,10 +134,11 @@ Class S3File extends AbstractFile {
 			$returned_size = strlen($data["Body"]);
 			if ($returned_size > $read_size)
 				throw new FileStreamerException("Read returned more data than requested.");
-			print($data["Body"]);
+			print $data["Body"];
 			$transferred += $returned_size;
 			$remaining -= $returned_size;
 		}
+		return TRUE;
 	}
 
 	public function readFile() {

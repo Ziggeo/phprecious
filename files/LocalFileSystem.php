@@ -62,7 +62,7 @@ Class LocalFile extends AbstractFile {
 			$returned_size = strlen($data);
 			if ($returned_size > $read_size)
 				throw new FileStreamerException("Read returned more data than requested.");
-			print($data);
+			print $data;
 			$transferred += $returned_size;
 			$remaining -= $returned_size;
 			flush();
@@ -70,6 +70,7 @@ Class LocalFile extends AbstractFile {
 		}
 
 		fclose($handle);
+		return TRUE;
 	}
 	
 	public function readFile() {
