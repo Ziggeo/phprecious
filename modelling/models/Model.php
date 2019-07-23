@@ -194,9 +194,19 @@ class Model {
 		return $value;
 	}
 
+	/**
+	 * Set the attribute to the model. If it's an update, it checks for the $setChanged flag and if the attribute is
+	 * configured as persistent before marking the model as changed for Database Update.
+	 *
+	 *
+	 * @param $key
+	 * @param $value
+	 * @param bool $setChanged
+	 */
 	protected function setAttr($key, $value, $setChanged = FALSE) {
 		$value = $this->typecastAttr($key, $value);
-		if ($setChanged && @(!isset($this->attrs[$key]) || $this->attrs[$key] !== $value))
+		$scheme = $this->schemeOf($key);
+		if ($setChanged && @(!isset($this->attrs[$key]) || $this->attrs[$key] !== $value) && @(!isset($scheme["persistent"]) || $scheme["persistent"] == TRUE))
 			$this->attrsChanged[$key] = $value;
 		$this->attrs[$key] = $value;
 	}
