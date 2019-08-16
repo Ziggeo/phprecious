@@ -85,9 +85,6 @@ class MongoDatabase extends Database {
             if (is_numeric($value))
                 return preg_match('/^\d{10}$/', $value) ? $value : $value / 1000;
         }
-        //Added to prevent returning empty arrays when empty objects are needed
-        if ($type === "object" && $value === array() && @$attrs["force_object"])
-        	return (object) $value;
         return $value;
     }
 }

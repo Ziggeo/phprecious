@@ -16,6 +16,8 @@ Class Application {
 
     public function error_handler($severity, $message, $filename, $lineno) {
         $this->error_messages[] = array("severity" => $severity, "message" => $message, "filename" => $filename, "lineno" => $lineno);
+        while (count($this->error_messages) > 100)
+            array_shift($this->error_messages);
     }
     
     public function fatal_handler() {

@@ -50,12 +50,19 @@ Abstract Class DataObjectStats extends DatabaseModel {
             $period_stat = $this->obtainPeriodStats($date, $period);
             $result = array_merge($result, $period_stat->data);
         }
-        if (!$hierarchy)
-            return $result;
-        $result = array($result);
-        $parent = $this->parentStats();
-        if ($parent != NULL)
-            return array_merge($result, $parent->readStats($options));
+        $scheme = static::getStatsScheme("default");
+        foreach ($scheme as $key=>$entry)
+            if ((!isset($result[$key]) || !is_numeric($result[$key])) && !is_callable($entry["default"]))
+                $result[$key] = $entry["default"];
+        foreach ($scheme as $key=>$entry)
+            if ((!isset($result[$key]) || !is_numeric($result[$key])) && is_callable($entry["default"]))
+                $result[$key] = $entry["default"]($result);
+        if ($hierarchy) {
+            $result = array($result);
+            $parent = $this->parentStats();
+            if ($parent != NULL)
+                $result = array_merge($result, $parent->readStats($options));
+        }
         return $result;
     }
     
@@ -171,31 +178,39 @@ Abstract Class DataObjectStats extends DatabaseModel {
         );
         $query = array_merge($base_query, self::datePeriodRange($period, $date));
         $cls = static::periodStatsClassName();
-        $row = $cls::findBy($query);
-        if ($row != NULL)
-            return $row;
-        // If it doesn't, check whether there is a later entry.
-        $later_query = array_merge($base_query, array("start_date" => array('$gt' => $query["start_date"])));
-        $rows = $cls::allBy($later_query, array("start_date" => -1), 1, 0);
-        $stat = new $cls($query);
+        $stat = $cls::findBy($query);
         $scheme = static::getStatsScheme("period");
-        if (count($rows) == 1) {
-            // If so, use initial data.
-            $row = $rows[0];
-            $stat->initial = $row->initial;
-        } else {
-            // If it doesn't, create a new entry with new initial data.
+        if ($stat == NULL) {
+            // If it doesn't, check whether there is a later entry.
+            $later_query = array_merge($base_query, array("start_date" => array('$gt' => $query["start_date"])));
+            $rows = $cls::allBy($later_query, array("start_date" => -1), 1, 0);
             $stat = new $cls($query);
-            $data = array();
-            foreach ($scheme as $key=>$entry)
-                if (!is_callable($entry["default"]))
-                    $data[$key] = $entry["default"];
-            foreach ($scheme as $key=>$entry)
-                if (is_callable($entry["default"]))
-                    $data[$key] = $entry["default"]($data, $this->data);
-            $stat->initial = $data;
+            if (count($rows) == 1) {
+                // If so, use initial data.
+                $row = $rows[0];
+                $stat->initial = $row->initial;
+            } else {
+                // If it doesn't, create a new entry with new initial data.
+                $stat = new $cls($query);
+                $data = array();
+                foreach ($scheme as $key => $entry)
+                    if (!is_callable($entry["default"]))
+                        $data[$key] = $entry["default"];
+                foreach ($scheme as $key => $entry)
+                    if (is_callable($entry["default"]))
+                        $data[$key] = $entry["default"]($data, $this->data);
+                $stat->initial = $data;
+            }
+            $stat->data = array_slice($stat->initial, 0);
         }
-        $stat->data = array_slice($stat->initial, 0);
+        $statData = $stat->data;
+        foreach ($scheme as $key => $entry)
+            if ((!isset($statData[$key]) || !is_numeric($statData[$key])) && !is_callable($entry["default"]))
+                $statData[$key] = $entry["default"];
+        foreach ($scheme as $key => $entry)
+            if ((!isset($statData[$key]) || !is_numeric($statData[$key])) && is_callable($entry["default"]))
+                $statData[$key] = $entry["default"]($statData, $this->data);
+        $stat->data = $statData;
         return $stat;
     }
 
