@@ -41,6 +41,24 @@ Class Requests {
 			$c = "&";
 		}
 		return $s;
-	} 
+	}
+
+	/**
+	 * Method to support get body data or POST data according what's set.
+	 * Mostly used for updated methods coming from mobile clients.
+	 *
+	 * @return array|mixed
+	 */
+	public static function getRequestData() {
+		$method = $_SERVER['REQUEST_METHOD'];
+		if (in_array($method, array("POST", "PUT")) && count($_POST)) {
+			return $_POST;
+		} elseif (in_array($method, array("POST", "PUT")) && count($_POST) === 0) {
+			return json_decode(file_get_contents("php://input"), TRUE);
+		} elseif ($method === "GET") {
+			return $_GET;
+		}
+		return array();
+	}
 	
 }
