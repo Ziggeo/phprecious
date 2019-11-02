@@ -85,8 +85,8 @@ class TimePeriod {
 		return self::hours($days * 24);
 	}
 
-	public static function months($days) {
-		return self::days(30);
+	public static function months($months) {
+		return self::days($months * 30);
 	}
 
 	public static function get($seconds) {
