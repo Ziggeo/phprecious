@@ -5,9 +5,10 @@ abstract class DatabaseTable {
 	private $database;
 	private $tablename;
 	
-    public function __construct($database, $tablename) {
+    public function __construct($database, $tablename, $to_lower = TRUE) {
     	$this->database = $database;
-    	$this->tablename = strtolower($tablename);
+    	$tablename = ($to_lower) ? strtolower($tablename) : $tablename;
+    	$this->tablename = $tablename;
     }
 	
 	public function getDatabase() {
