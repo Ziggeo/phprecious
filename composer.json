@@ -1,16 +1,16 @@
 {
-	"name" : "ziggeo/phprecious",
-	"description" : "PHPrecious is a Ruby-on-Rails-like light-weight PHP-framework.",
-	"version" : "0.0.40",
-	"license" : "Apache-2.0",
-	"require" : {
-		"php" : ">=7.1.0",
-		"phpseclib/phpseclib": "~2.0",
-		"mongodb/mongodb": "^1.2",
-		"aws/aws-sdk-php" : "3.*",
-        "ext-json": "*"
-	},
-	"require-dev": {
-		"phpunit/phpunit": "^7"
-	}
+  "name": "ziggeo/phprecious",
+  "description": "PHPrecious is a Ruby-on-Rails-like light-weight PHP-framework.",
+  "version": "0.0.40",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=7.1.0",
+    "phpseclib/phpseclib": "~2.0",
+    "mongodb/mongodb": "^1.2",
+    "aws/aws-sdk-php": "3.*",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7"
+  }
 }
