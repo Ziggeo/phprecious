@@ -9,16 +9,22 @@ use Aws\DynamoDb\Marshaler;
 class DynamoDBDatabaseTable extends DatabaseTable {
 
 	private $primary_key_attributes = array();
+	private $indexes = array();
 
 	const VALUE_IDENTIFIERS = array(
 		"set" => ":",
 		"remove" => "#"
 	);
 
-	public function __construct($database, $tablename, $key) {
+	public function __construct($database, $tablename, $key, $indexes) {
 		parent::__construct($database, $tablename, FALSE);
 		foreach ($key as $value) {
 			$this->primary_key_attributes[] = $value["AttributeName"];
+		}
+		foreach ($indexes as $in => $keys) {
+			$this->indexes[$in] = array_map(function ($attr) {
+				return $attr["AttributeName"];
+			}, $keys);
 		}
 	}
 
@@ -38,6 +44,12 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 
 	private function existsInPrimaryKey($attr) {
 		return in_array($attr, $this->primary_key_attributes);
+	}
+
+	private function existsInIndex($attr, $index) {
+		if (!@$index["name"] || !@$this->indexes[$index["name"]])
+			return FALSE;
+		return in_array($attr, $this->indexes[$index["name"]]);
 	}
 
 	public function insert(&$row) {
@@ -69,7 +81,8 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		$params = array();
 		//KEY EXPRESSION TO FILTER EXPRESSION WITH SCAN
 		if (count($query)) {
-			$params = $this->parseFindAndScan($query);
+			$query["index"] = (@$query["index"]) ? $query["index"] : array();
+			$params = $this->parseFindAndScan($query["query"], array(), $query["index"]);
 			$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
 		}
 		$params = $this->cleanScanParams($params);
@@ -84,32 +97,42 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 
 	public function scan($query = array(), $options = NULL) {
 		$marshaler = new Marshaler();
+		$query["query"] = (@$query["query"]) ? $query["query"] : array();
 		$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
-		$params = $this->parseFindAndScan($query["query"], $query["fields"]);
-		$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
+		$query["index"] = (@$query["index"]) ? $query["index"] : array();
+		$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"]);
+		if(isset($params["ExpressionAttributeValues"]))
+			$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
 		$params = $this->cleanScanParams($params);
 		$params = array_merge(array(
 			'TableName' => $this->getTablename()
 		), $params);
 
 		$result = $this->getDatabase()->getDatabase()->scan($params);
-		if (@$result["Items"])
+		if (@$result["Items"]) {
 			$result = new ArrayIterator($result["Items"]);
+		} else {
+			$result = new ArrayIterator([]);
+		}
 		return $result;
 	}
 
 	public function find($query, $options = NULL) {
 		$marshaler = new Marshaler();
 		$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
-		$params = $this->parseFindAndScan($query["query"], $query["fields"]);
+		$query["index"] = (@$query["index"]) ? $query["index"] : array();
+		$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"]);
 		$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
 		$params = array_merge(array(
 			'TableName' => $this->getTablename()
 		), $params);
 
 		$result = $this->getDatabase()->getDatabase()->query($params);
-		if (@$result["Items"])
+		if (@$result["Items"]) {
 			$result = new ArrayIterator($result["Items"]);
+		} else {
+			$result = new ArrayIterator([]);
+		}
 		return $result;
 	}
 
@@ -171,7 +194,7 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			'TableName' => $this->getTablename(),
 			'Key' => $key,
 			'UpdateExpression' => $updater["expression"],
-			'ExpressionAttributeValues'=> $eav,
+			'ExpressionAttributeValues' => $eav,
 			'ReturnValues' => 'UPDATED_NEW'
 		);
 
@@ -246,7 +269,9 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 				$expression .= $attribute_name . " = " . $update_value_key;
 				$eav[$update_value_key] = $update_value;
 			} else { //this will happen for remove and delete actions
-				$expression .= $update_value;
+				$attribute_name = "#" . preg_replace("/[^A-Za-z0-9]/", '', $update_value) . rand();
+				$ean[$attribute_name] = $update_value;
+				$expression .= $attribute_name;
 			}
 			if ($last_key <> $key)
 				$expression .= ", ";
@@ -259,7 +284,7 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		);
 	}
 
-	private function parseFindAndScan($query, $fields = array()) {
+	private function parseFindAndScan($query, $fields = array(), $index = array()) {
 		$kce = array();
 		$fe = array();
 		$pe = array();
@@ -277,12 +302,11 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 				$item_string .= $this->parseSimpleFindValue($key, $item, $attribute_name, $eav);
 			} else {
 				foreach ($item as $operator => $values) {
-					$item_string .= $attribute_name . " " . $operator . " ";
-					$item_string .= $this->parseArrayFindValue($key, $values, $attribute_name, $eav);
+					$item_string .= $this->parseArrayFindValue($key, $values, $attribute_name, $eav, $operator);
 				}
 			}
 
-			if ($this->existsInPrimaryKey($key)) {
+			if ($this->existsInPrimaryKey($key) || $this->existsInIndex($key, $index)) {
 				$kce[] = $item_string;
 			} else {
 				$fe[] = $item_string;
@@ -311,32 +335,38 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			$pe[] = implode(".", $field_name);
 		}
 
-		$parsed = array(
-			"ExpressionAttributeValues" => $eav,
-			"ExpressionAttributeNames" => $ean,
-			"KeyConditionExpression" => implode(" and ", $kce)
-		);
-		if (count($pe)) {
+		$parsed = array();
+		if (@$eav)
+			$parsed["ExpressionAttributeValues"] = $eav;
+		if (@$ean)
+			$parsed["ExpressionAttributeNames"] = $ean;
+		if (count($kce))
+			$parsed["KeyConditionExpression"] = implode(" and ", $kce);
+		if (count($pe)) //ProjectionExpression
 			$parsed["ProjectionExpression"] = implode(", ", $pe);
-		}
-		if (count($fe)) {
+		if (count($fe))//FilterExpression
 			$parsed["FilterExpression"] = implode(" and ", $fe);
+		if (count($index) && @$index["name"]) { //Index
+			$parsed["IndexName"] = $index["name"];
+			if (@$index["sort"]) {
+				$parsed["ScanIndexForward"] = @$index["sort"];
+			}
 		}
 
 		return $parsed;
 	}
 
-	private function parseSimpleFindValue($key, $item, $attribute, &$eav) {
+	private function parseSimpleFindValue($key, $item, $attribute, &$eav, $operator = "=") {
 		$value_key = ":" . preg_replace("/[^A-Za-z0-9]/", '', $key);
 		$eav[$value_key] = $item;
-		return $attribute . " = " . $value_key;
+		return $attribute . " $operator " . $value_key;
 	}
 
-	private function parseArrayFindValue($key, $item, $attribute, &$eav) {
+	private function parseArrayFindValue($key, $item, $attribute, &$eav, $operator) {
 		//key element should be the operator
 		$kce = "";
 		if (!is_array($item)) {
-			$kce .= $this->parseSimpleFindValue($key, $item, $attribute, $eav);
+			$kce .= $this->parseSimpleFindValue($key, $item, $attribute, $eav, $operator);
 		} else {
 			$last_key = ArrayUtils::arrayKeyLast($item);
 			foreach ($item as $idV => $value) {

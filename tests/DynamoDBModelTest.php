@@ -36,8 +36,8 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		$data = $test_table["data"];
 		$first_key = ArrayUtils::arrayKeyFirst($data);
 		$first_key_expression = array(
-			"year" => $data[$first_key]["year"],
-			"title" => $data[$first_key]["title"]
+			"_id" => $data[$first_key]["_id"],
+			"created" => $data[$first_key]["created"]
 		);
 
 		//Test INSERT
@@ -48,80 +48,99 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		//Test READ and DECODE
 		$item = $table->read(json_encode($first_key_expression));
 		$decoded = $database->decodeItem($item);
-		$this->assertEquals($data[$first_key]["title"], $decoded["title"]);
-
+		$this->assertEquals($data[$first_key]["_id"], $decoded["_id"]);
+		$this->assertTrue(isset($decoded["index"]));
 		//Test UPDATE
 		$update_data = array(
 			"update" => array(
-				"set" => array("info.rating" => 0.0, "info.rank" => 9999, "testcount" => 1),
-				"remove" => array("info.running_time_secs")
+				"set" => array("status" => 3, "failure_count" => 0, "not_ready_count" => 0),
+				"remove" => array("index")
 			)
 		);
 		$updated = $table->updateOne(
 			$first_key_expression,
 			$update_data
 		);
-		$this->assertNotNull($updated["testcount"]);
+		$updated = $database->decodeItem($updated);
+		$this->assertEquals(0, $updated["failure_count"]);
+		$this->assertFalse(isset($updated["index"]));
 		$item = $table->read(json_encode($first_key_expression));
 		$decoded = $database->decodeItem($item);
-		$this->assertFalse(isset($decoded["info"]["running_time_secs"]));
-		$this->assertEquals($first_key_expression["year"], $decoded["year"]);
+		$this->assertEquals($first_key_expression["_id"], $decoded["_id"]);
 
 		//Test INCREMENTS
-		$incremented = $table->incrementCell($first_key_expression, "testcount", 1);
+		$incremented = $table->incrementCell($first_key_expression, "not_ready_count", 1);
 		$incremented = $database->decodeItem($incremented);
-		$this->assertEquals(2, $incremented["testcount"]);
-		$decremented = $table->incrementCell($first_key_expression, "testcount", -1);
+		$this->assertEquals(1, $incremented["not_ready_count"]);
+		$decremented = $table->incrementCell($first_key_expression, "not_ready_count", -1);
 		$decremented = $database->decodeItem($decremented);
-		$this->assertEquals(1, $decremented["testcount"]);
-		//Test FIND
+		$this->assertEquals(0, $decremented["not_ready_count"]);
+		//Test FIND with Application Global index
 		$items = $table->find(
 			array(
 				"query" => array(
-					"year" => 1995,
-					"title" => array("between" => array("A", "T"))
+					"application_id" => "5dd3fc9e3a72e17d1c0ee918",
+					"created" => array(">" => "2013-12-31T23:59:59.99Z")
+				),
+				"index" => array(
+					"name" => "ApplicationIndex"
 				),
 				"fields" => array(
-					"year", "title", "info.rating", "info.actors[0]", "info.rank"
+					"owner_id", "owner_id_type", "status", "_id"
 				)
 			)
 		);
-		$this->assertEquals(7, iterator_count($items)); //7 items fulfill this query params. Manually counted in the test data.
-		$decoded_movie = NULL;
-		foreach ($items as $movie) {
-			$decoded_movie = $database->decodeItem($movie);
+		$this->assertEquals(19, iterator_count($items)); //19 items fulfill this query params. Manually counted in the test data.
+		$decoded_item = NULL;
+		foreach ($items as $item) {
+			$decoded_item = $database->decodeItem($item);
 			break;
 		}
-		$this->assertEquals(1, count($decoded_movie["info"]["actors"]));
-		$this->assertEquals(3, count($decoded_movie["info"]));
-		$this->assertFalse(isset($decoded_movie["info"]["plot"])); //Exists in DB but shouldn't be present in query
+		$this->assertEquals(3, $decoded_item["status"]);
+		$this->assertEquals("ApiVideoStream", $decoded_item["owner_id_type"]);
+		$this->assertFalse(isset($decoded_item["created"])); //Exists in DB but shouldn't be present in query
 
 		//Test COUNT
 		$this->assertEquals(count($data), $table->count());
-		$this->assertEquals(7, $table->count(array(
-				"year" => 1995,
-				"title" => array("between" => array("A", "T"))
+		$this->assertEquals(19, $table->count(array(
+				"query" => array(
+					"application_id" => "5dd3fc9e3a72e17d1c0ee918",
+					"created" => array(">" => "2013-12-31T23:59:59 +03:00")
+				),
+				"index" => array(
+					"name" => "ApplicationIndex"
+				),
+				"fields" => array(
+					"owner_id", "owner_id_type", "status", "_id"
+				)
 			)
 		));
 
 		//Test SCAN
 		$scanned = $table->scan(array(
 				"query" => array(
-					"year" => 1995,
-					"title" => array("between" => array("A", "T"))
+					"status" => 3
 				)
 			)
 		);
-		$this->assertEquals(7, iterator_count($scanned));
-		$decoded_movie = NULL;
-		foreach ($scanned as $movie) {
-			$decoded_movie = $database->decodeItem($movie);
-			break;
+		$this->assertEquals(124, iterator_count($scanned));
+		$decoded_item = NULL;
+		foreach ($scanned as $item) {
+			$decoded_item = $database->decodeItem($item);
+			$this->assertEquals(3, $decoded_item["status"]);
 		}
-		$this->assertEquals(3, count($decoded_movie["info"]["actors"]));
-		$this->assertEquals(9, count($decoded_movie["info"]));
-		$this->assertTrue(isset($decoded_movie["info"]["plot"])); //Exists in DB but shouldn't be present in query
-
+		//Test FIND with Owner Global index
+		$items = $table->find(
+			array(
+				"query" => array(
+					"owner_id" => "5dd585a2c4c441891b1a98d3"
+				),
+				"index" => array(
+					"name" => "OwnerIndex"
+				)
+			)
+		);
+		$this->assertEquals(23, iterator_count($items)); //19 items fulfill this query params. Manually counted in the test data.
 		$table->deleteTable();
 	}
 }

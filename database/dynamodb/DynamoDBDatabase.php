@@ -6,6 +6,7 @@ require_once(dirname(__FILE__) . "/DynamoDBDatabaseTable.php");
 require_once(dirname(__FILE__) . "/../../support/data/ArrayUtils.php");
 
 use Aws\DynamoDb\Exception\DynamoDbException;
+use Aws\DynamoDb\Marshaler;
 
 class DynamoDBDatabase extends Database {
 
@@ -13,7 +14,8 @@ class DynamoDBDatabase extends Database {
 		"S" => "string",
 		"N" => "number",
 		"M" => "array",
-		"L" => "list"
+		"L" => "list",
+		"BOOL" => "boolean"
 	);
 	protected static function perfmon($enter) {
 		global $PERFMON;
@@ -49,8 +51,8 @@ class DynamoDBDatabase extends Database {
 		return $this->database;
 	}
 
-	public function selectTable($name, $key = array()) {
-		return new DynamoDBDatabaseTable($this, $name, $key);
+	public function selectTable($name, $key = array(), $indexes = array()) {
+		return new DynamoDBDatabaseTable($this, $name, $key, $indexes);
 	}
 
 	public function encode($type, $value, $attrs = array()) {
@@ -58,25 +60,8 @@ class DynamoDBDatabase extends Database {
 		return $value;
 	}
 	public function decode($type, $value, $attrs = array()) {
-		if (!@self::TYPES[$type]) {
-			echo $type;
-			throw new Exception("Type not supported");
-		}
-		switch ($type) {
-			case "S":
-				$value = strval($value);
-				break;
-			case "N":
-				$value = (strpos($value, ".")) ? (float) $value : (int) $value;
-				break;
-			case "M":
-				$value = $this->decodeItem($value);
-				break;
-			case "L":
-				$value = $this->decodeItem($value);
-				break;
-		}
-		return $value;
+		$marshaler = new Marshaler();
+		return $marshaler->unmarshalValue(array($type => $value));
 	}
 
 
@@ -88,13 +73,19 @@ class DynamoDBDatabase extends Database {
 		if (!@$config["ProvisionedThroughput"])
 			throw new InvalidArgumentException("ProvisionedThroughput attribute is mandatory");
 		$config["TableName"] = $name;
-		try {
-			$this->getDatabase()->createTable($config);
-		} catch (DynamoDbException $e) {
-			echo "Unable to create table:\n";
-			echo $e->getMessage() . "\n";
+		$this->getDatabase()->createTable($config);
+		$indexes = array();
+		if (isset($config["GlobalSecondaryIndexes"])) {
+			foreach ($config["GlobalSecondaryIndexes"] as $index) {
+				$indexes[$index["IndexName"]] = $index["KeySchema"];
+			}
 		}
-		return $this->selectTable($name, $config["KeySchema"]);
+		if (isset($config["LocalSecondaryIndexes"])) {
+			foreach ($config["LocalSecondaryIndexes"] as $index) {
+				$indexes[$index["IndexName"]] = $index["KeySchema"];
+			}
+		}
+		return $this->selectTable($name, $config["KeySchema"], $indexes);
 	}
 
 	public function decodeItem($item) {
