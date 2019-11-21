@@ -60,5 +60,74 @@ Class Requests {
 		}
 		return array();
 	}
-	
+
+	/**
+	 * `readRequests` returns the values of requests variables for the array of
+	 * keys passed as an argument.
+	 *
+	 * @param array $arr Array of variables to return the value of.
+	 * @param boolean $return_null If the variables should be set in the `requests`
+	 * array even if they are null.
+	 *
+	 * @return array
+	 */
+
+	public static function readRequests($arr, $return_null = true) {
+		$result = array();
+		foreach ($arr as $key) {
+			if ($return_null) {
+				$result[$key] = Requests::getVar($key);
+			} else {
+				$val = Requests::getVar($key);
+
+				if (!is_null($val)) {
+					$result[$key] = $val;
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Returns the value of request data stored in the ways expressed by each flag.
+	 *
+	 * $get = GET request data
+	 * $post = POST request data
+	 * $post_raw = input body stream as raw string
+	 * $post_raw_json = input body stream as json string
+	 *
+	 * Merges all of the data into the $result array.
+	 *
+	 *
+	 * @param bool $get
+	 * @param bool $post
+	 * @param bool $post_raw
+	 * @param bool $post_raw_json
+	 * @return array
+	 */
+	public static function getRequestArgs($get = FALSE, $post = FALSE, $post_raw = FALSE, $post_raw_json = FALSE) {
+		$result = array();
+		if ($get)
+			$result = array_merge($result, $_GET);
+		if ($post)
+			$result = array_merge($result, $_POST);
+		if ($post_raw || $post_raw_json) {
+			$bodyinput = file_get_contents('php://input');
+			if ($post_raw && count($_FILES) == 0) {
+				try {
+					$parsed = array();
+					parse_str($bodyinput, $parsed);
+					$result = array_merge($result, $parsed);
+				} catch (Exception $e) {
+				}
+			}
+			if ($post_raw_json) {
+				$decoded = json_decode($bodyinput, TRUE);
+				if (@$decoded)
+					$result = array_merge($result, $decoded);
+			}
+		}
+		return $result;
+	}
+
 }
