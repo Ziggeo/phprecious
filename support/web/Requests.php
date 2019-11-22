@@ -111,9 +111,9 @@ Class Requests {
 			$result = array_merge($result, $_GET);
 		if ($post)
 			$result = array_merge($result, $_POST);
-		if ($post_raw || $post_raw_json) {
+		if (($post_raw || $post_raw_json) && count($_FILES) == 0) {
 			$bodyinput = file_get_contents('php://input');
-			if ($post_raw && count($_FILES) == 0) {
+			if ($post_raw) {
 				try {
 					$parsed = array();
 					parse_str($bodyinput, $parsed);
