@@ -14,6 +14,10 @@ class DatabaseModel extends ActiveModel {
 		return NULL;
 	}
 
+	protected function time() {
+		return time();
+	}
+
     protected static function getDatabase() {
         global $database;
 		if (isset($database))
@@ -114,12 +118,12 @@ class DatabaseModel extends ActiveModel {
     protected function beforeUpdate() {
         parent::beforeUpdate();
         if ($this->hasChanged())
-            $this->setAttr("updated", time(), TRUE);
+            $this->setAttr("updated", $this->time(), TRUE);
     }
     
     protected function beforeCreate() {
         parent::beforeCreate();
-        $t = time();
+        $t = $this->time();
         if (!@$this->created)
             $this->setAttr("created", $t, TRUE);  
         if (!@$this->updated)
