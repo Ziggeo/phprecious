@@ -8,6 +8,7 @@ class Router {
     public $controller_path = "";
     public $fullpath_base = "";
     public $functions = array();
+    public $post_functions = array();
     private $perfmon = NULL;
     private $logger = NULL;
     private $relative_paths = FALSE;
@@ -23,6 +24,8 @@ class Router {
             $this->logger = $options["logger"];
         if (isset($options["functions"]))
             $this->functions = $options["functions"];
+        if (isset($options["post_functions"]))
+            $this->post_functions = $options["post_functions"];
         $this->relative_paths = isset($options["relative_paths"]) ? TRUE : FALSE;
     }
 
@@ -63,6 +66,7 @@ class Router {
             "uri" => $uri,
             "controller_action" => $controller_action,
             "conditions" => array(),
+            "post_conditions" => array(),
             "arguments" => array(),
             "sitemap" => FALSE
         );
@@ -76,6 +80,8 @@ class Router {
             $entry["fullpath_base"] = $options["fullpath_base"];
         if (isset($options["conditions"]))
             $entry["conditions"] = $options["conditions"];
+        if (isset($options["post_conditions"]))
+            $entry["post_conditions"] = $options["post_conditions"];
         if (isset($options["path"]))
             $entry["path"] = $options["path"];
         if (isset($options["arguments"]))
@@ -146,6 +152,7 @@ class Router {
         $controller_action = $this->metaRoutes["404"];
         $args = array();
         $arguments = array();
+        $post_conditions = array();
 		$log_route = TRUE; //By default we're logging the route
         foreach ($this->routes as $route) {
             if ((($route["method"] == "*") || ($route["method"] == $method)) &&
@@ -176,15 +183,17 @@ class Router {
                     $args = $matches;
                     if (@$route["preargs"])
                         $args = array_merge($route["preargs"], $args);
+                    if (@$route["post_conditions"])
+                        $post_conditions = $route["post_conditions"];
                     break;
                 }
             }
         }
         $this->perfmon(false);
-        $this->dispatchControllerAction($controller_action, $args, $arguments, $log_route);
+        $this->dispatchControllerAction($controller_action, $args, $arguments, $log_route, $post_conditions);
     }
 
-    public function dispatchControllerAction($controller_action, $args = array(), $arguments = array(), $log_route = TRUE) {
+    public function dispatchControllerAction($controller_action, $args = array(), $arguments = array(), $log_route = TRUE, $post_conditions = array()) {
         $this->perfmon(true);
         if ($log_route) //Used to prevent route logging on demand.
         	$this->log(Logger::INFO_2, "Dispatch Action: " . $controller_action);
@@ -205,6 +214,13 @@ class Router {
         $clsname = $i ? substr($i, 1) : $cls;
         $this->perfmon(false);
         $controller = new $clsname();
+        $success = true;
+        while ($success && $condition = array_shift($post_conditions))
+            $success = isset($this->post_functions[$condition]) ? $this->post_functions[$condition]($controller) : $condition();
+        if (!$success) {
+            $this->dispatchMetaRoute("404");
+            return;
+        }
         $this->lastControllerInstance = $controller;
         $controller->dispatch($action_function, $args);
     }
