@@ -55,6 +55,11 @@ class MongoDatabase extends Database {
     }
 
     public function encode($type, $value, $attrs = array()) {
+        if (is_array($value) && in_array($type, array("id", "date", "datetime"))) {
+            return array_map(function($val) use($type, $attrs){
+                return $this->encode($type, $val, $attrs);
+            }, $value);
+        }
         if ($type == "id")
             return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
         if ($type == "date" || $type == "datetime")
