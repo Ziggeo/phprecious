@@ -127,7 +127,7 @@ abstract class JobModel extends DatabaseModel {
     }
 
     public static function processJobs() {
-        $jobs = self::allBy(array("status" => self::STATUS_OPEN), array("created" => 1), NULL, NULL, TRUE);
+        $jobs = self::allBy(array("status" => self::STATUS_OPEN), array("created" => 1, "_id" => 1), NULL, NULL, TRUE);
         foreach ($jobs as $job)
             $job->processJob();
     }
