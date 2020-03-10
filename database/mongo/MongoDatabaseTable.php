@@ -39,15 +39,17 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 	
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
-		$options = $this->updateOptions($options);
+        $options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
-		static::perfmon(true);
-		//TODO: Why do I have to create a new mongo id?
-        $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
-		//unset($row["_id"]);
-		$success = $this->getCollection()->insertOne($row, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged())
-        	$success = $success->isAcknowledged();
+        static::perfmon(true);
+        if ($this->primaryKey() !== "_id")
+            $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
+        $success = $this->getCollection()->insertOne($row, $options);
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged()) {
+            if ($this->primaryKey() === "_id")
+                $row[$this->primaryKey()] = $success->getInsertedId();
+            $success = $success->isAcknowledged();
+        }
 		static::perfmon(false);
 		return $success;
 	}
