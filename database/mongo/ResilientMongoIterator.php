@@ -39,12 +39,10 @@ Class ResilientMongoIterator implements Iterator {
     }
 
     public function rewind() {
-        if ($this->first && $this->iterator !== NULL)
-            // We are still using the first iterator, let's rewind it.
-            $this->iterator->rewind();
-        else
+        if (!$this->first || $this->iterator === NULL)
             // Let's start over from scratch
             $this->reset();
+        $this->iterator->rewind();
     }
 
     public function key() {
