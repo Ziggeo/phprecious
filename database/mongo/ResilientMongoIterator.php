@@ -90,8 +90,8 @@ Class ResilientMongoIterator implements Iterator {
         $lastElement = $this->current();
         try {
             // DEBUG: Comment In
-            if ($this->elementsObtained > 5 && $this->first)
-                throw new MongoDB\Driver\Exception\RuntimeException("cursor id exception simulation");
+            //if ($this->elementsObtained > 5 && $this->first)
+            //    throw new MongoDB\Driver\Exception\RuntimeException("cursor id exception simulation");
             // DEBUG: Comment In
             // We just try to get the next element
             $this->iterator->next();
