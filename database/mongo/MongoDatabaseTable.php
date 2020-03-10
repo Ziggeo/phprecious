@@ -1,6 +1,7 @@
 <?php
 
 require_once(dirname(__FILE__) . "/../DatabaseTable.php");
+require_once(dirname(__FILE__) . "/ResilientMongoIterator.php");
 
 class MongoDatabaseTable extends DatabaseTable {
 	
@@ -54,9 +55,18 @@ class MongoDatabaseTable extends DatabaseTable {
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
         $options = $this->sanitizeOptions($options);
-		$result = $this->getCollection()->find($values, $options);
-		if ($result)
-			$result = new IteratorIterator($result);
+        // to make it "easy" we currently do only support queries where the _id is part of the sort.
+        $resilientIteratorSupported = isset($options["sort"]) && isset($options["sort"]["_id"]);
+        if ($resilientIteratorSupported) {
+            $skip = isset($options["skip"]) ? $options["skip"] : NULL;
+            $limit = isset($options["limit"]) ? $options["limit"] : NULL;
+            $sort = isset($options["sort"]) ? $options["sort"] : NULL;
+            $result = new ResilientMongoIterator($this->getCollection(), $values, $skip, $limit, $sort);
+        } else {
+            $result = $this->getCollection()->find($values, $options);
+            if ($result)
+                $result = new IteratorIterator($result);
+        }
 		static::perfmon(false);
 		return $result;
 	}
