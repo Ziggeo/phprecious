@@ -1,6 +1,7 @@
 <?php
 
 require_once(dirname(__FILE__) . "/../DatabaseTable.php");
+require_once(dirname(__FILE__) . "/ResilientMongoIterator.php");
 
 class MongoDatabaseTable extends DatabaseTable {
 	
@@ -38,15 +39,17 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 	
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
-		$options = $this->updateOptions($options);
+        $options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
-		static::perfmon(true);
-		//TODO: Why do I have to create a new mongo id?
-        $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
-		//unset($row["_id"]);
-		$success = $this->getCollection()->insertOne($row, $options);
-        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged())
-        	$success = $success->isAcknowledged();
+        static::perfmon(true);
+        if ($this->primaryKey() !== "_id")
+            $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
+        $success = $this->getCollection()->insertOne($row, $options);
+        if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged()) {
+            if ($this->primaryKey() === "_id")
+                $row[$this->primaryKey()] = $success->getInsertedId();
+            $success = $success->isAcknowledged();
+        }
 		static::perfmon(false);
 		return $success;
 	}
@@ -54,9 +57,18 @@ class MongoDatabaseTable extends DatabaseTable {
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
         $options = $this->sanitizeOptions($options);
-		$result = $this->getCollection()->find($values, $options);
-		if ($result)
-			$result = new IteratorIterator($result);
+        // to make it "easy" we currently do only support queries where the _id is part of the sort.
+        $resilientIteratorSupported = isset($options["sort"]) && isset($options["sort"]["_id"]);
+        if ($resilientIteratorSupported) {
+            $skip = isset($options["skip"]) ? $options["skip"] : NULL;
+            $limit = isset($options["limit"]) ? $options["limit"] : NULL;
+            $sort = isset($options["sort"]) ? $options["sort"] : NULL;
+            $result = new ResilientMongoIterator($this->getCollection(), $values, $skip, $limit, $sort);
+        } else {
+            $result = $this->getCollection()->find($values, $options);
+            if ($result)
+                $result = new IteratorIterator($result);
+        }
 		static::perfmon(false);
 		return $result;
 	}
