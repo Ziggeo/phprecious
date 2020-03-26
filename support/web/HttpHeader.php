@@ -84,5 +84,12 @@ Class HttpHeader {
 		}
 		return $prepend_code ? $code . " " . $string : $string;
 	}
+
+	public static function setHeader($s) {
+	    if (function_exists("custom_http_header_function"))
+            custom_http_header_function($s);
+	    else
+	        header($s);
+    }
 		
 }

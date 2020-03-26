@@ -267,9 +267,9 @@ class Router {
 
     public function redirect($uri, $statusCode = NULL) {
         if (@$statusCode !== NULL)
-            header("Location: " . $uri, true, $statusCode);
+            HttpHeader::setHeader("Location: " . $uri, true, $statusCode);
         else
-            header("Location: " . $uri);
+            HttpHeader::setHeader("Location: " . $uri);
     }
 
     public function getCurrentController() {

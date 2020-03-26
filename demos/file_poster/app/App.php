@@ -123,7 +123,7 @@ Class App extends Application {
 	    @ob_end_clean();
 		// if $file got set then we were too late	
 	    headers_sent($file);
-		header('HTTP/1.0 500 Internal Server Error');
+		HttpHeader::setHeader('HTTP/1.0 500 Internal Server Error');
 	    echo ("Error: " . $e->__toString());
 	}
 		

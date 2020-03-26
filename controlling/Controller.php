@@ -78,9 +78,9 @@ Class Controller {
 
 	function header_http_status($status, $string = NULL) {
 		if ($string == NULL)
-			header("HTTP/1.1 " . HttpHeader::formatStatusCode($status, TRUE));
+			HttpHeader::setHeader("HTTP/1.1 " . HttpHeader::formatStatusCode($status, TRUE));
 		else
-			header("HTTP/1.1 " . $status . " " . $string);
+			HttpHeader::setHeader("HTTP/1.1 " . $status . " " . $string);
 	}	
 
     // The status and data of the response to the last request.
@@ -147,19 +147,19 @@ Class Controller {
 		}
 		if ($this->return_encoding == self::RETURN_ENCODING_DEFAULT) {
 			$this->header_http_status($status);
-		    header('Content-Type: application/json');
+		    HttpHeader::setHeader('Content-Type: application/json');
             /* Adding no-sniff and no-cache headers */
             if (in_array(Requests::getMethod(), array('POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH'))) {
-                header('Cache-Control: no-cache,no-store,must-revalidate');
-                header('Pragma: no-cache');
+                HttpHeader::setHeader('Cache-Control: no-cache,no-store,must-revalidate');
+                HttpHeader::setHeader('Pragma: no-cache');
             }
-            header('X-Content-Type-Options: nosniff');
-            print json_encode($data);
+            HttpHeader::setHeader('X-Content-Type-Options: nosniff');
+            $this->printData(json_encode($data));
 		} elseif ($this->return_encoding == self::RETURN_ENCODING_TEXTAREA) {
 			?><textarea data-type="application/json">{"success": <?= $success ? "true" : "false" ?>, "data": <?= json_encode($data) ?>}</textarea><?			
 		} elseif ($this->return_encoding == self::RETURN_ENCODING_POSTMESSAGE) {
 			$this->header_http_status($status);
-			print "<!DOCTYPE html><script>parent.postMessage(JSON.stringify(" . json_encode($data) . "), '*');</script>";
+			$this->printData("<!DOCTYPE html><script>parent.postMessage(JSON.stringify(" . json_encode($data) . "), '*');</script>");
         } elseif ($this->return_encoding == self::RETURN_ENCODING_STATUS_ONLY) {
             $this->header_http_status($status);
         }
@@ -169,10 +169,10 @@ Class Controller {
 		return $success;
 	}
 
-    protected function noCacheHeader() {
-        header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' );
-        header( 'Cache-Control: no-store, no-cache, must-revalidate' );
-        header( 'Pragma: no-cache' );
+    protected function noCacheHttpHeader() {
+        HttpHeader::setHeader( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' );
+        HttpHeader::setHeader( 'Cache-Control: no-store, no-cache, must-revalidate' );
+        HttpHeader::setHeader( 'Pragma: no-cache' );
     }
 
 	function return_forbidden($data = array()) {
@@ -194,5 +194,12 @@ Class Controller {
 	function return_success_created($data = array()) {
 		return $this->return_status("201", $data);
 	}
+
+	function printData($s) {
+        if (function_exists("custom_controller_print_data_function"))
+            custom_controller_print_data_function($s);
+        else
+            print($s);
+    }
 	
 }

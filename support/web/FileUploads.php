@@ -147,7 +147,7 @@ class FileUploads {
 		$result = self::resumableUploadsProcess ($parsed, $options );
 		if ($result !== self::RESUMABLE_ASSEMBLE_SUCCESS) {
 			$status = self::resumableUploadsProcessStatus($result);
-			header("HTTP/1.1 " . HttpHeader::formatStatusCode($status, TRUE));
+			HttpHeader::setHeader("HTTP/1.1 " . HttpHeader::formatStatusCode($status, TRUE));
 			return FALSE;
 		}
 		$_FILES [$options ["file"]] = array (

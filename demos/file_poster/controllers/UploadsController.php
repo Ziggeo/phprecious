@@ -11,7 +11,7 @@ Class UploadsController extends Controller {
 		$file = UploadedFile::findById($id);
 		if (!@$file)
 			return;
-		header('Content-type: ' . $file->getContentType());
+		HttpHeader::setHeader('Content-type: ' . $file->getContentType());
 		ob_clean();
 		flush();
 	    readfile($file->getIdentPath());

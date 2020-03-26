@@ -88,12 +88,12 @@ Class FileStreamer {
 		$range = $resume ? self::parseHttpRange($file_size) : NULL;
 
 		if (@$range) {
-            header('HTTP/1.1 206 Partial Content');
-	        header('Content-Range: bytes ' . $range["start"] . '-' . $range["end"] . '/' . $file_size);			
+            HttpHeader::setHeader('HTTP/1.1 206 Partial Content');
+	        HttpHeader::setHeader('Content-Range: bytes ' . $range["start"] . '-' . $range["end"] . '/' . $file_size);
 		} else {
-            header('HTTP/1.1 200 Ok');
+            HttpHeader::setHeader('HTTP/1.1 200 Ok');
 		}
-        header('Accept-Ranges: bytes');
+        HttpHeader::setHeader('Accept-Ranges: bytes');
 
 		if (isset($options["content_type"])) {
 			if (StringUtils::has_sub($options["content_type"], "/"))
@@ -102,12 +102,12 @@ Class FileStreamer {
 				$content_type = ContentType::byExtension($options["content_type"], $download ? TRUE : FALSE);	
 		} else
 			$content_type = ContentType::byFileName($download ? $download_name : $file, $download ? TRUE : FALSE);
-	    header('Content-Type: ' . $content_type);
+	    HttpHeader::setHeader('Content-Type: ' . $content_type);
 	  				
 		if ($download)
-	    	header('Content-Disposition: attachment; filename="' . $download_name . '"');
+	    	HttpHeader::setHeader('Content-Disposition: attachment; filename="' . $download_name . '"');
 		
-	    header('Content-Length: ' . (@$range ? $range["bytes"] : $file_size));
+	    HttpHeader::setHeader('Content-Length: ' . (@$range ? $range["bytes"] : $file_size));
 	  		
 		$remaining = @$range ? $range["bytes"] : $file_size;
 	    
