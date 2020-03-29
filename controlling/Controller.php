@@ -169,7 +169,7 @@ Class Controller {
 		return $success;
 	}
 
-    protected function noCacheHttpHeader() {
+    protected function noCacheHeader() {
         HttpHeader::setHeader( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' );
         HttpHeader::setHeader( 'Cache-Control: no-store, no-cache, must-revalidate' );
         HttpHeader::setHeader( 'Pragma: no-cache' );
