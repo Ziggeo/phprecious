@@ -55,6 +55,27 @@ Class S3FileSystem extends AbstractFileSystem {
 	public function region() {
 		return $this->region;
 	}
+
+	public function getPostSignedUrl($path, $expire = 60) {
+		$formInputs = array("acl" => "public-read", "key" => $path);
+		$options = array(
+			array('acl' => 'public-read'),
+			array('bucket' => $this->bucket()),
+			array('starts-with', '$key', '')
+		);
+
+		$expires = '+1 hours';
+
+		$postObject = new Aws\S3\PostObjectV4(
+			$this->s3(),
+			$this->bucket(),
+			$formInputs,
+			$options,
+			$expires
+		);
+
+		return $postObject;
+	}
 }
 
 
