@@ -38,16 +38,29 @@ class MongoDatabaseTable extends DatabaseTable {
 		return $options;
 	}
 	
-	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/)) {
+	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/), $resilience = 5) {
         $options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
         static::perfmon(true);
-        if ($this->primaryKey() !== "_id")
+        if ($this->primaryKey() === "_id")
+            unset($row["_id"]);
+        else
             $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
-        $success = $this->getCollection()->insertOne($row, $options);
+        $success = NULL;
+        while (TRUE) {
+            $resilience--;
+            try {
+                $success = $this->getCollection()->insertOne($row, $options);
+                break;
+            } catch (MongoDB\Driver\Exception\RuntimeException $e) {
+                // duplicate key _id_
+                if (strpos($e->getMessage(), "E11000") === FALSE || $resilience < 0)
+                    throw $e;
+            }
+        }
         if ((isset($options["safe"]) && $options["safe"]) || (isset($options["fsync"]) && $options["fsync"]) || (isset($options["w"]) && $options["w"]) || $success->isAcknowledged()) {
             if ($this->primaryKey() === "_id")
-                $row[$this->primaryKey()] = $success->getInsertedId();
+                $row["_id"] = $success->getInsertedId();
             $success = $success->isAcknowledged();
         }
 		static::perfmon(false);

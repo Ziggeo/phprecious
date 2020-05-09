@@ -1,7 +1,7 @@
 {
   "name": "ziggeo/phprecious",
   "description": "PHPrecious is a Ruby-on-Rails-like light-weight PHP-framework.",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "license": "Apache-2.0",
   "require": {
     "php": ">=7.1.0",
