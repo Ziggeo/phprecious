@@ -76,6 +76,17 @@ Class S3FileSystem extends AbstractFileSystem {
 
 		return $postObject;
 	}
+
+	public function getSignedUrl($path, $expire = 60) {
+		$cmd = $this->s3()->getCommand("GetObject", [
+			"Key" => $path,
+			"Bucket" => $this->bucket()
+		]);
+
+		$request = $this->s3()->createPresignedRequest($cmd, "+1 hours");
+
+		return (string)$request->getUri();
+	}
 }
 
 
