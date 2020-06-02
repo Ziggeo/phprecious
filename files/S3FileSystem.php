@@ -77,6 +77,16 @@ Class S3FileSystem extends AbstractFileSystem {
 		return $postObject;
 	}
 
+	/**
+	 * Gets a signed url for any path from a bucket.
+	 *
+	 * Note: $expire param is not used in this version
+	 *
+	 *
+	 * @param $path
+	 * @param int $expire
+	 * @return string
+	 */
 	public function getSignedUrl($path, $expire = 60) {
 		$cmd = $this->s3()->getCommand("GetObject", [
 			"Key" => $path,
