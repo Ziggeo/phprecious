@@ -19,26 +19,28 @@ Class FileStreamer {
 	 * If size is given, return values are bounded by size. Returns NULL if no range given.
 	 * 
 	 */
+    public static function parseHttpRangeValue($rangeValue, $size = NULL) {
+        list($size_unit, $range_orig) = explode('=', $rangeValue, 2);
+        if ($size_unit == 'bytes') {
+            list($range, $extra_ranges) = explode(',', $range_orig, 2);
+            list($seek_start, $seek_end) = explode('-', $range, 2);
+            $seek_start = max(0, intval($seek_start));
+            $seek_end = !!$seek_end ? max($seek_start, intval($seek_end)) : ($size-1);
+            if (isset($size)) {
+                $seek_start = min($seek_start, $size - 1);
+                $seek_end = min($seek_end, $size - 1);
+            }
+            return array(
+                "start" => $seek_start,
+                "end" => $seek_end,
+                "bytes" => $seek_end - $seek_start + 1
+            );
+        }
+        return NULL;
+    }
+
 	public static function parseHttpRange($size = NULL) {
-		if (isset($_SERVER['HTTP_RANGE'])) {
-	        list($size_unit, $range_orig) = explode('=', $_SERVER['HTTP_RANGE'], 2);	
-	        if ($size_unit == 'bytes') {
-				list($range, $extra_ranges) = explode(',', $range_orig, 2);
-			    list($seek_start, $seek_end) = explode('-', $range, 2);
-				$seek_start = max(0, intval($seek_start));
-				$seek_end = !!$seek_end ? max($seek_start, intval($seek_end)) : ($size-1);
-				if (isset($size)) {
-					$seek_start = min($seek_start, $size - 1);
-					$seek_end = min($seek_end, $size - 1);
-				}
-				return array(
-					"start" => $seek_start,
-					"end" => $seek_end,
-					"bytes" => $seek_end - $seek_start + 1
-				);
-			}
-		}
-		return NULL;
+		return isset($_SERVER['HTTP_RANGE']) ? static::parseHttpRangeValue($_SERVER['HTTP_RANGE'], $size) : NULL;
 	}
 	
 	
