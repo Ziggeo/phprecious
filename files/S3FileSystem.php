@@ -18,10 +18,10 @@ Class S3FileSystem extends AbstractFileSystem {
 		try {
 			if (empty($opts["region"]))
 				$opts["region"] = "us-east-1"; //Defaulting to us-east-1 region
-            /*
-			if (((!@$opts["key"] || !@$opts["secret"]) && (!@$opts["profile"])) || !@$opts["region"])
-				throw new Exception("Key, Secret and Region must be present to configure an AWS instance");
-            */
+            if (!@$opts["use_implicit_credentials"]) {
+                if (((!@$opts["key"] || !@$opts["secret"]) && (!@$opts["profile"])) || !@$opts["region"])
+                    throw new Exception("Key, Secret and Region must be present to configure an AWS instance");
+            }
 			$conf = array(
 				"region" => $opts["region"],
 				"version" => "2006-03-01"
