@@ -168,8 +168,30 @@ Abstract Class DataObjectStats extends DatabaseModel {
         elseif ($act == "set")
             $data[$key] = $val;
     }
-    
-    private function obtainPeriodStats($date, $period) {
+
+	/**
+	 * Public wrapper for the obtainPeriodStats function
+	 *
+	 * Added to gain support to check a specific period's stat group
+	 *
+	 * @param $date
+	 * @param $period
+	 * @param bool $look_next If TRUE and no stat for that period, return nearest stat stored or defaults.
+	 *                        If FALSE we return defaults
+	 * @return mixed
+	 */
+    public function justPeriodStats($date, $period, $look_next = TRUE) {
+    	return $this->obtainPeriodStats($date, $period, $look_next);
+	}
+
+	/**
+	 * @param $date
+	 * @param $period
+	 * @param bool $look_next If TRUE and no stat for that period, return nearest stat stored or defaults.
+	 *                        If FALSE we return defaults
+	 * @return mixed
+	 */
+    private function obtainPeriodStats($date, $period, $look_next = TRUE) {
         // Try to lookup specific period. If it exists, return it.
         $base_query = array(
             "stats_id" => $this->id(),
@@ -181,26 +203,30 @@ Abstract Class DataObjectStats extends DatabaseModel {
         $stat = $cls::findBy($query);
         $scheme = static::getStatsScheme("period");
         if ($stat == NULL) {
-            // If it doesn't, check whether there is a later entry.
-            $later_query = array_merge($base_query, array("start_date" => array('$gt' => $query["start_date"])));
-            $rows = $cls::allBy($later_query, array("start_date" => -1), 1, 0);
-            $stat = new $cls($query);
-            if (count($rows) == 1) {
-                // If so, use initial data.
-                $row = $rows[0];
-                $stat->initial = $row->initial;
-            } else {
-                // If it doesn't, create a new entry with new initial data.
-                $stat = new $cls($query);
-                $data = array();
-                foreach ($scheme as $key => $entry)
-                    if (!is_callable($entry["default"]))
-                        $data[$key] = $entry["default"];
-                foreach ($scheme as $key => $entry)
-                    if (is_callable($entry["default"]))
-                        $data[$key] = $entry["default"]($data, $this->data);
-                $stat->initial = $data;
-            }
+			$stat = new $cls($query);
+			// If it doesn't, check whether there is a later entry UNLESS we don't want that
+			if ($look_next) {
+				$later_query = array_merge($base_query, array("start_date" => array('$gt' => $query["start_date"])));
+				$rows = $cls::allBy($later_query, array("start_date" => -1), 1, 0);
+				if (count($rows) == 1) {
+					// If so, use initial data.
+					$row = $rows[0];
+					$stat->initial = $row->initial;
+				}
+			}
+			// If nothing was found in the database or we just want an empty stat
+			if (!@$stat->initial) {
+				$stat = new $cls($query);
+				$data = array();
+				foreach ($scheme as $key => $entry)
+					if (!is_callable($entry["default"]))
+						$data[$key] = $entry["default"];
+				foreach ($scheme as $key => $entry)
+					if (is_callable($entry["default"]))
+						$data[$key] = $entry["default"]($data, $this->data);
+				$stat->initial = $data;
+			}
+
             $stat->data = array_slice($stat->initial, 0);
         }
         $statData = $stat->data;
