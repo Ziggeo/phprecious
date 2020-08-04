@@ -37,10 +37,10 @@ Class S3FileSystem extends AbstractFileSystem {
 			$this->s3 = new Aws\S3\S3MultiRegionClient($conf);
 			$this->region = $this->s3->determineBucketRegion($opts["bucket"]);
 			if ($opts["region"] <> $this->region)
-				throw new ServiceFieldException(array("expected_region" => $this->region));
+				throw new FileSystemFieldException(array("expected_region" => $this->region));
 			$this->bucket = $opts["bucket"];
-		} catch (ServiceFieldException $e) {
-			throw new ServiceFieldException($e->getData());
+		} catch (FileSystemFieldException $e) {
+			throw new FileSystemFieldException($e->getData());
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		}
