@@ -9,7 +9,7 @@ Class ResilientFileSystem extends AbstractFileSystem {
 	protected $options = null;
 	
 	protected function getClass() {
-		return ResilientFile;
+		return "ResilientFile";
 	}
 	
 	function __construct($file_system, $options = array()) {
@@ -71,7 +71,11 @@ Class ResilientFile extends AbstractFile {
 	public function delete() {
 		$this->resilient_execute("delete");
 	}
-	
+
+	public function getFileClass() {
+		return get_class($this->file);
+	}
+
 	protected function writeStream($string) {
 		return $this->resilient_execute("writeStream");
 	}
