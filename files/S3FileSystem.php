@@ -36,6 +36,8 @@ Class S3FileSystem extends AbstractFileSystem {
 				$conf["signature"] = $opts["signature"];
 			$this->s3 = new Aws\S3\S3MultiRegionClient($conf);
 			$this->region = $this->s3->determineBucketRegion($opts["bucket"]);
+			if ($this->region === "") //Might mean that the bucket doesn't exist
+				throw new FileSystemException("We can't find your bucket.");
 			if ($opts["region"] <> $this->region)
 				throw new FileSystemFieldException(array("expected_region" => $this->region));
 			$this->bucket = $opts["bucket"];
