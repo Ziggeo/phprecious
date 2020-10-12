@@ -13,6 +13,16 @@ class MongoDatabaseTable extends DatabaseTable {
 			else
 				$PERFMON->leave("database");
 		}
+		/*
+		 * Putting this here because it's used by most of the query functions.
+		 *
+		 * We check if the memory usage by the script is greater than the limit - 2MB. If it is, we force the garbage
+		 * collection. 2MB seems like a safe threshold as we're dealing with DB records and that would mean a huge increase
+		 * in each cycle.
+		 */
+		if (memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (2 * 1024 * 1024)) {
+			gc_collect_cycles();
+		}
 	}
 
 	private $collection;
