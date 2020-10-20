@@ -19,7 +19,7 @@ class ConditionalValidator extends Validator {
 		if (!is_array($validator))
 			$validator = array($validator);
 		foreach ($validator as $v) {
-			$result = $v->validate($value);
+			$result = $v->validate($value, $context);
 			if ($result != NULL)
 				return $result;
 		}
