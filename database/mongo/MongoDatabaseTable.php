@@ -6,6 +6,7 @@ require_once(dirname(__FILE__) . "/ResilientMongoIterator.php");
 class MongoDatabaseTable extends DatabaseTable {
 
 	const MEMORY_LIMIT_THRESHOLD = 2; //In MB
+
 	protected static function perfmon($enter) {
 		global $PERFMON;
 		if (@$PERFMON) {
@@ -21,8 +22,11 @@ class MongoDatabaseTable extends DatabaseTable {
 		 * collection. 2MB seems like a safe threshold as we're dealing with DB records and that would mean a huge increase
 		 * in each cycle.
 		 */
-		if (memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024)) {
+		if (!@$_SESSION["stop_garbage_collection"] && memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024)) {
 			gc_collect_cycles();
+			//If after the garbage collection we're still over the limit, then we stop forcing the garbage collection for performance reasons.
+			if (memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024))
+				$_SESSION["stop_garbage_collection"] = TRUE;
 		}
 	}
 
