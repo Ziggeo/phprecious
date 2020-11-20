@@ -2,10 +2,13 @@
 
 require_once(dirname(__FILE__) . "/../DatabaseTable.php");
 require_once(dirname(__FILE__) . "/ResilientMongoIterator.php");
+require_once(dirname(__FILE__) . "/../../support/sys/MemoryManager.php");
 
 class MongoDatabaseTable extends DatabaseTable {
 
 	const MEMORY_LIMIT_THRESHOLD = 2; //In MB
+
+    private static $GC_BASELINE = -1;
 
 	protected static function perfmon($enter) {
 		global $PERFMON;
@@ -18,16 +21,8 @@ class MongoDatabaseTable extends DatabaseTable {
 		/*
 		 * Putting this here because it's used by most of the query functions.
 		 *
-		 * We check if the memory usage by the script is greater than the limit - 2MB. If it is, we force the garbage
-		 * collection. 2MB seems like a safe threshold as we're dealing with DB records and that would mean a huge increase
-		 * in each cycle.
 		 */
-		if (!@$_SESSION["stop_garbage_collection"] && memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024)) {
-			gc_collect_cycles();
-			//If after the garbage collection we're still over the limit, then we stop forcing the garbage collection for performance reasons.
-			if (memory_get_usage() >= ((intval(ini_get("memory_limit")) * 1024 * 1024)) - (self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024))
-				$_SESSION["stop_garbage_collection"] = TRUE;
-		}
+        self::$GC_BASELINE = MemoryManager::gc_collect_threshold_baseline(self::MEMORY_LIMIT_THRESHOLD * 1024 * 1024, self::$GC_BASELINE);
 	}
 
 	private $collection;
