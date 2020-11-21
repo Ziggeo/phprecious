@@ -8,7 +8,7 @@ class MemoryManager {
      * Returns the new baseline after garbage collection.
      *
      */
-    public static function gc_collect_baseline_threshold($threshold, $baseline = -1) {
+    public static function gc_collect_threshold_baseline($threshold, $baseline = -1) {
         if ($baseline < 0)
             return memory_get_usage();
         if (memory_get_usage() >= $baseline + $threshold) {
