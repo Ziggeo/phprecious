@@ -7,7 +7,7 @@ require_once(dirname(__FILE__) . "/AbstractFileSystem.php");
 Class FileSystem extends AbstractFileSystem {
 	
 	protected function getClass() {
-		return File;
+		return "File";
 	}
 	
 	private static $fs_singleton = NULL;

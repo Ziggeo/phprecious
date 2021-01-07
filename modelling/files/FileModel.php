@@ -312,7 +312,7 @@ Class FileModel extends DatabaseModel {
 	}
 
 	protected function afterDelete() {
-		if (file_exists($this->getFileName()))
+		if ($this->file_exists())
 			@unlink($this->getFileName());
 	}
 	
