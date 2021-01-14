@@ -130,8 +130,8 @@ class DatabaseModel extends ActiveModel {
             $this->setAttr("updated", $t, TRUE);  
     }   
     
-    protected static function countModels($query = array()) {
-        return self::table()->count(self::encodeData($query));
+    protected static function countModels($query = array(), $extra_options = array()) {
+        return self::table()->count(self::encodeData($query), $extra_options);
     }
 
     protected function incAttr($key, $value) {
