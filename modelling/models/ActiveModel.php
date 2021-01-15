@@ -291,7 +291,7 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 
-	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE, $ignore_remove_field = FALSE) {
+	public static function allBy($query, $sort = NULL, $limit = NULL, $skip = NULL, $iterator = FALSE, $ignore_remove_field = FALSE, $extra_options = array()) {
 		$options = array();
 		if (@$sort)
 			$options["sort"] = $sort;
@@ -299,6 +299,7 @@ abstract class ActiveModel extends Model {
 			$options["limit"] = $limit;
 		if (@$skip)
 			$options["skip"] = $skip;
+		$options = array_merge($options, $extra_options);
 		$rf = static::classOptionsOf("remove_field");
 		if ($rf != NULL && !isset($query[$rf]) && !$ignore_remove_field)
 			$query[$rf] = FALSE;
@@ -318,15 +319,15 @@ abstract class ActiveModel extends Model {
 		return NULL;
 	}
 	
-	protected static function countModels($query = array()) {
-		return count(self::allBy($query));
+	protected static function countModels($query = array(), $extra_options = array()) {
+		return count(self::allBy($query, NULL, NULL, NULL, FALSE, FALSE, $extra_options));
 	}
 	
-	public static function count($query = array(), $ignore_remove_field = FALSE) {
+	public static function count($query = array(), $ignore_remove_field = FALSE, $extra_options = array()) {
 		$rf = static::classOptionsOf("remove_field");
 		if ($rf != NULL && !isset($query[$rf]) && !$ignore_remove_field)
 			$query[$rf] = FALSE;
-		return static::countModels($query);
+		return static::countModels($query, $extra_options);
 	}
 	
 	public static function materializeObjects($cursor) {

@@ -86,7 +86,8 @@ class MongoDatabaseTable extends DatabaseTable {
             $skip = isset($options["skip"]) ? $options["skip"] : NULL;
             $limit = isset($options["limit"]) ? $options["limit"] : NULL;
             $sort = isset($options["sort"]) ? $options["sort"] : NULL;
-            $result = new ResilientMongoIterator($this->getCollection(), $values, $skip, $limit, $sort);
+            $hint = isset($options["hint"]) ? $options["hint"] : NULL;
+            $result = new ResilientMongoIterator($this->getCollection(), $values, $skip, $limit, $sort, $hint);
         } else {
             $result = $this->getCollection()->find($values, $options);
             if ($result)
@@ -96,9 +97,9 @@ class MongoDatabaseTable extends DatabaseTable {
 		return $result;
 	}
 	
-	public function count($values) {
+	public function count($values, $options = array()) {
 		static::perfmon(true);
-		$result = $this->getCollection()->count($values);
+		$result = $this->getCollection()->count($values, $options);
 		static::perfmon(false);
 		return $result;
 	}

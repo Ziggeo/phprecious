@@ -8,16 +8,18 @@ Class ResilientMongoIterator implements Iterator {
     private $originalSkip;
     private $originalLimit;
     private $originalSort;
+    private $originalHint;
     private $elementsObtained;
     private $iterator;
     private $first;
 
-    function __construct($collection, $query, $skip, $limit, $sort) {
+    function __construct($collection, $query, $skip, $limit, $sort, $hint) {
         $this->collection = $collection;
         $this->query = $query;
         $this->originalSkip = $skip;
         $this->originalLimit = $limit;
         $this->originalSort = $sort;
+        $this->originalHint = $hint;
         $this->reset();
     }
 
@@ -31,6 +33,8 @@ Class ResilientMongoIterator implements Iterator {
             $options["limit"] = $this->originalLimit;
         if ($this->originalSort !== NULL)
             $options["sort"] = $this->originalSort;
+		if ($this->originalHint !== NULL)
+			$options["hint"] = $this->originalHint;
         $this->iterator = new IteratorIterator($this->collection->find($this->query, $options));
     }
 
