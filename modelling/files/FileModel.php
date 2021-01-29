@@ -182,6 +182,22 @@ Class FileModel extends DatabaseModel {
 		return $instance;
 	}
 
+	public static function createFileObject($filename, $options = array()) {
+		static::log(Logger::INFO, "Create just file object by " . $filename . "");
+		$original_file_name = basename($filename);
+		$file_name = @$options["file_name"] ? $options["file_name"] : $original_file_name;
+		$extension = @$options["extension"] ? $options["extension"] : FileUtils::extensionOf($file_name);
+		$instance = new static(array(
+			"extension" => $extension,
+			"original_file_name" => $original_file_name,
+			"file_name" => $file_name
+		));
+		$instance->file_size = 0;
+		if (!$instance->save())
+			return NULL;
+		return $instance;
+	}
+
 	public static function createByData($filename, $data, $options = array()) {
 		$instance = self::createFolderNoFile($filename, $options);
 		if ($instance == NULL)
