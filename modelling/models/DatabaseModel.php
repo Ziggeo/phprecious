@@ -27,6 +27,10 @@ class DatabaseModel extends ActiveModel {
 		return NULL;
     }
 
+	protected static function tableDefinition() {
+		return NULL;
+	}
+
     public static function encodeData($attrs) {
         $sch = static::classScheme();
         $result = array();
@@ -81,7 +85,7 @@ class DatabaseModel extends ActiveModel {
     public static function table($force = FALSE) {
         $class = get_called_class();
         if (!isset(self::$table[$class]) || $force)
-        	self::$table[$class] = static::getDatabase()->selectTable(static::tableName());
+        	self::$table[$class] = static::getDatabase()->selectTable(static::tableName(), static::tableDefinition());
         return self::$table[$class];
     }
     
@@ -173,7 +177,7 @@ class DatabaseModel extends ActiveModel {
         });
     }
 
-    protected static function allRowsBy($query, $options = NULL) {
+    public static function allRowsBy($query, $options = NULL) {
         $result = self::table()->find(self::encodeData($query), $options);
         $cls = get_called_class();
         return new MappedIterator($result, function ($row) use ($cls) {
