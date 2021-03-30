@@ -51,17 +51,25 @@ class DynamoDBDatabase extends Database {
 		return $this->database;
 	}
 
-	public function selectTable($name, $key = array(), $indexes = array()) {
-		return new DynamoDBDatabaseTable($this, $name, $key, $indexes);
+	public function selectTable($name, $config = array()) {
+		return new DynamoDBDatabaseTable($this, $name, $config);
 	}
 
 	public function encode($type, $value, $attrs = array()) {
-
+		if ($type === "date")
+			return date(DATE_ISO8601, $value);
 		return $value;
 	}
 	public function decode($type, $value, $attrs = array()) {
 		$marshaler = new Marshaler();
-		return $marshaler->unmarshalValue(array($type => $value));
+		if (!is_array($value)) {
+			if (($type === "string" || $type === "date" || $type === "id"))
+				$type = "S";
+			elseif ($type === "boolean")
+				$type = "BOOL";
+			return $marshaler->unmarshalValue(array($type => $value));
+		} else
+			return $marshaler->unmarshalValue($value);
 	}
 
 
@@ -70,22 +78,11 @@ class DynamoDBDatabase extends Database {
 			throw new InvalidArgumentException("KeyScheme attribute is mandatory");
 		if (!@$config["AttributeDefinitions"])
 			throw new InvalidArgumentException("AttributeDefinitions attribute is mandatory");
-		if (!@$config["ProvisionedThroughput"])
-			throw new InvalidArgumentException("ProvisionedThroughput attribute is mandatory");
+		/*if (!@$config["ProvisionedThroughput"])
+			throw new InvalidArgumentException("ProvisionedThroughput attribute is mandatory");*/
 		$config["TableName"] = $name;
 		$this->getDatabase()->createTable($config);
-		$indexes = array();
-		if (isset($config["GlobalSecondaryIndexes"])) {
-			foreach ($config["GlobalSecondaryIndexes"] as $index) {
-				$indexes[$index["IndexName"]] = $index["KeySchema"];
-			}
-		}
-		if (isset($config["LocalSecondaryIndexes"])) {
-			foreach ($config["LocalSecondaryIndexes"] as $index) {
-				$indexes[$index["IndexName"]] = $index["KeySchema"];
-			}
-		}
-		return $this->selectTable($name, $config["KeySchema"], $indexes);
+		return $this->selectTable($name, $config);
 	}
 
 	public function decodeItem($item) {

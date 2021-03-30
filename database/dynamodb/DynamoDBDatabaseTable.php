@@ -10,22 +10,35 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 
 	private $primary_key_attributes = array();
 	private $indexes = array();
+	private $unparsed_config = array();
 
 	const VALUE_IDENTIFIERS = array(
 		"set" => ":",
 		"remove" => "#"
 	);
 
-	public function __construct($database, $tablename, $key, $indexes) {
+	public function __construct($database, $tablename, $config) {
 		parent::__construct($database, $tablename, FALSE);
-		foreach ($key as $value) {
+		foreach ($config["KeySchema"] as $value) {
 			$this->primary_key_attributes[] = $value["AttributeName"];
+		}
+		$indexes = array();
+		if (isset($config["GlobalSecondaryIndexes"])) {
+			foreach ($config["GlobalSecondaryIndexes"] as $index) {
+				$indexes[$index["IndexName"]] = $index["KeySchema"];
+			}
+		}
+		if (isset($config["LocalSecondaryIndexes"])) {
+			foreach ($config["LocalSecondaryIndexes"] as $index) {
+				$indexes[$index["IndexName"]] = $index["KeySchema"];
+			}
 		}
 		foreach ($indexes as $in => $keys) {
 			$this->indexes[$in] = array_map(function ($attr) {
 				return $attr["AttributeName"];
 			}, $keys);
 		}
+		$this->unparsed_config = $config;
 	}
 
 	protected static function perfmon($enter) {
@@ -39,6 +52,8 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	}
 
 	public function primaryKey() {
+		if (count($this->primary_key_attributes) === 1)
+			return $this->primary_key_attributes[0];
 		return $this->primary_key_attributes;
 	}
 
@@ -53,87 +68,159 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	}
 
 	public function insert(&$row) {
-		$marshaler = new Marshaler();
-		$params = array(
-			'TableName' => $this->getTablename(),
-			'Item' => $marshaler->marshalJson(json_encode($row))
-		);
+		try {
+			$marshaler = new Marshaler();
+			$params = array(
+				'TableName' => $this->getTablename(),
+				'Item' => $marshaler->marshalItem($row)
+			);
 
-		return $this->getDatabase()->getDatabase()->putItem($params);
+			return $this->getDatabase()->getDatabase()->putItem($params);
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->insert($row);
+			} else
+				throw $exception;
+		}
 	}
 
 
 	public function read($values, $options = NULL) {
-		$marshaler = new Marshaler();
-		$key = $marshaler->marshalJson($values);
+		try {
+			$marshaler = new Marshaler();
+			$key = $marshaler->marshalJson($values);
 
-		$params = array(
-			'TableName' => $this->getTablename(),
-			'Key' => $key
-		);
+			$params = array(
+				'TableName' => $this->getTablename(),
+				'Key' => $key
+			);
 
-		$result = $this->getDatabase()->getDatabase()->getItem($params);
-		return $result["Item"];
+			$result = $this->getDatabase()->getDatabase()->getItem($params);
+			return $result["Item"];
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->read($values, $options);
+			} else
+				throw $exception;
+		}
 	}
 
 	public function count($query = array()) {
-		$marshaler = new Marshaler();
-		$params = array();
-		//KEY EXPRESSION TO FILTER EXPRESSION WITH SCAN
-		if (count($query)) {
-			$query["index"] = (@$query["index"]) ? $query["index"] : array();
-			$params = $this->parseFindAndScan($query["query"], array(), $query["index"]);
-			$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
-		}
-		$params = $this->cleanScanParams($params);
-		$params = array_merge(array(
-			"TableName" => $this->getTablename(),
-			"Select" => "COUNT"
-		), $params);
+		try {
+			$marshaler = new Marshaler();
+			$params = array();
+			//KEY EXPRESSION TO FILTER EXPRESSION WITH SCAN
+			if (count($query)) {
+				$query["index"] = (@$query["index"]) ? $query["index"] : array();
+				if (isset($query["query"]["start_query_from"]))
+					unset($query["query"]["start_query_from"]);
+				$params = $this->parseFindAndScan($query["query"], array(), $query["index"]);
+				$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
+			}
+			$params = $this->cleanScanParams($params);
+			$params = array_merge(array(
+				"TableName" => $this->getTablename(),
+				"Select" => "COUNT"
+			), $params);
 
-		$result = $this->getDatabase()->getDatabase()->scan($params);
-		return $result["Count"];
+			$result = $this->getDatabase()->getDatabase()->scan($params);
+			return $result["Count"];
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->count($query);
+			} else
+				throw $exception;
+		}
 	}
 
 	public function scan($query = array(), $options = NULL) {
-		$marshaler = new Marshaler();
-		$query["query"] = (@$query["query"]) ? $query["query"] : array();
-		$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
-		$query["index"] = (@$query["index"]) ? $query["index"] : array();
-		$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"]);
-		if(isset($params["ExpressionAttributeValues"]))
-			$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
-		$params = $this->cleanScanParams($params);
-		$params = array_merge(array(
-			'TableName' => $this->getTablename()
-		), $params);
+		try {
+			$marshaler = new Marshaler();
+			$query["query"] = (@$query["query"]) ? $query["query"] : array();
+			$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
+			$query["index"] = (@$query["index"]) ? $query["index"] : array();
+			if (@$query["query"]["start_query_from"]) {
+				$options["start_query_from"] = $query["query"]["start_query_from"];
+				unset($query["query"]["start_query_from"]);
+			}
+			$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"], $options);
+			if (isset($params["ExpressionAttributeValues"]))
+				$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
+			if (isset($params["ExclusiveStartKey"]))
+				$params["ExclusiveStartKey"] = $marshaler->marshalJson(json_encode($params["ExclusiveStartKey"]));
+			$params = $this->cleanScanParams($params);
+			$params = array_merge(array(
+				'TableName' => $this->getTablename()
+			), $params);
 
-		$result = $this->getDatabase()->getDatabase()->scan($params);
-		if (@$result["Items"]) {
-			$result = new ArrayIterator($result["Items"]);
-		} else {
-			$result = new ArrayIterator([]);
+			$results = [];
+			while (TRUE) {
+				$params = array_merge(array(
+					'TableName' => $this->getTablename()
+				), $params);
+				$result = $this->getDatabase()->getDatabase()->scan($params);
+				if (@$result["Items"])
+					$results = array_merge($results, $result["Items"]);
+				if (!isset($result["LastEvaluatedKey"]) || (is_numeric($options["limit"]) && count($results) >= $options["limit"]))
+					break;
+				if (isset($result["LastEvaluatedKey"]))
+					$params["ExclusiveStartKey"] = $result["LastEvaluatedKey"];
+				else
+					break;
+			}
+
+			return new ArrayIterator($results);
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->scan($query, $options);
+			} else
+				throw $exception;
 		}
-		return $result;
 	}
 
 	public function find($query, $options = NULL) {
-		$marshaler = new Marshaler();
-		$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
-		$query["index"] = (@$query["index"]) ? $query["index"] : array();
-		$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"]);
-		$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
-		$params = array_merge(array(
-			'TableName' => $this->getTablename()
-		), $params);
+		try {
+			$marshaler = new Marshaler();
+			$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
+			$query["index"] = (@$query["index"]) ? $query["index"] : array();
+			if (@$query["query"]["start_query_from"]) {
+				$options["start_query_from"] = $query["query"]["start_query_from"];
+				unset($query["query"]["start_query_from"]);
+			}
+			$params = $this->parseFindAndScan($query["query"], $query["fields"], $query["index"], $options);
+			if (!@$params["KeyConditionExpression"])
+				return $this->scan($query, $options);
+			$params["ExpressionAttributeValues"] = $marshaler->marshalJson(json_encode($params["ExpressionAttributeValues"]));
+			if (isset($params["ExclusiveStartKey"]))
+				$params["ExclusiveStartKey"] = $marshaler->marshalJson(json_encode($params["ExclusiveStartKey"]));
+			$results = [];
+			while (TRUE) {
+				$params = array_merge(array(
+					'TableName' => $this->getTablename()
+				), $params);
+				$result = $this->getDatabase()->getDatabase()->query($params);
+				if (@$result["Items"])
+					$results = array_merge($results, $result["Items"]);
+				if (!isset($result["LastEvaluatedKey"]) || (is_numeric($options["limit"]) && count($results) >= $options["limit"]))
+					break;
+				if (isset($result["LastEvaluatedKey"]))
+					$params["ExclusiveStartKey"] = $result["LastEvaluatedKey"];
+				else
+					break;
+			}
 
-		$result = $this->getDatabase()->getDatabase()->query($params);
-		if (@$result["Items"]) {
-			$result = new ArrayIterator($result["Items"]);
-		} else {
-			$result = new ArrayIterator([]);
+			return new ArrayIterator($results);
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->find($query, $options);
+			} else
+				throw $exception;
 		}
-		return $result;
 	}
 
 	public function update($query, $update) {
@@ -141,17 +228,25 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	}
 
 	public function updateOne($id, $update) {
-		$marshaler = new Marshaler();
-		$params = $this->parseUpdate($update);
-		$key = $marshaler->marshalJson(json_encode($id));
-		$params = array_merge(array(
-			'TableName' => $this->getTablename(),
-			'Key' => $key,
-			'ReturnValues' => 'UPDATED_NEW'
-		), $params);
+		try {
+			$marshaler = new Marshaler();
+			$params = $this->parseUpdate($update);
+			$key = $marshaler->marshalJson(json_encode($id));
+			$params = array_merge(array(
+				'TableName' => $this->getTablename(),
+				'Key' => $key,
+				'ReturnValues' => 'UPDATED_NEW'
+			), $params);
 
-		$result = $this->getDatabase()->getDatabase()->updateItem($params);
-		return $result['Attributes'];
+			$result = $this->getDatabase()->getDatabase()->updateItem($params);
+			return $result['Attributes'];
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->updateOne($id, $update);
+			} else
+				throw $exception;
+		}
 	}
 
 	public function remove($query) {
@@ -159,16 +254,24 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	}
 
 	public function removeOne($query) {
-		$marshaler = new Marshaler();
-		$key = $marshaler->marshalJson($query);
+		try {
+			$marshaler = new Marshaler();
+			$key = $marshaler->marshalJson(json_encode($query));
 
-		$params = array(
-			'TableName' => $this->getTablename(),
-			'Key' => $key
-		);
+			$params = array(
+				'TableName' => $this->getTablename(),
+				'Key' => $key
+			);
 
-		$result = $this->getDatabase()->getDatabase()->deleteItem($params);
-		return $result["Item"];
+			$result = $this->getDatabase()->getDatabase()->deleteItem($params);
+			return $result["Item"];
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->removeOne($query);
+			} else
+				throw $exception;
+		}
 	}
 
 	public function deleteTable() {
@@ -185,21 +288,29 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	}
 
 	public function incrementCell($id, $attr, $value) {
-		$marshaler = new Marshaler();
-		$key = $marshaler->marshalJson(json_encode($id));
-		$updater = $this->parseIncrement($attr, $value);
-		$eav = $marshaler->marshalJson($updater["value"]);
+		try {
+			$marshaler = new Marshaler();
+			$key = $marshaler->marshalJson(json_encode($id));
+			$updater = $this->parseIncrement($attr, $value);
+			$eav = $marshaler->marshalJson($updater["value"]);
 
-		$params = array(
-			'TableName' => $this->getTablename(),
-			'Key' => $key,
-			'UpdateExpression' => $updater["expression"],
-			'ExpressionAttributeValues' => $eav,
-			'ReturnValues' => 'UPDATED_NEW'
-		);
+			$params = array(
+				'TableName' => $this->getTablename(),
+				'Key' => $key,
+				'UpdateExpression' => $updater["expression"],
+				'ExpressionAttributeValues' => $eav,
+				'ReturnValues' => 'UPDATED_NEW'
+			);
 
-		$result = $this->getDatabase()->getDatabase()->updateItem($params);
-		return $result['Attributes'];
+			$result = $this->getDatabase()->getDatabase()->updateItem($params);
+			return $result['Attributes'];
+		} catch (DynamoDbException $exception) {
+			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
+				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
+				return $this->incrementCell($id, $attr, $value);
+			} else 
+				throw $exception;
+		}
 	}
 
 	private function parseIncrement($attr, $value) {
@@ -284,7 +395,7 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		);
 	}
 
-	private function parseFindAndScan($query, $fields = array(), $index = array()) {
+	private function parseFindAndScan($query, $fields = array(), $index = array(), $options = NULL) {
 		$kce = array();
 		$fe = array();
 		$pe = array();
@@ -348,10 +459,15 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			$parsed["FilterExpression"] = implode(" and ", $fe);
 		if (count($index) && @$index["name"]) { //Index
 			$parsed["IndexName"] = $index["name"];
-			if (@$index["sort"]) {
+			if (isset($index["sort"])) {
 				$parsed["ScanIndexForward"] = @$index["sort"];
 			}
 		}
+		if (@$options["limit"])
+			$parsed["Limit"] = $options["limit"];
+
+		if (@$options["start_query_from"])
+			$parsed["ExclusiveStartKey"] = $options["start_query_from"];
 
 		return $parsed;
 	}

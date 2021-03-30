@@ -18,6 +18,10 @@ abstract class DatabaseTable {
 	public function getTablename() {
 		return $this->tablename;
 	}
+
+	public function getTableDefinition() {
+		return NULL;
+	}
 	
 	public abstract function primaryKey();
 

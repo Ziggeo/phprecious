@@ -60,8 +60,14 @@ class MongoDatabase extends Database {
                 return $this->encode($type, $val, $attrs);
             }, $value);
         }
-        if ($type == "id")
-            return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
+        if ($type == "id") {
+			try {
+				return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
+			} catch (InvalidArgumentException $e) {
+				if (@$attrs["weakly_encoded"] && is_string($value))
+					return $value;
+			}
+		}
         if ($type == "date" || $type == "datetime")
             return $value == NULL ? NULL : new MongoDB\BSON\UTCDatetime($value * 1000);
 		//Added to prevent storing empty arrays when empty objects are needed
