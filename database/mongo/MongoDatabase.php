@@ -50,7 +50,7 @@ class MongoDatabase extends Database {
 		return $this->database;
 	}
 
-    public function selectTable($name) {
+    public function selectTable($name, $definition = NULL) {
         return new MongoDatabaseTable($this, $name);
     }
 
@@ -66,6 +66,8 @@ class MongoDatabase extends Database {
 			} catch (InvalidArgumentException $e) {
 				if (@$attrs["weakly_encoded"] && is_string($value))
 					return $value;
+				else
+					throw $e;
 			}
 		}
         if ($type == "date" || $type == "datetime")

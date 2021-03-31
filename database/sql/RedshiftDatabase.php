@@ -72,7 +72,7 @@ class RedshiftDatabase extends Database {
 		return $this->database;
 	}
 
-	public function selectTable($name) {
+	public function selectTable($name, $definition = NULL) {
 		return new RedshiftDatabaseTable($this, $name);
 	}
 

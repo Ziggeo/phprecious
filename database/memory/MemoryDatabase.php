@@ -12,7 +12,7 @@ class MemoryDatabase extends Database {
     public function __construct() {
     }
 	
-    public function selectTable($name) {
+    public function selectTable($name, $definition = NULL) {
     	if (!isset($this->tables[$name]))
 			$this->tables[$name] = new MemoryDatabaseTable($this, $name);
 		return $this->tables[$name];

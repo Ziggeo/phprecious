@@ -68,7 +68,7 @@ class PostgresDatabase extends Database {
 		return $this->database;
 	}
 
-    public function selectTable($name) {
+    public function selectTable($name, $definition = NULL) {
         return new PostgresDatabaseTable($this, $name);
     }
 	
