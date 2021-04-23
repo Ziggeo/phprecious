@@ -12,6 +12,10 @@ Class AbstractFileSystem {
 		$cls = $this->getClass();
 		return is_string($file_name) ? new $cls($this, $file_name) : $file_name;
 	}
+
+	public function createFolderFromFilename($filename) {
+		throw new FileSystemException("Method not supported");
+	}
 		
 }
 
