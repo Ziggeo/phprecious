@@ -101,6 +101,19 @@ Class S3FileSystem extends AbstractFileSystem {
 
 		return (string)$request->getUri();
 	}
+
+	public function createFolderFromFilename($filename) {
+		$pos = strrpos($filename, "/");
+		$dir = substr($filename, 0, $pos);
+		if (!StringUtils::ends_with($dir, "/"))
+			$dir .= "/";
+		$this->s3()->putObject(array(
+			"Bucket" => $this->bucket(),
+			'Key' => $dir,
+			"ACL" => "private",
+			'Body' => ""
+		));
+	}
 }
 
 
