@@ -266,6 +266,7 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			$result = $this->getDatabase()->getDatabase()->deleteItem($params);
 			return $result["Item"];
 		} catch (DynamoDbException $exception) {
+			APP()->logger(NULL, NULL, $exception->getMessage());
 			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
 				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
 				return $this->removeOne($query);
@@ -338,6 +339,14 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		$expression = "";
 		$values = array();
 		$names = array();
+		if (!isset($update_data["update"])) {
+			$update_data = array(
+				"update" =>
+					array(
+						"set" => $update_data
+					)
+			);
+		};
 		$last_action_key = ArrayUtils::arrayKeyLast($update_data["update"]);
 		foreach ($update_data["update"] as $action => $data) {
 			$parsed_action = $this->parseUpdateAction($action, $data);

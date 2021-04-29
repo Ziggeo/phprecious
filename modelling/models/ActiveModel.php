@@ -200,7 +200,7 @@ abstract class ActiveModel extends Model {
 			$this->deleted = TRUE;
 			$this->afterDelete();
 		} else {
-			static::log(Logger::WARN, "Failed to delete model '{" . get_called_class() . "' with id {$this->id()}.");
+			static::log(Logger::WARN, "Failed to delete model '" . get_called_class() . "' with id {$this->id()}.");
 			if ($this->optionsOf("exceptions"))
 				throw new ModelException("Model deletion failed");
 		}
