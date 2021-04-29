@@ -264,9 +264,8 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			);
 
 			$result = $this->getDatabase()->getDatabase()->deleteItem($params);
-			return $result["Item"];
+			return TRUE;
 		} catch (DynamoDbException $exception) {
-			APP()->logger(NULL, NULL, $exception->getMessage());
 			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
 				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
 				return $this->removeOne($query);
