@@ -114,6 +114,17 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			//KEY EXPRESSION TO FILTER EXPRESSION WITH SCAN
 			if (count($query)) {
 				$query["index"] = (@$query["index"]) ? $query["index"] : array();
+				if (!@$query["query"]) {
+					$new_query = array();
+					foreach ($query as $field => $value) {
+						if (!in_array($field, array("fields", "index", "query"))) {
+							$new_query[$field] = $value;
+							unset($query[$field]);
+						}
+					}
+					if (count($new_query))
+						$query["query"] = $new_query;
+				}
 				if (isset($query["query"]["start_query_from"]))
 					unset($query["query"]["start_query_from"]);
 				$params = $this->parseFindAndScan($query["query"], array(), $query["index"]);
@@ -140,6 +151,17 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		try {
 			$marshaler = new Marshaler();
 			$query["query"] = (@$query["query"]) ? $query["query"] : array();
+			if (!@$query["query"]) {
+				$new_query = array();
+				foreach ($query as $field => $value) {
+					if (!in_array($field, array("fields", "index", "query"))) {
+						$new_query[$field] = $value;
+						unset($query[$field]);
+					}
+				}
+				if (count($new_query))
+					$query["query"] = $new_query;
+			}
 			$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
 			$query["index"] = (@$query["index"]) ? $query["index"] : array();
 			if (@$query["query"]["start_query_from"]) {
@@ -187,6 +209,16 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			$marshaler = new Marshaler();
 			$query["fields"] = (@$query["fields"]) ? $query["fields"] : array();
 			$query["index"] = (@$query["index"]) ? $query["index"] : array();
+			if (!@$query["query"]) {
+				$new_query = array();
+				foreach ($query as $field => $value) {
+					if (!in_array($field, array("fields", "index"))) {
+						$new_query[$field] = $value;
+						unset($query[$field]);
+					}
+				}
+				$query["query"] = $new_query;
+			}
 			if (@$query["query"]["start_query_from"]) {
 				$options["start_query_from"] = $query["query"]["start_query_from"];
 				unset($query["query"]["start_query_from"]);
@@ -308,7 +340,7 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 			if ($exception->getAwsErrorCode() === "ResourceNotFoundException" && @$this->unparsed_config) {
 				$this->getDatabase()->createTable($this->getTablename(), $this->unparsed_config);
 				return $this->incrementCell($id, $attr, $value);
-			} else 
+			} else
 				throw $exception;
 		}
 	}
@@ -483,6 +515,20 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	private function parseSimpleFindValue($key, $item, $attribute, &$eav, $operator = "=") {
 		$value_key = ":" . preg_replace("/[^A-Za-z0-9]/", '', $key);
 		$eav[$value_key] = $item;
+		switch ($operator) {
+			case '$gt':
+				$operator = ">";
+				break;
+			case '$lt':
+				$operator = "<";
+				break;
+			case '$gte':
+				$operator = ">=";
+				break;
+			case '$lte':
+				$operator = "<=";
+				break;
+		}
 		return $attribute . " $operator " . $value_key;
 	}
 
