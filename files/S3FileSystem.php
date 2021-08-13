@@ -183,10 +183,24 @@ Class S3File extends AbstractFile {
 		}
 	}
 
+	public function readSeekableStream() {
+		$context = stream_context_create([
+			's3' => array('seekable' => true)
+		]);
+		$handle = fopen($this->s3path(), "r", false, $context);
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open file");
+		$this->read_handle = $handle;
+		return $handle;
+	}
+
 	public function readStream() {
+		if (@$this->read_handle)
+			return $this->read_handle;
 		$handle = fopen($this->s3path(), "r");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
+		$this->read_handle = $handle;
 		return $handle;
 	}
 
@@ -221,6 +235,18 @@ Class S3File extends AbstractFile {
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		}
+	}
+
+	public function getChunk($chunk_size = 8192, $seekable = NULL) {
+		if (!@$this->read_handle)
+			($seekable) ? $this->readSeekableStream() : $this->readStream();
+		$handle = $this->read_handle;
+		$accumulator = "";
+		while (strlen($accumulator) < $chunk_size && !feof($handle)) {
+			$get_chunk_size = min($chunk_size - strlen($accumulator), 8192); //8KB is the max chunk size for PHP Remote file reading.
+			$accumulator .= fread($handle, $get_chunk_size);
+		}
+		return $accumulator;
 	}
 
 }
