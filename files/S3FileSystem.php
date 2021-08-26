@@ -81,6 +81,47 @@ Class S3FileSystem extends AbstractFileSystem {
 		return $postObject;
 	}
 
+	public function createMultipartUpload($path) {
+		$result = $this->s3()->createMultipartUpload(array(
+			"Bucket" => $this->bucket(),
+			"Key" => $path
+		));
+		return $result["UploadId"];
+	}
+
+	public function completeMultipartUpload($path, $uploadId, $parts) {
+		$result = $this->s3()->completeMultipartUpload(array(
+			"Bucket" => $this->bucket(),
+			"Key" => $path,
+			"MultipartUpload" => array(
+				"Parts" => $parts
+			),
+			"UploadId" => $uploadId
+		));
+		return $result;
+	}
+
+	public function getUploadPartSignedUrl($path, $uploadId, $partNumber) {
+		$cmd = $this->s3()->getCommand("uploadPart", array(
+			"Bucket" =>  $this->bucket(),
+			"Key" => $path,
+			"UploadId" => $uploadId,
+			"PartNumber" => $partNumber
+		));
+
+		$url = $this->s3()->createPresignedRequest($cmd, "+24 hours");
+		return (string)$url->getUri();
+	}
+
+	public function getUploadPartsSignedUrls($path, $uploadId, $parts) {
+		$urls = array();
+		$partsArray = is_array($parts) ? $parts : range(1, $parts);
+		foreach ($partsArray as $partNumber) {
+			$urls[$partNumber] = $this->getUploadPartSignedUrl($path, $uploadId, $partNumber);
+		}
+		return $urls;
+	}
+
 	/**
 	 * Gets a signed url for any path from a bucket.
 	 *
