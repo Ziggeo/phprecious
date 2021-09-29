@@ -427,5 +427,5 @@ Class FileModel extends DatabaseModel {
 	public function materialize() {
 		return static::fileSystem()->getFile($this->getFileName());
 	}
-	
+
 }

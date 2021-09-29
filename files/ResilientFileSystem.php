@@ -76,12 +76,31 @@ Class ResilientFile extends AbstractFile {
 		return get_class($this->file);
 	}
 
-	protected function writeStream($string) {
+	public function writeStream() {
 		return $this->resilient_execute("writeStream");
 	}
 
-	protected function readStream($string) {
+	public function readStream() {
 		return $this->resilient_execute("readStream");
 	}
-	
+
+	public function readSeekableStream() {
+		return $this->resilient_execute("readSeekableStream");
+	}
+
+	public function getChunk($chunk_size = 8192, $seekable = NULL) {
+		return $this->resilient_execute("getChunk", array($chunk_size, $seekable));
+	}
+
+	public function toLocalFile($dest) {
+		return $this->resilient_execute("toLocalFile", array($dest));
+	}
+
+	public function s3path() {
+		return $this->resilient_execute("s3path");
+	}
+
+	public function tmpMaterialize() {
+		return $this->resilient_execute("tmpMaterialize");
+	}
 }

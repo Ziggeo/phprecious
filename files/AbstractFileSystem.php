@@ -81,7 +81,8 @@ Class AbstractFile {
 	
 	protected $file_system = null;
 	protected $file_name = null;
-	
+	protected $read_handle = null;
+
 	function __construct($file_system, $file_name) {
 		$this->file_system = $file_system;
 		$this->file_name = $file_name;
@@ -121,7 +122,15 @@ Class AbstractFile {
 		throw new FileSystemException("Unsupported Operation");
 	} 
 
-	protected function readStream() {
+	public function readStream() {
+		throw new FileSystemException("Unsupported Operation");
+	}
+
+	public function readSeekableStream() {
+		throw new FileSystemException("Unsupported Operation");
+	}
+
+	public function getChunk($chunk_size = 8192, $seekable = NULL) {
 		throw new FileSystemException("Unsupported Operation");
 	}
 	
@@ -153,6 +162,10 @@ Class AbstractFile {
 	}	
 	
 	public function materialize() {
+		return new TemporaryMaterializedFile($this);
+	}
+
+	public function tmpMaterialize() {
 		return new TemporaryMaterializedFile($this);
 	}
 

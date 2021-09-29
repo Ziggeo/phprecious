@@ -21,7 +21,7 @@ Class FileSystem extends AbstractFileSystem {
 }
 
 Class File extends AbstractFile {
-	
+
 	public function size() {
 		return filesize($this->file_name);
 	}
@@ -36,9 +36,12 @@ Class File extends AbstractFile {
 	}
 	
 	public function readStream() {
+		if (@$this->read_handle)
+			return $this->read_handle;
 		$handle = fopen($this->file_name, "r");
 		if ($handle === FALSE)
 			throw new FileSystemException("Could not open file");
+		$this->read_handle = $handle;
 		return $handle;
 	}
 	
@@ -63,4 +66,14 @@ Class File extends AbstractFile {
 		return new FileMaterializedFile($this);
 	}
 
+	public function getChunk($chunk_size = 8192, $seekable = NULL) {
+		if (!@$this->read_handle)
+			$this->readStream();
+		$handle = $this->read_handle;
+		$accumulator = "";
+		while (strlen($accumulator) < $chunk_size && !feof($handle)) {
+			$accumulator .= fread($handle, $chunk_size);
+		}
+		return $accumulator;
+	}
 }
