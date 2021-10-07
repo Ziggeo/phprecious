@@ -263,6 +263,9 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 		try {
 			$marshaler = new Marshaler();
 			$params = $this->parseUpdate($update);
+			if (is_string($id) && count($this->primaryKey()) === 1) {
+				$id = array($this->primaryKey() => $id);
+			}
 			$key = $marshaler->marshalJson(json_encode($id));
 			$params = array_merge(array(
 				'TableName' => $this->getTablename(),
@@ -322,6 +325,9 @@ class DynamoDBDatabaseTable extends DatabaseTable {
 	public function incrementCell($id, $attr, $value) {
 		try {
 			$marshaler = new Marshaler();
+			if (is_string($id) && count($this->primaryKey()) === 1) {
+				$id = array($this->primaryKey() => $id);
+			}
 			$key = $marshaler->marshalJson(json_encode($id));
 			$updater = $this->parseIncrement($attr, $value);
 			$eav = $marshaler->marshalJson($updater["value"]);
