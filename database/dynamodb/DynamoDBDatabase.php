@@ -60,14 +60,22 @@ class DynamoDBDatabase extends Database {
     }
     public function decode($type, $value, $attrs = array()) {
         $marshaler = new Marshaler();
-        if (!is_array($value)) {
-            if (($type === "string" || $type === "date" || $type === "id"))
-                $type = "S";
-            elseif ($type === "boolean")
-                $type = "BOOL";
-            return $marshaler->unmarshalValue(array($type => $value));
-        } else
-            return $marshaler->unmarshalValue($value);
+        if (($type === "string" || $type === "id")) {
+          return $marshaler->unmarshalValue(array("S" => $value));
+        } elseif ($type === "boolean") {
+          return $marshaler->unmarshalValue(array("BOOL" => $value));
+        } elseif ($type === "date") {
+					$date = $marshaler->unmarshalValue(array("S" => $value));
+					//We turn the date into a timestamp
+          try {
+            $date_obj = new DateTime($date);
+            return $date_obj->getTimestamp();
+          } catch (Exception $e) {
+						return NULL;
+          }
+        } else {
+          return $marshaler->unmarshalValue(array($type => $value));
+        }
     }
 
 

@@ -128,6 +128,9 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		foreach ($scanned as $item) {
 			$decoded_item = $database->decodeItem($item);
 			$this->assertEquals(3, $decoded_item["status"]);
+			if (isset($decoded_item["test_object_property"])) {
+				$this->assertEquals(2, count($decoded_item["test_object_property"]));
+			}
 		}
 		//Test FIND with Owner Global index
 		$items = $table->find(
