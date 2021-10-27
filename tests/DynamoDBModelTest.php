@@ -50,6 +50,17 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		$decoded = $database->decodeItem($item);
 		$this->assertEquals($data[$first_key]["_id"], $decoded["_id"]);
 		$this->assertTrue(isset($decoded["index"]));
+		$data_date = $database->decode("date", $data[$first_key]["created"]);
+		$decoded_date = $database->decode("date", $decoded["created"]);
+		$this->assertEquals($data_date, $decoded_date);
+		$data_date = $database->decode("date", $data[$first_key]["created"]);
+		$decoded_date = $database->decode("date", $decoded["created"]);
+		$this->assertEquals($data_date, $decoded_date);
+		$this->assertEquals($database->encode("date", $data_date), $decoded["created"]);
+		//Date Object
+		$decoded_date = $database->decode("date", array("S" => $decoded["created"]));
+		$this->assertEquals($data_date, $decoded_date);
+		//TODO TEST WITH ARRAYS
 		//Test UPDATE
 		$update_data = array(
 			"update" => array(
