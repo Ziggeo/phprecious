@@ -86,6 +86,8 @@ class DynamoDBDatabase extends Database {
 					$date = $marshaler->unmarshalValue($value);
 					//We turn the date into a timestamp
 					try {
+						//https://stackoverflow.com/questions/17427503/php-datetime-construct-failed-to-parse-time-string-xxxxxxxx-at-position-x/17427605
+						//This weird check is done to prevent a DateTime error while parsing some specific timestamps
 						$parsed_date = TimeSupport::is_valid_timestamp($date) ? "@" . $date : $date;
 						$date_obj = new DateTime($parsed_date);
 
