@@ -86,7 +86,8 @@ class DynamoDBDatabase extends Database {
 					$date = $marshaler->unmarshalValue($value);
 					//We turn the date into a timestamp
 					try {
-						$date_obj = new DateTime($date);
+						$parsed_date = TimeSupport::is_valid_timestamp($date) ? "@" . $date : $date;
+						$date_obj = new DateTime($parsed_date);
 
 						return $date_obj->getTimestamp();
 					} catch (Exception $e) {
