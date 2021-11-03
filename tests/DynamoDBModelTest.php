@@ -60,6 +60,8 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		//Date Object
 		$decoded_date = $database->decode("date", array("S" => $decoded["created"]));
 		$this->assertEquals($data_date, $decoded_date);
+		$decode_test = $database->decode("date", array("S" => 1635869771));
+		$this->assertEquals($decode_test, 1635869771);
 		//TODO TEST WITH ARRAYS
 		//Test UPDATE
 		$update_data = array(

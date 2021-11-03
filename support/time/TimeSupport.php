@@ -39,6 +39,10 @@ class TimeSupport {
 		return "0.00000000 " . $seconds;
 	}
 
+	public static function is_valid_timestamp($timestamp) {
+		return ((string) (int) $timestamp == $timestamp) && ($timestamp <= PHP_INT_MAX) && ($timestamp >= ~PHP_INT_MAX);
+	}
+
 }
 
 
