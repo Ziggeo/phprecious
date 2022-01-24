@@ -19,17 +19,20 @@ class MongoDatabase extends Database {
     private $connection;
     private $database;
     private $dbname;
-	private $uri;
+	  private $uri;
+		private $db_options;
     
-    public function __construct($dbname, $uri = "mongodb://localhost:27017") {
+    public function __construct($dbname, $uri = "mongodb://localhost:27017", $db_options = array()) {
     	$this->dbname = strtolower($dbname);
-		$this->uri = $uri;
+		  $this->uri = $uri;
+			$this->db_options = $db_options;
     }
 	
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
-        	$this->connection = class_exists("\MongoDB\Client") ? new MongoDB\Client($this->uri, [], [
+					$uri_options = array_merge([], $this->db_options);
+        	$this->connection = class_exists("\MongoDB\Client") ? new MongoDB\Client($this->uri, $uri_options, [
                 'typeMap' => [
                     'array' => 'array',
                     'document' => 'array',
