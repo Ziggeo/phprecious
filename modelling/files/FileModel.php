@@ -212,7 +212,18 @@ Class FileModel extends DatabaseModel {
 		}
 		return $instance;
 	}
-	
+	public static function copy($from, $to, $context = NULL) {
+		return copy($from, $to, $context);
+	}
+
+	public static function rename($from, $to, $context = NULL) {
+		return rename($from, $to, $context);
+	}
+
+	public static function mkdir($directory, $permissions = 0777, $recursive = FALSE, $context = NULL) {
+		return mkdir($directory, $permissions, $recursive, $context);
+	}
+
 	public function updateSize() {
 		$this->update(array("file_size" => filesize($this->getFileName())));
 	}
@@ -244,7 +255,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			if (mkdir($instance->getDirectoryPath(), 0777, TRUE))
+			if (forward_static_call(array($class, "mkdir"), $instance->getDirectoryPath(), 0777, TRUE))
 				break;
 			$retry_count--;
 			if ($retry_count > 0)
@@ -297,7 +308,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			if (mkdir($instance->getDirectoryPath(), 0777, TRUE))
+			if (forward_static_call(array($class, "mkdir"), $instance->getDirectoryPath(), 0777, TRUE))
 				break;
 			$retry_count--;
 			if ($retry_count > 0)
@@ -312,7 +323,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			$success = ($move && rename($filename, $instance->getFileName())) || (!$move && copy($filename, $instance->getFileName()));
+			$success = ($move && forward_static_call(array($class, "rename"), $filename, $instance->getFileName())) || (!$move && forward_static_call(array($class, "copy"), $filename, $instance->getFileName()));
 			if ($success)
 				break;
 			$retry_count--;
@@ -339,11 +350,11 @@ Class FileModel extends DatabaseModel {
 		if (!@$this->optionsOf("prefixes"))
 			return FALSE;
 		$pfx = $this->optionsOf("prefixes");
-		if (!mkdir($this->getDirectoryPath("removed"), 0777, TRUE)) {
+		if (!forward_static_call(array(get_called_class(), "mkdir"),$this->getDirectoryPath("removed"), 0777, TRUE)) {
 			static::log("Error: cannot create directory.", Logger::WARN);
 			return FALSE;
 		}
-		if (!rename($this->getFileName(), $this->getFileName("removed"))) {
+		if (!forward_static_call(array(get_called_class(), "rename"), $this->getFileName(), $this->getFileName("removed"))) {
 			static::log("Error: cannot move file.", Logger::WARN);
 			return FALSE;
 		}
@@ -393,8 +404,8 @@ Class FileModel extends DatabaseModel {
 			$pfx = self::classOptionsOf("prefixes");
 			if (@$pfx && @$pfx["unref"]) {
 				$move_base = self::classOptionsOf("directory") . $pfx["unref"];
-				@mkdir(FileUtils::pathOf($move_base . "/" . $sub));
-				@rename($base . "/" . $sub, $move_base . "/" . $sub);
+				@forward_static_call(array(get_called_class(), "mkdir"), FileUtils::pathOf($move_base . "/" . $sub));
+				@forward_static_call(array(get_called_class(), "rename"), $base . "/" . $sub, $move_base . "/" . $sub);
 			} else {
 				@unlink($base . "/" . $sub);
 			}

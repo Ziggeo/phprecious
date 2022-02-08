@@ -143,17 +143,52 @@ Class S3FileSystem extends AbstractFileSystem {
 		return (string)$request->getUri();
 	}
 
+	public function cleanupS3Path($path) {
+		if (StringUtils::startsWith($path, "s3://"))
+			$path = str_replace("s3://" . $this->bucket() . "/", "", $path);
+		return $path;
+	}
+
 	public function createFolderFromFilename($filename) {
 		$pos = strrpos($filename, "/");
 		$dir = substr($filename, 0, $pos);
 		if (!StringUtils::ends_with($dir, "/"))
 			$dir .= "/";
+		$dir = $this->cleanupS3Path($dir);
 		$this->s3()->putObject(array(
 			"Bucket" => $this->bucket(),
 			'Key' => $dir,
 			"ACL" => "private",
 			'Body' => ""
 		));
+		return TRUE;
+	}
+
+	public function uploadLocalFile($file, $path) {
+		try {
+			$this->s3()->putObject(array(
+				"Bucket" => $this->bucket(),
+				"Key" => $this->cleanupS3Path($path),
+				"SourceFile" => $file,
+				"@region" => $this->region()
+			));
+			return TRUE;
+		} catch (Exception $e) {
+			throw new FileSystemException($e->getMessage());
+		}
+	}
+
+	public function deleteFile($path) {
+		try {
+			$meta = $this->s3()->deleteObject(array(
+				"Bucket" => $this->bucket(),
+				"Key" => $this->cleanupS3Path($path),
+				"@region" => $this->region()
+			));
+			return TRUE;
+		} catch (Exception $e) {
+			throw new FileSystemException("Could not delete file");
+		}
 	}
 }
 
