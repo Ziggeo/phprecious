@@ -84,8 +84,8 @@ class FileUtils {
 		return str_replace(" ", "", str_replace("/", "", str_replace("..", "", $filename)));
 	}
 	
-	public static function move_uploaded_file($tmp_name, $target) {
-		return move_uploaded_file($tmp_name, $target) || rename($tmp_name, $target);
+	public static function move_uploaded_file($tmp_name, $target, $class = "FileModel") {
+		return forward_static_call(array($class, "move_uploaded_file"), $tmp_name, $target) || forward_static_call(array($class, "rename"), $tmp_name, $target);
 	}
 	
 }

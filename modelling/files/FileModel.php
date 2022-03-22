@@ -79,13 +79,18 @@ Class FileModel extends DatabaseModel {
 			return $this->identifier;		
 		return join("/", str_split($this->identifier, $split_identifier));
 	}
-	
+
+	//Default alias for getFileName
+	public function getFilePath() {
+		return $this->getFileName();
+	}
+
 	public function getFileName($prefix = NULL) {
-		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . "." . $this->extension;
+		return $this->optionsOf("directory") . $this->getFileNameWithoutBase($prefix);
 	}
 
 	public function getFileNameWithoutBase($prefix = NULL) {
-		return $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . "." . $this->extension;
+		return $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . ((@$this->extension) ? "." . $this->extension : "");
 	}
 	
 	public function getDirectoryPath($prefix = NULL) {
@@ -224,6 +229,10 @@ Class FileModel extends DatabaseModel {
 		return mkdir($directory, $permissions, $recursive, $context);
 	}
 
+	public static function move_uploaded_file($from, $to) {
+		return move_uploaded_file($from, $to);
+	}
+
 	public function updateSize() {
 		$this->update(array("file_size" => filesize($this->getFileName())));
 	}
@@ -270,7 +279,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			if (FileUtils::move_uploaded_file($tmp_file, $instance->getFileName()))
+			if (FileUtils::move_uploaded_file($tmp_file, $instance->getFilePath(), $class))
 				break;
 			$retry_count--;
 			if ($retry_count > 0)
