@@ -86,7 +86,7 @@ Class FileModel extends DatabaseModel {
 	}
 
 	public function getFileName($prefix = NULL) {
-		return $this->optionsOf("directory") . $this->getFileNameWithoutBase($prefix);
+		return $this->optionsOf("directory") . $this->getPrefix($prefix) . "/" . $this->getIdentifierName() . ((@$this->extension) ? "." . $this->extension : "");
 	}
 
 	public function getFileNameWithoutBase($prefix = NULL) {
