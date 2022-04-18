@@ -81,8 +81,8 @@ Class FileModel extends DatabaseModel {
 	}
 
 	//Default alias for getFileName
-	public function getFilePath() {
-		return $this->getFileName();
+	public function getFilePath($prefix = NULL) {
+		return $this->getFileName($prefix);
 	}
 
 	public function getFileName($prefix = NULL) {
@@ -332,7 +332,7 @@ Class FileModel extends DatabaseModel {
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
 		while ($retry_count > 0) {
-			$success = ($move && forward_static_call(array($class, "rename"), $filename, $instance->getFileName())) || (!$move && forward_static_call(array($class, "copy"), $filename, $instance->getFileName()));
+			$success = ($move && forward_static_call(array($class, "rename"), $filename, $instance->getFilePath())) || (!$move && forward_static_call(array($class, "copy"), $filename, $instance->getFilePath()));
 			if ($success)
 				break;
 			$retry_count--;
@@ -363,7 +363,7 @@ Class FileModel extends DatabaseModel {
 			static::log("Error: cannot create directory.", Logger::WARN);
 			return FALSE;
 		}
-		if (!forward_static_call(array(get_called_class(), "rename"), $this->getFileName(), $this->getFileName("removed"))) {
+		if (!forward_static_call(array(get_called_class(), "rename"), $this->getFilePath(), $this->getFilePath("removed"))) {
 			static::log("Error: cannot move file.", Logger::WARN);
 			return FALSE;
 		}
