@@ -61,7 +61,7 @@ Class S3FileSystem extends AbstractFileSystem {
 	}
 
 	public function getPostSignedUrl($path, $expire = 60) {
-		$formInputs = array("acl" => "private");
+		$formInputs = array("acl" => "private", "ContentType" => mime_content_type($path));
 		$options = array(
 			array("acl" => "private"),
 			array("bucket" => $this->bucket()),
