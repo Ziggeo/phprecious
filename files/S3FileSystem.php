@@ -61,13 +61,13 @@ Class S3FileSystem extends AbstractFileSystem {
 	}
 
 	public function getPostSignedUrl($path, $expire = 60) {
-		$formInputs = array("acl" => "private");
+		$formInputs = array("acl" => "private", "Content-Type" => ContentType::byFileName($path));
 		$options = array(
 			array("acl" => "private"),
 			array("bucket" => $this->bucket()),
-			array("eq", '$key', $path)
+			array("eq", '$key', $path),
+			array("eq", '$Content-Type', ContentType::byFileName($path))
 		);
-
 		$expires = '+1 hours';
 
 		$postObject = new Aws\S3\PostObjectV4(
@@ -84,7 +84,8 @@ Class S3FileSystem extends AbstractFileSystem {
 	public function createMultipartUpload($path) {
 		$result = $this->s3()->createMultipartUpload(array(
 			"Bucket" => $this->bucket(),
-			"Key" => $path
+			"Key" => $path,
+			"ContentType" => ContentType::byFileName($path)
 		));
 		return $result["UploadId"];
 	}
@@ -170,7 +171,8 @@ Class S3FileSystem extends AbstractFileSystem {
 				"Bucket" => $this->bucket(),
 				"Key" => $this->cleanupS3Path($path),
 				"SourceFile" => $file,
-				"@region" => $this->region()
+				"@region" => $this->region(),
+				"ContentType" => ContentType::byFileName($path)
 			));
 			return TRUE;
 		} catch (Exception $e) {
@@ -306,7 +308,8 @@ Class S3File extends AbstractFile {
 				"Bucket" => $this->bucket(),
 				"Key" => $this->filename(),
 				"SourceFile" => $file,
-				"@region" => $this->region()
+				"@region" => $this->region(),
+				"ContentType" => ContentType::byFileName($this->filename())
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
