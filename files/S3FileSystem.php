@@ -84,7 +84,8 @@ Class S3FileSystem extends AbstractFileSystem {
 	public function createMultipartUpload($path) {
 		$result = $this->s3()->createMultipartUpload(array(
 			"Bucket" => $this->bucket(),
-			"Key" => $path
+			"Key" => $path,
+			"ContentType" => mime_content_type($path)
 		));
 		return $result["UploadId"];
 	}
@@ -170,7 +171,8 @@ Class S3FileSystem extends AbstractFileSystem {
 				"Bucket" => $this->bucket(),
 				"Key" => $this->cleanupS3Path($path),
 				"SourceFile" => $file,
-				"@region" => $this->region()
+				"@region" => $this->region(),
+				"ContentType" => mime_content_type($file)
 			));
 			return TRUE;
 		} catch (Exception $e) {
@@ -306,7 +308,8 @@ Class S3File extends AbstractFile {
 				"Bucket" => $this->bucket(),
 				"Key" => $this->filename(),
 				"SourceFile" => $file,
-				"@region" => $this->region()
+				"@region" => $this->region(),
+				"ContentType" => mime_content_type($file)
 			));
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
