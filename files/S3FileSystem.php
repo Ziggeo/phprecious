@@ -65,7 +65,8 @@ Class S3FileSystem extends AbstractFileSystem {
 		$options = array(
 			array("acl" => "private"),
 			array("bucket" => $this->bucket()),
-			array("eq", '$key', $path)
+			array("eq", '$key', $path),
+			array("ContentType" => mime_content_type($path))
 		);
 
 		$expires = '+1 hours';
