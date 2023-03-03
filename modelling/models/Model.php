@@ -401,7 +401,7 @@ class Model {
 		$result = array();
 		$sch = $this->scheme();
 		foreach ($sch as $key=>$meta) {
-			$key_tags = @$meta["tags"] ? $mega["tags"] : array();
+			$key_tags = @$meta["tags"] ? $meta["tags"] : array();
 			if (ArrayUtils::subset($tags, $key_tags))
 				$result[$key] = $this->$key;
 		}
