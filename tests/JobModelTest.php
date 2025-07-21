@@ -18,33 +18,38 @@ $test_valid_job = TRUE;
 $test_fail_job = FALSE;
 
 Class JobModelTestModel extends JobModel {
-    
+
     protected static function getDatabase() {
         global $database;
         return $database;
     }
-    
+
     protected static function jobOptions() {
         global $test_job_model_options;
         return $test_job_model_options;
     }
-    
+
     protected function validJob() {
         global $test_valid_job;
         return $test_valid_job;
     }
-    
+
     protected function performJob() {
         global $test_fail_job;
         if ($test_fail_job)
             throw new Exception("Failed");
     }
-    
+
+    public static function nextJob() {
+        $job = parent::nextJob();
+        return $job ? array($job) : array();
+    }
+
 }
 
 
 class JobModelTest extends PHPUnit\Framework\TestCase {
-    
+
     public function testExecuteDirectSuccess() {
         global $database, $test_valid_job, $test_fail_job, $test_job_model_options;
         $test_valid_job = TRUE;

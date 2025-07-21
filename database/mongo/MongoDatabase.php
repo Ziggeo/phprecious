@@ -21,13 +21,13 @@ class MongoDatabase extends Database {
     private $dbname;
 	  private $uri;
 		private $db_options;
-    
+
     public function __construct($dbname, $uri = "mongodb://localhost:27017", $db_options = array()) {
     	$this->dbname = strtolower($dbname);
 		  $this->uri = $uri;
 			$this->db_options = $db_options;
     }
-	
+
 	private function getConnection() {
         if (!$this->connection) {
         	static::perfmon(true);
@@ -43,7 +43,7 @@ class MongoDatabase extends Database {
 		}
 		return $this->connection;
 	}
-	
+
 	public function getDatabase() {
         if (!$this->database) {
         	static::perfmon(true);
@@ -65,7 +65,7 @@ class MongoDatabase extends Database {
         }
         if ($type == "id") {
 			try {
-				return $value == NULL ? NULL : new MongoDB\BSON\ObjectID($value);
+				return $value == NULL ? NULL : new MongoDB\BSON\ObjectId($value);
 			} catch (InvalidArgumentException $e) {
 				if (@$attrs["weakly_encoded"] && is_string($value))
 					return $value;

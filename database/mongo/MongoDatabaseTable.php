@@ -26,7 +26,7 @@ class MongoDatabaseTable extends DatabaseTable {
 	}
 
 	private $collection;
-	
+
 	private function getCollection() {
 		if (!$this->collection) {
 			static::perfmon(true);
@@ -35,11 +35,11 @@ class MongoDatabaseTable extends DatabaseTable {
 		}
 		return $this->collection;
 	}
-	
+
 	public function primaryKey() {
 		return "_id";
 	}
-	
+
 	private function updateOptions($options) {
 		if (isset($options["safe"]) && class_exists("\MongoDB\Client")) {
 			$options["w"] = $options["safe"];
@@ -47,7 +47,7 @@ class MongoDatabaseTable extends DatabaseTable {
 		}
 		return $options;
 	}
-	
+
 	public function insert(&$row, $options = array("safe" => TRUE, /*"fsync" => TRUE*/), $resilience = 5) {
         $options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
@@ -55,7 +55,7 @@ class MongoDatabaseTable extends DatabaseTable {
         if ($this->primaryKey() === "_id")
             unset($row["_id"]);
         else
-            $row[$this->primaryKey()] = new MongoDB\BSON\ObjectID();
+            $row[$this->primaryKey()] = new MongoDB\BSON\ObjectId();
         $success = NULL;
         while (TRUE) {
             $resilience--;
@@ -76,7 +76,7 @@ class MongoDatabaseTable extends DatabaseTable {
 		static::perfmon(false);
 		return $success;
 	}
-	
+
 	public function find($values, $options = NULL) {
 		static::perfmon(true);
         $options = $this->sanitizeOptions($options);
@@ -96,21 +96,21 @@ class MongoDatabaseTable extends DatabaseTable {
 		static::perfmon(false);
 		return $result;
 	}
-	
+
 	public function count($values, $options = array()) {
 		static::perfmon(true);
-		$result = $this->getCollection()->count($values, $options);
+		$result = $this->getCollection()->countDocuments($values, $options);
 		static::perfmon(false);
 		return $result;
 	}
-	
+
 	public function findOne($values) {
 		static::perfmon(true);
 		$result = $this->getCollection()->findOne($values);
 		static::perfmon(false);
 		return $result;
 	}
-	
+
 	public function update($query, $update, $options = array("safe" => TRUE)) { // "multiple" => false
 		$options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
@@ -124,19 +124,19 @@ class MongoDatabaseTable extends DatabaseTable {
 		static::perfmon(false);
 		return $success;
 	}
-	
+
 	public function incrementCell($id, $key, $value) {
 		static::perfmon(true);
 		$success = $this->getCollection()->updateOne(array("_id" => $id), array('$inc' => array($key => $value)));
 		static::perfmon(false);
 		return $success->isAcknowledged() ? $success->isAcknowledged() : $success;
 	}
-	
+
 	public function updateOne($query, $update, $options = array("safe" => TRUE)) {
 		$options["multiple"] = FALSE;
 		return $this->update($query, $update, $options);
 	}
-	
+
 	public function remove($query, $options = array("safe" => TRUE)) { // "justOne" => true
 		$options = $this->updateOptions($options);
         $options = $this->sanitizeOptions($options);
@@ -148,17 +148,17 @@ class MongoDatabaseTable extends DatabaseTable {
 		static::perfmon(false);
 		return $success;
 	}
-	
+
 	public function removeOne($query, $options = array("safe" => TRUE)) {
 		$options["justOne"] = TRUE;
 		return $this->remove($query, $options);
 	}
-	
+
 	public function ensureIndex($keys) {
 		$arr = array();
 		foreach($keys as $key)
 			$arr[$key] = 1;
-		return $this->getCollection()->ensureIndex($arr);
+		return $this->getCollection()->createIndex($arr);
 	}
 
     public function sanitizeOptions($options) {
@@ -168,5 +168,5 @@ class MongoDatabaseTable extends DatabaseTable {
             $options["limit"] = intval($options["limit"]);
         return $options;
     }
-    
+
 }

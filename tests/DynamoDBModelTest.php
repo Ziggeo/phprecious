@@ -30,7 +30,7 @@ class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 		} catch (Exception $exception) {
 			//Table was already deleted
 		}
-		$test_table = json_decode(file_get_contents('./test_data/test-table.json'), TRUE);
+		$test_table = json_decode(file_get_contents(dirname(__FILE__) . "/test_data/test-table.json"), TRUE);
 		$table_config = $test_table["table"];
 		$table = $database->createTable("TestTable", $table_config);
 		$data = $test_table["data"];

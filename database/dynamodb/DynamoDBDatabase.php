@@ -42,6 +42,9 @@ class DynamoDBDatabase extends Database {
                 $config["region"] = "us-east-1";
             if (empty($config["version"]))
                 $config["version"] = "latest";
+            // Suppress PHP deprecation warning for PHP versions below 8.1.x
+            // This will be required until PHP is upgraded to 8.1.x or higher
+            $config["suppress_php_deprecation_warning"] = true;
             $sdk = new Aws\Sdk($config);
             $this->database = $sdk->createDynamoDb();
             static::perfmon(FALSE);
@@ -49,8 +52,8 @@ class DynamoDBDatabase extends Database {
         return $this->database;
     }
 
-    public function selectTable($name, $config = array()) {
-        return new DynamoDBDatabaseTable($this, $name, $config);
+    public function selectTable($name, $definition = NULL) {
+        return new DynamoDBDatabaseTable($this, $name, $definition);
     }
 
     public function encode($type, $value, $attrs = array()) {
