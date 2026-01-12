@@ -9,7 +9,7 @@ Class ImplicitFTPFileSystem extends AbstractFileSystem {
 	private $resource;
 
 	protected function getClass() {
-		return ImplicitFTPFile;
+		return "ImplicitFTPFile";
 	}
 
 	function __construct($options) {

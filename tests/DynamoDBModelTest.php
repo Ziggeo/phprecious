@@ -4,33 +4,64 @@ require_once(dirname(__FILE__) . "/../database/dynamodb/DynamoDBDatabase.php");
 require_once(dirname(__FILE__) . "/../database/dynamodb/DynamoDBDatabaseTable.php");
 require_once(dirname(__FILE__) . "/../modelling/models/DatabaseModel.php");
 
-$test_config = json_decode(file_get_contents(dirname(__FILE__) . "/test_data/dynamodb-test-config.json"), TRUE);
 $database = NULL;
 
 
 class DynamoDBModelTest extends PHPUnit\Framework\TestCase {
 
+
 	public function testTableCreateCrudAndTableDelete() {
-		global $test_config;
-		if (!@$test_config)
-			throw new Exception(
-				"Please add the dynamodb-test-config.json file under the ./tests folder with the following format: " .
-				"{
-			        \"dynamodb.test_db_config\": {
-					\"endpoint\": \"TESTURL\",
-					\"region\": \"TESTREGION\",
-					\"version\": \"latest\"
-				  }
-				}"
-			);
+		$test_config_path = realpath(__DIR__ . "/test_data/dynamodb-test-config.json");
+		if ($test_config_path === FALSE) {
+			$test_config_path = __DIR__ . "/test_data/dynamodb-test-config.json";
+		}
+		$test_config = file_exists($test_config_path) ? json_decode(file_get_contents($test_config_path), TRUE) : NULL;
+		$env_endpoint = getenv("DYNAMODB_ENDPOINT");
+		$env_region = getenv("DYNAMODB_REGION");
+		$env_version = getenv("DYNAMODB_VERSION");
+		if ($env_endpoint || $env_region || $env_version) {
+			if (!is_array($test_config)) {
+				$test_config = array();
+			}
+			if (!isset($test_config["dynamodb.test_db_config"])) {
+				$test_config["dynamodb.test_db_config"] = array();
+			}
+			if ($env_endpoint) {
+				$test_config["dynamodb.test_db_config"]["endpoint"] = $env_endpoint;
+			}
+			if ($env_region) {
+				$test_config["dynamodb.test_db_config"]["region"] = $env_region;
+			}
+			if ($env_version) {
+				$test_config["dynamodb.test_db_config"]["version"] = $env_version;
+			}
+		}
+		if (!is_array($test_config) || !isset($test_config["dynamodb.test_db_config"])) {
+			$this->markTestSkipped("Missing DynamoDB test config at {$test_config_path}.");
+		}
 		$database = new DynamoDBDatabase($test_config["dynamodb.test_db_config"]);
-		$database->getDatabase();
+		$attempts = 5;
+
+		while ($attempts > 0) {
+			try {
+				$database->getDatabase();
+				break;
+			} catch (Exception $exception) {
+				$attempts--;
+				if ($attempts === 0) {
+					$this->markTestSkipped("DynamoDB not available: " . $exception->getMessage());
+				}
+				usleep(500000);
+			}
+		}
+
 		try {
 			$database->deleteTable("TestTable");
 		} catch (Exception $exception) {
 			//Table was already deleted
 		}
-		$test_table = json_decode(file_get_contents('./test_data/test-table.json'), TRUE);
+		$test_table = json_decode(file_get_contents(dirname(__FILE__) . "/test_data/test-table.json"), TRUE);
+
 		$table_config = $test_table["table"];
 		$table = $database->createTable("TestTable", $table_config);
 		$data = $test_table["data"];

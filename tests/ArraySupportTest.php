@@ -2,7 +2,8 @@
 
 require_once(dirname(__FILE__) . "/../support/data/ArrayUtils.php");
 
-class ArrayUtilsTest extends PHPUnit\Framework\TestCase {
+class ArraySupportTest extends PHPUnit\Framework\TestCase {
+
 	
 	public function testFilterArray() {
 		$result = ArrayUtils::filter(array("a" => 1, "b" => 2, "c" => 3), array("a", "c", "d"));

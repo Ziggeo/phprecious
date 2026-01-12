@@ -94,17 +94,20 @@ abstract class JobModel extends DatabaseModel {
 
     public function processJob() {
         $opts = static::jobOptions();
+        $delete_on_discard = !empty($opts["delete_on_discard"]);
+        $delete_on_close = !empty($opts["delete_on_close"]);
+        $not_ready_max = $opts["not_ready_max"] ?? NULL;
         if ($this->status == self::STATUS_OPEN) {
             $this->updateStatus(self::STATUS_EXECUTING);
             if (!$this->validJob()) {
                 $this->updateStatus(self::STATUS_DISCARDED);
-                if ($opts["delete_on_discard"])
+                if ($delete_on_discard)
                     $this->delete();
                 return TRUE;
             }
             if (!$this->isReady()) {
                 $this->inc("not_ready_count");
-                if ($opts["not_ready_max"] != NULL && $this->not_ready_count < $opts["not_ready_max"])
+                if ($not_ready_max != NULL && $this->not_ready_count < $not_ready_max)
                     $this->updateStatus(self::STATUS_NOT_READY);
                 else {
                     $this->inc("failure_count");
@@ -115,7 +118,7 @@ abstract class JobModel extends DatabaseModel {
             try {
                 $this->performJob();
                 $this->updateStatus(self::STATUS_CLOSED);
-                if ($opts["delete_on_close"])
+                if ($delete_on_close)
                     $this->delete();
                 return TRUE;
             } catch (Exception $e) {
@@ -127,7 +130,7 @@ abstract class JobModel extends DatabaseModel {
     }
 
     public static function processJobs() {
-        $jobs = self::allBy(array("status" => self::STATUS_OPEN), array("created" => 1, "_id" => 1), NULL, NULL, TRUE);
+        $jobs = static::allBy(array("status" => self::STATUS_OPEN), array("created" => 1, "_id" => 1), NULL, NULL, TRUE);
         foreach ($jobs as $job)
             if ($job->shardApplicable())
                 $job->processJob();
@@ -138,61 +141,67 @@ abstract class JobModel extends DatabaseModel {
     }
 
     public static function updateJobs($updateOptions = array()) {
-        if (!@$updateOptions["increase_max"])
+        if (!isset($updateOptions["increase_max"]))
             $updateOptions["increase_max"] = 0;
         $opts = static::jobOptions();
-        if ($opts["timeout"] != NULL) {
+        $timeout = $opts["timeout"] ?? NULL;
+        $timeout_max = $opts["timeout_max"] ?? NULL;
+        $failure_max = $opts["failure_max"] ?? NULL;
+        $not_ready_max = $opts["not_ready_max"] ?? NULL;
+        $created_after = $updateOptions["created_after"] ?? NULL;
+        $delay = $updateOptions["delay"] ?? NULL;
+        if ($timeout != NULL) {
             $query = array("status" => self::STATUS_EXECUTING);
-            if (@$updateOptions["created_after"])
-                $query["created"] = array('$gt' => $updateOptions["created_after"]);
-            $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
+            if ($created_after)
+                $query["created"] = array('$gt' => $created_after);
+            $jobs = static::allBy($query, NULL, NULL, NULL, TRUE);
             foreach ($jobs as $job) {
-                if (TimePoint::get($job->updated)->increment($opts["timeout"])->earlier()) {
+                if ($timeout <= 0 || TimePoint::get($job->updated)->increment($timeout)->earlier()) {
                     $job->inc("timeout_count");
                     $job->updateStatus(self::STATUS_TIMEOUT, "", Logger::WARN);
-                    if (@$updateOptions["delay"])
-                        usleep(@$updateOptions["delay"]);
+                    if ($delay)
+                        usleep($delay);
                 }
             }
         }
-        if ($opts["timeout_max"] == NULL || $opts["timeout_max"] > 0) {
+        if ($timeout_max == NULL || $timeout_max > 0) {
             $query = array("status" => self::STATUS_TIMEOUT);
-            if ($opts["timeout_max"] != NULL)
-                $query["timeout_count"] = array('$lte' => $opts["timeout_max"] + $updateOptions["increase_max"]);
-            if (@$updateOptions["created_after"])
-                $query["created"] = array('$gt' => $updateOptions["created_after"]);
-            $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
+            if ($timeout_max != NULL)
+                $query["timeout_count"] = array('$lte' => $timeout_max + $updateOptions["increase_max"]);
+            if ($created_after)
+                $query["created"] = array('$gt' => $created_after);
+            $jobs = static::allBy($query, NULL, NULL, NULL, TRUE);
             foreach ($jobs as $job) {
                 $job->updateStatus(self::STATUS_OPEN, "Reopen after timeout");
-                if (@$updateOptions["delay"])
-                    usleep(@$updateOptions["delay"]);
+                if ($delay)
+                    usleep($delay);
             }
         }
-        if ($opts["failure_max"] == NULL || $opts["failure_max"] > 1) {
+        if ($failure_max == NULL || $failure_max > 1) {
             $query = array("status" => self::STATUS_FAILED);
-            if ($opts["failure_max"] != NULL)
-                $query["failure_count"] = array('$lte' => $opts["failure_max"] + $updateOptions["increase_max"]);
-            if (@$updateOptions["created_after"])
-                $query["created"] = array('$gt' => $updateOptions["created_after"]);
-            $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
+            if ($failure_max != NULL)
+                $query["failure_count"] = array('$lte' => $failure_max + $updateOptions["increase_max"]);
+            if ($created_after)
+                $query["created"] = array('$gt' => $created_after);
+            $jobs = static::allBy($query, NULL, NULL, NULL, TRUE);
             foreach ($jobs as $job) {
                 $job->updateStatus(self::STATUS_OPEN, "Reopen after failure");
-                if (@$updateOptions["delay"])
-                    usleep(@$updateOptions["delay"]);
+                if ($delay)
+                    usleep($delay);
             }
         }
-        if ($opts["not_ready_max"] == NULL || $opts["not_ready_max"] > 1) {
+        if ($not_ready_max == NULL || $not_ready_max > 1) {
             $query = array("status" => self::STATUS_NOT_READY);
-            if ($opts["not_ready_max"] != NULL)
-                $query["not_ready_count"] = array('$lte' => $opts["not_ready_max"] + $updateOptions["increase_max"]);
-            if (@$updateOptions["created_after"])
-                $query["created"] = array('$gt' => $updateOptions["created_after"]);
-            $jobs = self::allBy($query, NULL, NULL, NULL, TRUE);
+            if ($not_ready_max != NULL)
+                $query["not_ready_count"] = array('$lte' => $not_ready_max + $updateOptions["increase_max"]);
+            if ($created_after)
+                $query["created"] = array('$gt' => $created_after);
+            $jobs = static::allBy($query, NULL, NULL, NULL, TRUE);
             foreach ($jobs as $job) {
                 if ($job->isReady()) {
                     $job->updateStatus(self::STATUS_OPEN, "Reopen after not ready");
-                    if (@$updateOptions["delay"])
-                        usleep(@$updateOptions["delay"]);
+                    if ($delay)
+                        usleep($delay);
                 }
             }
         }

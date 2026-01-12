@@ -9,7 +9,7 @@ Class FTPFileSystem extends AbstractFileSystem {
 	private $ftp;
 
 	protected function getClass() {
-		return FTPFile;
+		return "FTPFile";
 	}
 
 	function __construct($options) {

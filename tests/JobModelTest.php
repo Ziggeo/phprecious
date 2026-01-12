@@ -53,9 +53,10 @@ class JobModelTest extends PHPUnit\Framework\TestCase {
         $database = new MemoryDatabase();
         $job = new JobModelTestModel();
         $job->save();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 0);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertNull($next_job);
         $this->assertEquals($job->status, JobModel::STATUS_CLOSED);
+
     }
 
     public function testExecuteSuccess() {
@@ -66,13 +67,14 @@ class JobModelTest extends PHPUnit\Framework\TestCase {
         $database = new MemoryDatabase();
         $job = new JobModelTestModel();
         $job->save();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 1);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertInstanceOf(JobModelTestModel::class, $next_job);
         $this->assertEquals($job->status, JobModel::STATUS_OPEN);
         $job->processJob();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 0);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertNull($next_job);
         $this->assertEquals($job->status, JobModel::STATUS_CLOSED);
+
     }
 
     public function testExecuteInvalid() {
@@ -83,13 +85,14 @@ class JobModelTest extends PHPUnit\Framework\TestCase {
         $database = new MemoryDatabase();
         $job = new JobModelTestModel();
         $job->save();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 1);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertInstanceOf(JobModelTestModel::class, $next_job);
         $this->assertEquals($job->status, JobModel::STATUS_OPEN);
         $job->processJob();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 0);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertNull($next_job);
         $this->assertEquals($job->status, JobModel::STATUS_DISCARDED);
+
     }
 
     public function testExecuteFail() {
@@ -100,19 +103,23 @@ class JobModelTest extends PHPUnit\Framework\TestCase {
         $database = new MemoryDatabase();
         $job = new JobModelTestModel();
         $job->save();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 1);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertInstanceOf(JobModelTestModel::class, $next_job);
         $this->assertEquals($job->status, JobModel::STATUS_OPEN);
         $job->processJob();
-        $jobs = JobModelTestModel::nextJob(NULL);
-        $this->assertEquals(count($jobs), 0);
+        $next_job = JobModelTestModel::nextJob();
+        $this->assertNull($next_job);
         $this->assertEquals($job->status, JobModel::STATUS_FAILED);
+
     }
 
     public function testTimeout() {
-        global $database;
+        global $database, $test_job_model_options;
+        $test_job_model_options["timeout"] = -1;
+        $test_job_model_options["timeout_max"] = 1;
         $database = new MemoryDatabase();
         JobModelTestModel::table(TRUE);
+
         $job = new JobModelTestModel();
         $job->save();
         $this->assertEquals($job->status, JobModel::STATUS_OPEN);
