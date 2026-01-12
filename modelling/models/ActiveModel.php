@@ -387,7 +387,7 @@ abstract class ActiveModel extends Model {
 		return FALSE;
 	}
 
-    protected function expiredQuery() {
+    protected static function expiredQuery() {
         return array();
     }
 

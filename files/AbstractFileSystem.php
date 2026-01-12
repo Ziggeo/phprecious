@@ -5,7 +5,7 @@ require_once(dirname(__FILE__) . "/FileSystemException.php");
 Class AbstractFileSystem {
 	
 	protected function getClass() {
-		return AbstractFile;
+		return "AbstractFile";
 	}
 	
 	public function getFile($file_name) {
