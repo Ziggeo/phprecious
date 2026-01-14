@@ -106,6 +106,8 @@ Class ImplicitFTPFile extends AbstractFile {
 
 	public function toLocalFile($file) {
 		$file = fopen($file, 'w');
+		if ($file === FALSE)
+			throw new FileSystemException("Could not open file for writing");
 		$ftp = $this->ftp();
 		$url = curl_getinfo($ftp, CURLINFO_EFFECTIVE_URL);
 		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->file_name);
@@ -121,6 +123,8 @@ Class ImplicitFTPFile extends AbstractFile {
 	public function fromLocalFile($file) {
 		$ch = $this->ftp();
 		$fileStream = fopen($file, "r");
+		if ($fileStream === FALSE)
+			throw new FileSystemException("Could not open file for reading");
 		$url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 		curl_setopt($ch, CURLOPT_URL, $url . "/" . $this->file_name);
 		curl_setopt($ch, CURLOPT_UPLOAD, 1);

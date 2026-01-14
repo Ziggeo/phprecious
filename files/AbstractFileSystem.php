@@ -3,11 +3,11 @@
 require_once(dirname(__FILE__) . "/FileSystemException.php");
 
 Class AbstractFileSystem {
-	
+
 	protected function getClass() {
 		return "AbstractFile";
 	}
-	
+
 	public function getFile($file_name) {
 		$cls = $this->getClass();
 		return is_string($file_name) ? new $cls($this, $file_name) : $file_name;
@@ -16,21 +16,21 @@ Class AbstractFileSystem {
 	public function createFolderFromFilename($filename) {
 		throw new FileSystemException("Method not supported");
 	}
-		
+
 }
 
 
 
 Abstract Class AbstractMaterializedFile {
-	
+
 	public abstract function filename();
 
 	public function release() {}
-	
+
 	function __destruct() {
 		$this->release();
-	} 
-	
+	}
+
 	public function materialize() {
 		return $this;
 	}
@@ -39,17 +39,17 @@ Abstract Class AbstractMaterializedFile {
 
 
 Class FileMaterializedFile extends AbstractMaterializedFile {
-	
+
 	protected $file;
-	
+
 	function __construct($file) {
 		$this->file = $file;
 	}
-	
+
 	public function filename() {
 		return $this->file->filename();
 	}
-	
+
 }
 
 
@@ -68,7 +68,7 @@ Class TemporaryMaterializedFile extends AbstractMaterializedFile {
 	public function filename() {
 		return $this->filename;
 	}
-	
+
 	public function release() {
 		unlink($this->filename);
 	}
@@ -78,7 +78,7 @@ Class TemporaryMaterializedFile extends AbstractMaterializedFile {
 
 
 Class AbstractFile {
-	
+
 	protected $file_system = null;
 	protected $file_name = null;
 	protected $read_handle = null;
@@ -87,15 +87,15 @@ Class AbstractFile {
 		$this->file_system = $file_system;
 		$this->file_name = $file_name;
 	}
-	
+
 	public function size() {
 		throw new FileSystemException("Unsupported Operation");
 	}
-	
+
 	public function filename() {
 		return $this->file_name;
 	}
-	
+
 	public function waitUntilExists($options = array("wait_time" => 1000, "repeat_count" => 3)) {
 		$attempts = $options["repeat_count"];
 		while ($attempts > 0) {
@@ -105,7 +105,7 @@ Class AbstractFile {
 			usleep($options["wait_time"]);
 		}
 	}
-	
+
 	public function exists() {
 		throw new FileSystemException("Unsupported Operation");
 	}
@@ -117,10 +117,10 @@ Class AbstractFile {
 	public function delete() {
 		throw new FileSystemException("Unsupported Operation");
 	}
-	
+
 	protected function writeStream() {
 		throw new FileSystemException("Unsupported Operation");
-	} 
+	}
 
 	public function readStream() {
 		throw new FileSystemException("Unsupported Operation");
@@ -133,34 +133,38 @@ Class AbstractFile {
 	public function getChunk($chunk_size = 8192, $seekable = NULL) {
 		throw new FileSystemException("Unsupported Operation");
 	}
-	
+
 	public function putContents($data) {
 		$stream = $this->writeStream();
 		fwrite($stream, $data);
 		fclose($stream);
 	}
-	
+
 	public function getContents() {
 		$stream = $this->readStream();
 		$data = fread($stream, $this->size());
 		fclose($stream);
 		return $data;
 	}
-	
+
 	public function toLocalFile($file) {
 		$input = $this->readStream();
 		$output = fopen($file, "w");
+		if ($output === FALSE)
+			throw new FileSystemException("Could not open file for writing");
 		stream_copy_to_stream($input, $output);
 		fclose($output);
 	}
-	
+
 	public function fromLocalFile($file) {
 		$input = fopen($file, "r");
+		if ($input === FALSE)
+			throw new FileSystemException("Could not open file for reading");
 		$output = $this->writeStream();
 		stream_copy_to_stream($input, $output);
 		fclose($output);
-	}	
-	
+	}
+
 	public function materialize() {
 		return new TemporaryMaterializedFile($this);
 	}
