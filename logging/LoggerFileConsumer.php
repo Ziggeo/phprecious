@@ -3,12 +3,12 @@
 require_once(dirname(__FILE__) . "/LoggerConsumer.php");
 
 class LoggerFileConsumer extends LoggerConsumer {
-	
+
 	private $filename;
 	private $logfh;
 	private $last_filename = NULL;
 	private $options;
-	
+
 	public function __construct($filename, $options = array()) {
 		$this->filename = $filename;
 		$this->options = array_merge(array(
@@ -19,18 +19,18 @@ class LoggerFileConsumer extends LoggerConsumer {
 		), $options);
 		$this->obtain();
 	}
-	
+
     public function __destruct() {
     	$this->release();
     }
-      
+
 	private function release() {
         if ($this->logfh) {
         	fclose($this->logfh);
 	        unset($this->logfh);
 		}
 	}
-	
+
 	private function currentFilename($time_shift = 0, $modulo_shift = 0) {
 		if (!@$this->options["rotate_logs"])
 			return $this->filename;
@@ -39,9 +39,9 @@ class LoggerFileConsumer extends LoggerConsumer {
 		$modulo = $this->options["rotate_modulo"];
 		$time = floor(time() / $divider) + $time_shift + $modulo_shift * $modulo;
 		$time_mod = $time % $modulo;
-		return $this->filename . "." . $time_mod . "." . $time; 
+		return $this->filename . "." . $time_mod . "." . $time;
 	}
-	
+
 	private function obtain() {
 		$current = $this->currentFilename();
 		if ($current != $this->last_filename) {
@@ -51,6 +51,12 @@ class LoggerFileConsumer extends LoggerConsumer {
 	            chmod($this->last_filename, 0666);
 	        }
 	        $this->logfh = @fopen($this->last_filename, "a");
+	        // Check if file handle was successfully created
+	        if ($this->logfh === false) {
+	            // Log handle creation failed, set to null to prevent fatal errors
+	            $this->logfh = null;
+	            // Could add error handling here if needed
+	        }
 			if (@$this->options["delete_old_logs"]) {
 				$old = $this->currentFilename(0, -1);
 				if ($old != $this->last_filename && file_exists($old))
@@ -58,10 +64,13 @@ class LoggerFileConsumer extends LoggerConsumer {
 			}
 		}
 	}
-		
+
 	protected function processMessage($logger, $logMessage) {
 		$this->obtain();
-		fwrite($this->logfh, $logMessage->formatOneLine());
+		// Only write to log if we have a valid file handle
+		if ($this->logfh) {
+			fwrite($this->logfh, $logMessage->formatOneLine());
+		}
 	}
 
 }
