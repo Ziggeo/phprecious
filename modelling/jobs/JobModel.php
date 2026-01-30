@@ -121,7 +121,7 @@ abstract class JobModel extends DatabaseModel {
                 if ($delete_on_close)
                     $this->delete();
                 return TRUE;
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 $this->inc("failure_count");
                 $this->updateStatus(self::STATUS_FAILED, $e->getMessage(), Logger::WARN);
             }
