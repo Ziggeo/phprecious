@@ -150,6 +150,28 @@ Class S3FileSystem extends AbstractFileSystem {
 		return $path;
 	}
 
+	public function localUploadParams($bucket, $key, $file, $region, $content_type) {
+		$handle = fopen($file, "rb");
+		if ($handle === FALSE)
+			throw new FileSystemException("Could not open local file for upload");
+		$size = filesize($file);
+		if ($size === FALSE) {
+			fclose($handle);
+			throw new FileSystemException("Could not determine local file size");
+		}
+		return array(
+			"params" => array(
+				"Bucket" => $bucket,
+				"Key" => $key,
+				"Body" => $handle,
+				"ContentLength" => $size,
+				"@region" => $region,
+				"ContentType" => $content_type
+			),
+			"handle" => $handle
+		);
+	}
+
 	public function createFolderFromFilename($filename) {
 		$pos = strrpos($filename, "/");
 		$dir = substr($filename, 0, $pos);
@@ -166,17 +188,20 @@ Class S3FileSystem extends AbstractFileSystem {
 	}
 
 	public function uploadLocalFile($file, $path) {
+		$upload = $this->localUploadParams(
+			$this->bucket(),
+			$this->cleanupS3Path($path),
+			$file,
+			$this->region(),
+			ContentType::byFileName($path)
+		);
 		try {
-			$this->s3()->putObject(array(
-				"Bucket" => $this->bucket(),
-				"Key" => $this->cleanupS3Path($path),
-				"SourceFile" => $file,
-				"@region" => $this->region(),
-				"ContentType" => ContentType::byFileName($path)
-			));
+			$this->s3()->putObject($upload["params"]);
 			return TRUE;
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
+		} finally {
+			fclose($upload["handle"]);
 		}
 	}
 
@@ -303,16 +328,19 @@ Class S3File extends AbstractFile {
 	}
 
 	public function fromLocalFile($file) {
+		$upload = $this->file_system->localUploadParams(
+			$this->bucket(),
+			$this->filename(),
+			$file,
+			$this->region(),
+			ContentType::byFileName($this->filename())
+		);
 		try {
-			$this->s3()->putObject(array(
-				"Bucket" => $this->bucket(),
-				"Key" => $this->filename(),
-				"SourceFile" => $file,
-				"@region" => $this->region(),
-				"ContentType" => ContentType::byFileName($this->filename())
-			));
+			$this->s3()->putObject($upload["params"]);
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
+		} finally {
+			fclose($upload["handle"]);
 		}
 	}
 
