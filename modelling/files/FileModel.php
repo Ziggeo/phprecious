@@ -335,6 +335,7 @@ Class FileModel extends DatabaseModel {
 			return NULL;
 		$retry_count = self::classOptionsOf("retry_count");
 		$retry_delay = self::classOptionsOf("retry_delay");
+		$retry_budget = $retry_count;
 		while ($retry_count > 0) {
 			$success = ($move && forward_static_call(array($class, "rename"), $filename, $instance->getFilePath())) || (!$move && forward_static_call(array($class, "copy"), $filename, $instance->getFilePath()));
 			if ($success)
@@ -343,7 +344,19 @@ Class FileModel extends DatabaseModel {
 			if ($retry_count > 0)
 				usleep(1000 * $retry_delay);
 			else {
-				static::log("Error: cannot move file.", Logger::WARN);
+				$last_error = error_get_last();
+				$last_error_msg = $last_error ? (isset($last_error["message"]) ? $last_error["message"] : "unknown") : "none";
+				$source_exists = file_exists($filename);
+				$diag = "Error: cannot move file."
+					. " op=" . ($move ? "rename" : "copy")
+					. " source=" . $filename
+					. " source_exists=" . var_export($source_exists, TRUE)
+					. " source_readable=" . var_export(is_readable($filename), TRUE)
+					. " source_size=" . ($source_exists ? filesize($filename) : "n/a")
+					. " target=" . $instance->getFilePath()
+					. " retry_budget=" . $retry_budget
+					. " last_error=" . $last_error_msg;
+				static::log($diag, Logger::WARN);
 				$instance->delete();
 				return NULL;
 			}
