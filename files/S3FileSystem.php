@@ -201,7 +201,8 @@ Class S3FileSystem extends AbstractFileSystem {
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		} finally {
-			fclose($upload["handle"]);
+			if (is_resource($upload["handle"]))
+				fclose($upload["handle"]);
 		}
 	}
 
@@ -340,7 +341,8 @@ Class S3File extends AbstractFile {
 		} catch (Exception $e) {
 			throw new FileSystemException($e->getMessage());
 		} finally {
-			fclose($upload["handle"]);
+			if (is_resource($upload["handle"]))
+				fclose($upload["handle"]);
 		}
 	}
 
