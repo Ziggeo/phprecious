@@ -48,6 +48,17 @@ Class FTPFile extends AbstractFile {
 		return $this->file_system->ftp();
 	}
 
+	/**
+	 * Percent-encode each path segment for use in a curl FTP URL, preserving the "/" separators.
+	 * curl (libcurl 7.x+) rejects URLs containing raw spaces / reserved chars with
+	 * CURLE_URL_MALFORMAT (error 3); older curl silently tolerated them. Remote Base Paths with a
+	 * space (e.g. "/My Folder") therefore fail on newer runtimes. curl percent-decodes the FTP path
+	 * before issuing FTP commands, so "%20" reaches the server as a literal space (correct).
+	 */
+	private function urlPath() {
+		return implode("/", array_map("rawurlencode", explode("/", $this->file_name)));
+	}
+
 	public function size() {
 		return ftp_size($this->ftp(), $this->file_name);
 	}
@@ -59,7 +70,7 @@ Class FTPFile extends AbstractFile {
 	public function delete() {
 		$ftp = $this->ftp();
 		$url = curl_getinfo($ftp, CURLINFO_EFFECTIVE_URL);
-		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->urlPath());
 		curl_setopt($ftp, CURLOPT_CUSTOMREQUEST, "DELETE");
 		curl_setopt($ftp, CURLOPT_RETURNTRANSFER, true);
 		$result = curl_exec($ftp);
@@ -104,7 +115,7 @@ Class FTPFile extends AbstractFile {
 			throw new FileSystemException("Could not open file for writing");
 		$ftp = $this->ftp();
 		$url = curl_getinfo($ftp, CURLINFO_EFFECTIVE_URL);
-		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ftp, CURLOPT_URL, $url . "/" . $this->urlPath());
 		curl_setopt($ftp, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ftp, CURLOPT_FILE, $file); #
 		curl_exec($ftp);
@@ -120,7 +131,7 @@ Class FTPFile extends AbstractFile {
 		if ($fileStream === FALSE)
 			throw new FileSystemException("Could not open file for reading");
 		$url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-		curl_setopt($ch, CURLOPT_URL, $url . "/" . $this->file_name);
+		curl_setopt($ch, CURLOPT_URL, $url . "/" . $this->urlPath());
 		curl_setopt($ch, CURLOPT_UPLOAD, 1);
 		curl_setopt($ch, CURLOPT_INFILE, $fileStream);
 
